@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MEI Velocity | Harare Taxi & Transport</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+<header class="nav">
+  <a class="brand" href="#home"><img src="assets/mei_logo.jpg" alt="MEI Velocity logo"></a>
+  <nav>
+    <a href="#home">Home</a><a href="#book">Book a Ride</a><a href="#services">Our Services</a>
+    <a href="#vehicles">Our Vehicles</a><a href="#fares">Fares</a><a href="#about">About Us</a><a href="#contact">Contact</a>
+  </nav>
+  <a class="phone" href="tel:+263781144071">☎ +263 78 114 4071</a>
+</header>
+
+<section class="hero" id="home">
+  <div class="hero-bg"></div><div class="hero-shade"></div>
+  <div class="hero-content">
+    <div class="coverage">HARARE • 40 KM RADIUS</div>
+    <h1>WE MOVE<br>WHAT <span>MATTERS.</span></h1>
+    <p class="tagline">SAFE. RELIABLE. ON TIME.</p>
+    <div class="trust">
+      <div><b>✓</b><span>Trusted<br>Drivers</span></div>
+      <div><b>◷</b><span>On Time<br>Always</span></div>
+      <div><b>♙</b><span>Your Safety<br>Our Priority</span></div>
+    </div>
+
+    <div class="booking" id="book">
+      <div class="booking-top"><h2>🚕 Book Your Ride</h2><div class="tabs"><button class="active">Ride Now</button><button>Schedule Ride</button></div></div>
+      <div class="inputs">
+        <div class="field"><label>Pick-up Location</label><input id="pickup" placeholder="Enter pickup location"></div>
+        <div class="field"><label>Drop-off Location</label><input id="dropoff" placeholder="Enter drop-off location"></div>
+        <button id="fareBtn" class="get-fare">GET FARE →</button>
+      </div>
+      <div class="summary">
+        <div><small>Distance</small><strong id="distance">0 km</strong></div>
+        <div><small>Estimated Fare</small><strong id="total">$0.00</strong><em>$0.75 per km</em></div>
+        <div class="payment"><b>Payment Method</b>
+          <label><input type="radio" name="payment" value="Cash" checked> 💵 Cash (Pay driver)</label>
+          <label><input type="radio" name="payment" value="Card"> 💳 Card (Pay online)</label>
+        </div>
+        <button id="bookBtn" class="book-btn">BOOK RIDE</button>
+      </div>
+      <p id="status">Enter pickup and drop-off locations.</p>
+      <div id="success" class="success"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section services" id="services">
+  <div class="heading">
+    <h2>OUR <span>SERVICES</span></h2>
+    <p>Reliable transport solutions for every need.</p>
+  </div>
+
+  <div class="service-grid">
+
+    <article>
+      <div class="upload-card">
+        <img src="assets/services/school-run.jpg" alt="School Run">
+      </div>
+      <h3>SCHOOL RUN</h3>
+      <p>Safe and reliable rides for children.</p>
+    </article>
+
+    <article>
+      <div class="upload-card">
+        <img src="assets/services/package-delivery.jpg" alt="Package Delivery">
+      </div>
+      <h3>PACKAGE DELIVERY</h3>
+      <p>Fast and secure delivery across Harare.</p>
+    </article>
+
+    <article>
+      <div class="upload-card">
+        <img src="assets/services/corporate-private.jpg" alt="Corporate and Private Transport">
+      </div>
+      <h3>CORPORATE & PRIVATE</h3>
+      <p>Comfortable transport for business and personal needs.</p>
+    </article>
+
+    <article>
+      <div class="upload-card">
+        <img src="assets/services/shopping-errands.jpg" alt="Shopping and Errand Runs">
+      </div>
+      <h3>SHOPPING & ERRAND RUNS</h3>
+      <p>Convenient rides for daily errands.</p>
+    </article>
+
+    <article>
+      <div class="upload-card">
+        <img src="assets/services/airport-transfers.jpg" alt="Airport Transfers">
+      </div>
+      <h3>AIRPORT TRANSFERS</h3>
+      <p>Reliable airport transport on request.</p>
+    </article>
+
+  </div>
+</section>
+<section class="section vehicles" id="vehicles">
+
+  <div class="heading">
+    <h2>OUR <span>VEHICLES</span></h2>
+    <p>Comfort, safety and reliability for every journey.</p>
+  </div>
+
+  <div class="vehicle-grid">
+
+    <article>
+      <div class="vehicle-img">
+        <img src="assets/vehicles/toyota-spade.jpg" alt="Toyota Spade">
+      </div>
+
+      <div>
+        <h3>TOYOTA SPADE</h3>
+        <p>
+          Comfortable, spacious and reliable. Perfect for school runs,
+          family trips and everyday travel.
+        </p>
+      </div>
+    </article>
+
+    <article>
+      <div class="vehicle-img">
+        <img src="assets/vehicles/nissan-note.jpg" alt="Nissan Note">
+      </div>
+
+      <div>
+        <h3>NISSAN NOTE</h3>
+        <p>
+          Fuel efficient and dependable for everyday rides.
+          Smooth and comfortable.
+        </p>
+      </div>
+    </article>
+
+    <article>
+      <div class="vehicle-img">
+        <img src="assets/vehicles/truck.jpg" alt="Truck for Hire">
+      </div>
+
+      <div>
+        <h3>TRUCK FOR HIRE</h3>
+        <p>
+          Perfect for moving, deliveries and more.
+        </p>
+        <strong>$1.50/km</strong>
+      </div>
+    </article>
+
+  </div>
+
+</section>
+
+<section class="section vehicles" id="vehicles">
+
+  <div class="heading">
+    <h2>OUR <span>VEHICLES</span></h2>
+    <p>Comfort, safety and reliability for every journey.</p>
+  </div>
+
+  <div class="vehicle-grid">
+
+    <article>
+      <div class="vehicle-img">
+        <img src="assets/vehicles/toyota-spade.jpg" alt="Toyota Spade">
+      </div>
+
+      <div>
+        <h3>TOYOTA SPADE</h3>
+        <p>
+          Comfortable, spacious and reliable. Perfect for school runs,
+          family trips and everyday travel.
+        </p>
+      </div>
+    </article>
+
+    <article>
+      <div class="vehicle-img">
+        <img src="assets/vehicles/nissan-note.jpg" alt="Nissan Note">
+      </div>
+
+      <div>
+        <h3>NISSAN NOTE</h3>
+        <p>
+          Fuel efficient and dependable for everyday rides.
+        </p>
+      </div>
+    </article>
+
+    <article>
+      <div class="vehicle-img">
+        <img src="assets/vehicles/truck.jpg" alt="Truck for Hire">
+      </div>
+
+      <div>
+        <h3>TRUCK FOR HIRE</h3>
+        <p>
+          Perfect for moving, deliveries and more.
+        </p>
+        <strong>$1.50/km</strong>
+      </div>
+    </article>
+
+  </div>
+
+</section>
+
+<section class="benefits">
+  <div>🛡️<b>CLEAN & WELL<br>MAINTAINED</b></div><div>👥<b>PROFESSIONAL<br>DRIVERS</b></div><div>◷<b>PUNCTUAL &<br>SAFE SERVICE</b></div><div>💲<b>TRANSPARENT<br>FARES</b></div><div>☎<b>CUSTOMER<br>SUPPORT</b></div>
+</section>
+
+<section class="section two-col" id="fares">
+  <div class="panel"><h2>OUR <span>FARES</span></h2><div class="fare-row"><b>STANDARD RIDES</b><strong>$0.75/km</strong></div><div class="fare-row"><b>TRUCK FOR HIRE</b><strong>$1.50/km</strong></div><p>Standard ride fares are calculated from the driving distance between pickup and drop-off.</p></div>
+  <div class="panel"><h2>OUR <span>SERVICE AREAS</span></h2><p>📍 Harare — Main Route</p><p>📍 Village Borrowdale</p><p>📍 UZ Campus</p><p>📍 Surrounding areas</p><h3>40 KM RADIUS</h3><p>Special requests considered outside the main service area.</p></div>
+</section>
+
+<section class="section two-col" id="about">
+  <div class="panel"><h2>WHY CHOOSE <span>MEI VELOCITY?</span></h2><ul><li>Clean and well maintained vehicles</li><li>Professional and trusted drivers</li><li>Punctual and safe service</li><li>Reasonable, transparent fares</li><li>Customer focused support</li></ul></div>
+  <div class="panel"><h2>DRIVEN BY <span>VALUES.</span></h2><p>Delivered with pride. We don't just move people — we move lives forward.</p></div>
+</section>
+
+<section class="cta" id="contact"><div><small>BOOK YOUR RIDE TODAY!</small><strong>+263 78 114 4071</strong></div><a href="#book">BOOK A RIDE NOW →</a></section>
+<footer><img src="assets/mei_logo.jpg" alt="MEI Velocity"><span>Harare, Zimbabwe</span><span>Driven by values. Delivered with pride.</span><span>© 2026 MEI Velocity. All Rights Reserved.</span></footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
