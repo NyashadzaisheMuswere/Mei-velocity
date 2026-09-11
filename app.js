@@ -1,33 +1,221 @@
-const RATE=0.75;
-async function geocode(place){
-  const q=place.toLowerCase().includes("harare")?place:place+", Harare, Zimbabwe";
-  const r=await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q));
-  const d=await r.json();if(!d.length)throw new Error("Location not found: "+place);
-  return {lat:+d[0].lat,lon:+d[0].lon};
+const RATE = 0.85;
+let suggestionTimer;
+
+async function getLocationSuggestions(input, datalistId) {
+  const query = input.value.trim();
+  const datalist = document.getElementById(datalistId);
+
+  if (query.length < 3) {
+    datalist.innerHTML = "";
+    return;
+  }
+
+  clearTimeout(suggestionTimer);
+
+  suggestionTimer = setTimeout(async () => {
+    try {
+      const url =
+        "https://nominatim.openstreetmap.org/search" +
+        "?format=json" +
+        "&addressdetails=1" +
+        "&limit=5" +
+        "&countrycodes=zw" +
+        "&q=" +
+        encodeURIComponent(query);
+
+      const response = await fetch(url);
+      const locations = await response.json();
+
+      datalist.innerHTML = "";
+
+      locations.forEach(location => {
+        const option = document.createElement("option");
+        option.value = location.display_name;
+        datalist.appendChild(option);
+      });
+
+    } catch (error) {
+      console.error("Location suggestions error:", error);
+    }
+  }, 400);
 }
-async function calculateFare(){
-  const a=document.getElementById("pickup").value.trim(),b=document.getElementById("dropoff").value.trim();
-  if(!a||!b){document.getElementById("status").textContent="Enter both locations.";return}
-  document.getElementById("status").textContent="Calculating route...";
-  try{
-    const p=await geocode(a),q=await geocode(b);
-    const r=await fetch(`https://router.project-osrm.org/route/v1/driving/${p.lon},${p.lat};${q.lon},${q.lat}?overview=false`);
-    const d=await r.json();if(d.code!=="Ok")throw new Error("Route unavailable.");
-    const km=d.routes[0].distance/1000,fare=km*RATE;
-    document.getElementById("distance").textContent=km.toFixed(1)+" km";
-    document.getElementById("total").textContent="$"+fare.toFixed(2);
-    document.getElementById("status").textContent="Fare calculated at $0.75 per kilometre.";
-    window.rideFare={km,fare};
-  }catch(e){document.getElementById("status").textContent=e.message}
+
+document.getElementById("pickup").addEventListener("input", function () {
+  getLocationSuggestions(this, "pickupSuggestions");
+});
+
+document.getElementById("dropoff").addEventListener("input", function () {
+  getLocationSuggestions(this, "dropoffSuggestions");
+});
+async function geocode(place) {
+  const q = place.toLowerCase().includes("harare")
+    ? place
+    : `${place}, Harare, Zimbabwe`;
+
+  const url =
+    "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
+    encodeURIComponent(q);
+
+  const response = await fetch(url);
+  const data = await response.json();
+
+  if (!data.length) {
+    throw new Error("Location not found: " + place);
+  }
+
+  return {
+    lat: Number(data[0].lat),
+    lon: Number(data[0].lon)
+  };
 }
-document.getElementById("fareBtn").onclick=calculateFare;
-document.getElementById("bookBtn").onclick=()=>{
-  if(!window.rideFare){calculateFare();return}
-  const method=document.querySelector('input[name="payment"]:checked').value,s=document.getElementById("success");
-  s.style.display="block";s.textContent=`Ride request: ${window.rideFare.km.toFixed(1)} km — $${window.rideFare.fare.toFixed(2)} — ${method}.`;
+
+async function calculateFare() {
+
+  const pickup = document.getElementById("pickup").value.trim();
+  const dropoff = document.getElementById("dropoff").value.trim();
+
+  if (!pickup || !dropoff) {
+    document.getElementById("status").textContent =
+      "Enter both pickup and drop-off locations.";
+    return;
+  }
+
+  document.getElementById("status").textContent =
+    "Calculating route...";
+
+  try {
+
+    const p = await geocode(pickup);
+    const q = await geocode(dropoff);
+
+    const response = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${p.lon},${p.lat};${q.lon},${q.lat}?overview=false`
+    );
+
+    const data = await response.json();
+
+    if (data.code !== "Ok") {
+      throw new Error("Route unavailable.");
+    }
+
+    const km = data.routes[0].distance / 1000;
+    const fare = km * RATE;
+
+    document.getElementById("distance").textContent =
+      km.toFixed(1) + " km";
+
+    document.getElementById("total").textContent =
+      "$" + fare.toFixed(2);
+
+    document.getElementById("status").textContent =
+      "Fare calculated at $0.75 per kilometre.";
+
+    window.rideFare = {
+      km,
+      fare
+    };
+
+  } catch (error) {
+
+    document.getElementById("status").textContent =
+      error.message;
+  }
+}
+
+
+document.getElementById("fareBtn").onclick = calculateFare;
+
+
+document.getElementById("bookBtn").onclick = async () => {
+
+  if (!window.rideFare) {
+    await calculateFare();
+
+    if (!window.rideFare) {
+      return;
+    }
+  }
+
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const pickup = document.getElementById("pickup").value.trim();
+  const dropoff = document.getElementById("dropoff").value.trim();
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+  const vehicle = document.getElementById("vehicle").value;
+
+  const paymentElement =
+    document.querySelector('input[name="payment"]:checked');
+
+  const payment = paymentElement
+    ? paymentElement.value
+    : "Cash";
+
+
+  if (!name || !phone || !pickup || !dropoff || !date || !time) {
+
+    document.getElementById("status").textContent =
+      "Please complete all booking details.";
+
+    return;
+  }
+
+
+  document.getElementById("status").textContent =
+    "Sending booking...";
+
+
+  try {
+
+    const response = await fetch(
+      "http://localhost:5000/api/bookings",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+          name,
+          phone,
+          pickup,
+          dropoff,
+          date,
+          time,
+          vehicle,
+          distance: window.rideFare.km,
+          fare: window.rideFare.fare,
+          payment
+        })
+      }
+    );
+
+
+    const data = await response.json();
+
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || "Booking failed."
+      );
+    }
+
+
+    document.getElementById("success").style.display =
+      "block";
+
+    document.getElementById("success").textContent =
+      `Booking confirmed! Your booking number is ${data.booking.id}.`;
+
+    document.getElementById("status").textContent =
+      "MEI Velocity has received your ride request.";
+
+  } catch (error) {
+
+    document.getElementById("status").textContent =
+      "Booking failed: " + error.message;
+
+  }
+
 };
-function preview(input,img){const f=input.files?.[0];if(!f)return;const r=new FileReader();r.onload=e=>img.src=e.target.result;r.readAsDataURL(f)}
-function previewService(i){preview(i,i.parentElement.querySelector("img"));i.parentElement.querySelector("span").textContent="Picture selected"}
-function previewFleet(i){preview(i,i.parentElement.querySelector("img"));i.parentElement.querySelector("span").textContent="Picture selected"}
-function previewVehicle(i){preview(i,i.parentElement.querySelector("img"));i.parentElement.querySelector("span").textContent="Picture selected"}
-function previewLogo(i){preview(i,i.parentElement.querySelector("img"))}

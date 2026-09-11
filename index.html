@@ -33,26 +33,111 @@
     </div>
 
     <div class="booking" id="book">
-      <div class="booking-top"><h2>🚕 Book Your Ride</h2><div class="tabs"><button class="active">Ride Now</button><button>Schedule Ride</button></div></div>
-      <div class="inputs">
-        <div class="field"><label>Pick-up Location</label><input id="pickup" placeholder="Enter pickup location"></div>
-        <div class="field"><label>Drop-off Location</label><input id="dropoff" placeholder="Enter drop-off location"></div>
-        <button id="fareBtn" class="get-fare">GET FARE →</button>
-      </div>
-      <div class="summary">
-        <div><small>Distance</small><strong id="distance">0 km</strong></div>
-        <div><small>Estimated Fare</small><strong id="total">$0.00</strong><em>$0.75 per km</em></div>
-        <div class="payment"><b>Payment Method</b>
-          <label><input type="radio" name="payment" value="Cash" checked> 💵 Cash (Pay driver)</label>
-          <label><input type="radio" name="payment" value="Card"> 💳 Card (Pay online)</label>
-        </div>
-        <button id="bookBtn" class="book-btn">BOOK RIDE</button>
-      </div>
-      <p id="status">Enter pickup and drop-off locations.</p>
-      <div id="success" class="success"></div>
+
+  <div class="booking-top">
+    <h2>🚕 Book Your Ride</h2>
+
+    <div class="tabs">
+      <button class="active" type="button">Ride Now</button>
+      <button type="button">Schedule Ride</button>
     </div>
   </div>
-</section>
+
+  <div class="inputs">
+
+    <div class="field">
+      <label>Your Name</label>
+      <input id="name" type="text" placeholder="Enter your name">
+    </div>
+
+    <div class="field">
+      <label>Phone Number</label>
+      <input id="phone" type="tel" placeholder="+263 XX XXX XXXX">
+    </div>
+
+    <div class="field">
+  <label>Pick-up Location</label>
+  <input
+    id="pickup"
+    list="pickupSuggestions"
+    placeholder="type your pickup location..."
+    autocomplete="off"
+  >
+  <datalist id="pickupSuggestions"></datalist>
+</div>
+
+   <div class="field">
+  <label>Drop-off Location</label>
+  <input
+    id="dropoff"
+    list="dropoffSuggestions"
+    placeholder="type your destination..."
+    autocomplete="off"
+  >
+  <datalist id="dropoffSuggestions"></datalist>
+</div>
+    <div class="field">
+      <label>Date</label>
+      <input id="date" type="date">
+    </div>
+
+    <div class="field">
+      <label>Time</label>
+      <input id="time" type="time">
+    </div>
+
+    <div class="field">
+      <label>Vehicle</label>
+      <select id="vehicle">
+        <option value="Toyota Spade">Toyota Spade</option>
+        <option value="Nissan Note">Nissan Note</option>
+      </select>
+    </div>
+
+    <button id="fareBtn" class="get-fare" type="button">
+      GET FARE →
+    </button>
+
+  </div>
+
+  <div class="summary">
+
+    <div>
+      <small>Distance</small>
+      <strong id="distance">0 km</strong>
+    </div>
+
+    <div>
+      <small>Estimated Fare</small>
+      <strong id="total">$0.00</strong>
+      <em>$0.75 per km</em>
+    </div>
+
+    <div class="payment">
+      <b>Payment Method</b>
+
+      <label>
+        <input type="radio" name="payment" value="Cash" checked>
+        💵 Cash (Pay driver)
+      </label>
+
+      <label>
+        <input type="radio" name="payment" value="Card">
+        💳 Card (Pay online)
+      </label>
+    </div>
+
+    <button id="bookBtn" class="book-btn" type="button">
+      BOOK RIDE
+    </button>
+
+  </div>
+
+  <p id="status">Enter your details and locations.</p>
+
+  <div id="success" class="success"></div>
+
+</div>
 
 <section class="section services" id="services">
   <div class="heading">
