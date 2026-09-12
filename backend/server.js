@@ -55,7 +55,7 @@ async function initializeDatabase() {
   `);
 
   console.log("MEI Velocity database ready.");
-});
+}
 
 app.get("/", (req, res) => {
   res.json({
