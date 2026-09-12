@@ -1,115 +1,253 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MEI Velocity — Drivers</title>
-<style>
-body{font-family:Arial,sans-serif;background:#f4f5f7;margin:0;color:#111}
-header{background:#111;color:#fff;padding:18px 22px}
-main{max-width:1000px;margin:25px auto;padding:0 16px}
-.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 18px #00000012}
-input,select,button{padding:11px;border:1px solid #ccc;border-radius:8px;font:inherit}
-input,select{width:100%;box-sizing:border-box}
-button{cursor:pointer;background:#111;color:#fff;border:0}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.form{display:grid;gap:12px}
-.driver{border:1px solid #ddd;border-radius:10px;padding:14px;margin:10px 0;display:flex;justify-content:space-between;gap:12px;align-items:center}
-.pill{padding:5px 9px;border-radius:20px;background:#eee;font-size:12px}
-.online{background:#d9f7df}.busy{background:#fff0c2}.off{background:#eee}
-.error{color:#b00020}.success{color:#087f23}
-@media(max-width:650px){.grid{grid-template-columns:1fr}.driver{display:block}.driver button{margin-top:8px}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEI VELOCITY — Driver Management</title>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,sans-serif;background:#f4f5f7;color:#111}
+    .wrap{max-width:1000px;margin:40px auto;padding:0 18px}
+    .card{background:#fff;border-radius:14px;padding:24px;box-shadow:0 5px 22px rgba(0,0,0,.08)}
+    h1{margin:0 0 6px;font-size:30px}
+    .sub{margin:0 0 24px;color:#666}
+    label{display:block;font-weight:600;margin:14px 0 6px}
+    input,select{width:100%;padding:12px;border:1px solid #ccc;border-radius:8px;font-size:15px}
+    button{border:0;border-radius:8px;padding:11px 15px;font-weight:600;cursor:pointer}
+    .primary{background:#111;color:#fff}
+    .secondary{background:#eee;color:#111}
+    .danger{background:#b42318;color:#fff}
+    .success{color:#147a32;margin:10px 0}
+    .error{color:#c52222;margin:10px 0}
+    .login{max-width:430px;margin:80px auto}
+    .hidden{display:none}
+    table{width:100%;border-collapse:collapse;margin-top:24px}
+    th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #e5e5e5;vertical-align:middle}
+    th{font-size:13px;color:#666}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#eee;font-size:12px}
+    .row-msg{margin-top:15px;min-height:20px}
+    @media(max-width:700px){
+      table,thead,tbody,tr,th,td{display:block}
+      thead{display:none}
+      tr{padding:14px 0;border-bottom:1px solid #ddd}
+      td{border:0;padding:5px 0}
+      td:before{content:attr(data-label);display:inline-block;width:90px;font-weight:600;color:#666}
+      .actions{margin-top:8px}
+    }
+  </style>
 </head>
 <body>
-<header><strong>MEI VELOCITY</strong> — Driver Management</header>
-<main>
-<div class="card">
-<h2>Add Driver</h2>
-<form id="form" class="form">
-<div class="grid">
-<input id="driverName" placeholder="Driver name" required>
-<input id="driverPhone" placeholder="Phone number" required>
-<input id="driverVehicle" placeholder="Vehicle e.g. Toyota Spade" required>
-<input id="driverPlate" placeholder="Number plate" required>
-<input id="driverPassword" type="password" minlength="6" placeholder="Temporary password (6+ chars)" required>
-</div>
-<button type="submit">Add Driver</button>
-</form>
-<p id="msg"></p>
-</div>
-<div class="card">
-<h2>Drivers</h2>
-<div id="list">Loading…</div>
-</div>
-</main>
-<script>
-const API='https://mei-velocity1.onrender.com';
-let adminPassword=sessionStorage.getItem('meiAdminPassword')||prompt('Enter MEI admin password');
-if(adminPassword)sessionStorage.setItem('meiAdminPassword',adminPassword);
+  <div id="loginCard" class="card login">
+    <h1>MEI VELOCITY</h1>
+    <p class="sub">Driver Management</p>
+    <label for="adminPassword">Admin password</label>
+    <input id="adminPassword" type="password" autocomplete="current-password">
+    <button id="loginBtn" class="primary" style="width:100%;margin-top:16px">Sign in</button>
+    <div id="loginMsg" class="row-msg"></div>
+  </div>
 
-function headers(){
-  return {'Content-Type':'application/json','x-admin-password':adminPassword||''};
-}
-function setMessage(text, ok=false){
-  const el=document.getElementById('msg');
-  el.textContent=text;
-  el.className=ok?'success':'error';
-}
-async function load(){
-  try{
-    const r=await fetch(API+'/api/admin/drivers',{headers:headers()});
-    if(r.status===401){
-      sessionStorage.removeItem('meiAdminPassword');
-      document.getElementById('list').textContent='Invalid admin password. Refresh and try again.';
+  <div id="app" class="wrap hidden">
+    <div class="card">
+      <h1>Driver Management</h1>
+      <p class="sub">Add drivers, reset passwords, and manage driver status.</p>
+
+      <h2>Add Driver</h2>
+      <label for="name">Name</label>
+      <input id="name" autocomplete="name">
+
+      <label for="phone">Phone</label>
+      <input id="phone" autocomplete="tel">
+
+      <label for="vehicle">Vehicle</label>
+      <input id="vehicle">
+
+      <label for="plate">Plate</label>
+      <input id="plate">
+
+      <label for="newPassword">Initial password</label>
+      <input id="newPassword" type="password" autocomplete="new-password">
+
+      <button id="addBtn" class="primary" style="margin-top:16px">Add Driver</button>
+      <div id="msg" class="row-msg"></div>
+
+      <h2 style="margin-top:32px">Drivers</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Vehicle</th>
+              <th>Plate</th>
+              <th>Status</th>
+              <th>Active</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="driverRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const API = 'https://mei-velocity1.onrender.com';
+  let adminPassword = '';
+
+  const $ = id => document.getElementById(id);
+
+  function showMsg(el, text, ok=false) {
+    el.className = ok ? 'success row-msg' : 'error row-msg';
+    el.textContent = text;
+  }
+
+  async function api(path, options={}) {
+    options.headers = Object.assign({}, options.headers || {}, {
+      'x-admin-password': adminPassword
+    });
+    return fetch(API + path, options);
+  }
+
+  async function loadDrivers() {
+    const r = await api('/api/admin/drivers');
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.message || 'Unable to load drivers.');
+
+    $('driverRows').innerHTML = d.drivers.map(driver => `
+      <tr>
+        <td data-label="Name">${escapeHtml(driver.name)}</td>
+        <td data-label="Phone">${escapeHtml(driver.phone)}</td>
+        <td data-label="Vehicle">${escapeHtml(driver.vehicle || '')}</td>
+        <td data-label="Plate">${escapeHtml(driver.plate || '')}</td>
+        <td data-label="Status"><span class="badge">${escapeHtml(driver.status)}</span></td>
+        <td data-label="Active">${driver.active ? 'Yes' : 'No'}</td>
+        <td data-label="Actions">
+          <div class="actions">
+            <button class="secondary" onclick="resetPassword(${driver.id}, '${jsEscape(driver.name)}')">Reset Password</button>
+            ${driver.active
+              ? `<button class="danger" onclick="deactivateDriver(${driver.id}, '${jsEscape(driver.name)}')">Deactivate</button>`
+              : ''}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  async function resetPassword(id, driverName) {
+    const password = prompt(`Enter a new password for ${driverName} (minimum 6 characters):`);
+    if (password === null) return;
+
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters.');
       return;
     }
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.message||'Could not load drivers.');
-    document.getElementById('list').innerHTML=d.drivers.length
-      ? d.drivers.map(x=>`<div class="driver"><div><b>${esc(x.name)}</b><br>${esc(x.phone)} · ${esc(x.vehicle)} · ${esc(x.plate)}<br><span class="pill ${x.status==='Online'?'online':x.status==='Busy'?'busy':'off'}">${esc(x.status)}</span> <span class="pill">${x.active?'Active':'Inactive'}</span></div><button type="button" onclick="deactivate('${esc(x.id)}')">${x.active?'Deactivate':'Inactive'}</button></div>`).join('')
-      : 'No drivers yet.';
-  }catch(err){
-    document.getElementById('list').textContent=err.message||'Could not load drivers.';
-  }
-}
-async function deactivate(id){
-  if(!confirm('Deactivate this driver?')) return;
-  try{
-    const r=await fetch(API+'/api/admin/drivers/'+encodeURIComponent(id),{method:'DELETE',headers:headers()});
-    const d=await r.json();
-    if(!r.ok) return alert(d.message||'Could not deactivate driver.');
-    load();
-  }catch(err){ alert('Could not connect to the server.'); }
-}
-document.getElementById('form').addEventListener('submit',async e=>{
-  e.preventDefault();
-  setMessage('Adding driver...',true);
-  const body={
-    name:document.getElementById('driverName').value.trim(),
-    phone:document.getElementById('driverPhone').value.trim(),
-    vehicle:document.getElementById('driverVehicle').value.trim(),
-    plate:document.getElementById('driverPlate').value.trim(),
-    password:document.getElementById('driverPassword').value
-  };
-  try{
-    const r=await fetch(API+'/api/admin/drivers',{method:'POST',headers:headers(),body:JSON.stringify(body)});
-    const d=await r.json();
-    if(!r.ok){
-      setMessage(d.message||'Could not add driver.');
+
+    const confirmPassword = prompt('Enter the new password again to confirm:');
+    if (confirmPassword === null) return;
+
+    if (password !== confirmPassword) {
+      alert('Passwords do not match.');
       return;
     }
-    e.target.reset();
-    setMessage(d.message||'Driver added successfully.',true);
-    load();
-  }catch(err){
-    setMessage('Could not connect to the server. Please try again.');
+
+    const r = await api('/api/admin/drivers/' + id, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({password})
+    });
+
+    const d = await r.json();
+    if (!r.ok) {
+      alert(d.message || 'Password reset failed.');
+      return;
+    }
+
+    alert('Password reset successfully. The driver can now log in with the new password.');
   }
-});
-function esc(s){
-  return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-load();
+
+  async function deactivateDriver(id, driverName) {
+    if (!confirm(`Deactivate ${driverName}?`)) return;
+
+    const r = await api('/api/admin/drivers/' + id, {
+      method: 'PATCH',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({active:false})
+    });
+
+    const d = await r.json();
+    if (!r.ok) {
+      alert(d.message || 'Unable to deactivate driver.');
+      return;
+    }
+
+    loadDrivers().catch(e => showMsg($('msg'), e.message));
+  }
+
+  $('loginBtn').addEventListener('click', async () => {
+    const value = $('adminPassword').value.trim();
+    if (!value) {
+      showMsg($('loginMsg'), 'Enter the admin password.');
+      return;
+    }
+
+    adminPassword = value;
+    try {
+      await loadDrivers();
+      $('loginCard').classList.add('hidden');
+      $('app').classList.remove('hidden');
+    } catch (e) {
+      adminPassword = '';
+      showMsg($('loginMsg'), e.message);
+    }
+  });
+
+  $('addBtn').addEventListener('click', async () => {
+    const name = $('name').value.trim();
+    const phone = $('phone').value.trim();
+    const vehicle = $('vehicle').value.trim();
+    const plate = $('plate').value.trim();
+    const password = $('newPassword').value;
+
+    if (!name || !phone || !vehicle || !plate || !password) {
+      showMsg($('msg'), 'Please fill in all driver fields.');
+      return;
+    }
+    if (password.length < 6) {
+      showMsg($('msg'), 'Driver password must be at least 6 characters.');
+      return;
+    }
+
+    const r = await api('/api/admin/drivers', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name, phone, vehicle, plate, password})
+    });
+
+    const d = await r.json();
+    if (!r.ok) {
+      showMsg($('msg'), d.message || 'Unable to add driver.');
+      return;
+    }
+
+    showMsg($('msg'), 'Driver added successfully.', true);
+    $('name').value = '';
+    $('phone').value = '';
+    $('vehicle').value = '';
+    $('plate').value = '';
+    $('newPassword').value = '';
+    loadDrivers().catch(e => showMsg($('msg'), e.message));
+  });
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[ch]));
+  }
+
+  function jsEscape(value) {
+    return String(value ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  }
 </script>
 </body>
 </html>
