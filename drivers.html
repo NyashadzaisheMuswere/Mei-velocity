@@ -124,9 +124,9 @@
         <td data-label="Active">${driver.active ? 'Yes' : 'No'}</td>
         <td data-label="Actions">
           <div class="actions">
-            <button class="secondary" onclick="resetPassword(${driver.id}, '${jsEscape(driver.name)}')">Reset Password</button>
+            <button class="secondary reset-btn" data-id="${driver.id}" data-name="${escapeHtml(driver.name)}" type="button">Reset Password</button>
             ${driver.active
-              ? `<button class="danger" onclick="deactivateDriver(${driver.id}, '${jsEscape(driver.name)}')">Deactivate</button>`
+              ? `<button class="danger deactivate-btn" data-id="${driver.id}" data-name="${escapeHtml(driver.name)}" type="button">Deactivate</button>`
               : ''}
           </div>
         </td>
@@ -135,36 +135,57 @@
   }
 
   async function resetPassword(id, driverName) {
-    const password = prompt(`Enter a new password for ${driverName} (minimum 6 characters):`);
+    const password = window.prompt(`Enter a new password for ${driverName} (minimum 6 characters):`);
     if (password === null) return;
 
     if (password.length < 6) {
-      alert('Password must be at least 6 characters.');
+      window.alert('Password must be at least 6 characters.');
       return;
     }
 
-    const confirmPassword = prompt('Enter the new password again to confirm:');
+    const confirmPassword = window.prompt('Enter the new password again to confirm:');
     if (confirmPassword === null) return;
 
     if (password !== confirmPassword) {
-      alert('Passwords do not match.');
+      window.alert('Passwords do not match.');
       return;
     }
 
-    const r = await api('/api/admin/drivers/' + id, {
-      method: 'PATCH',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({password})
-    });
+    try {
+      window.alert('Saving the new password. Press OK to continue.');
+      const r = await api('/api/admin/drivers/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ password })
+      });
 
-    const d = await r.json();
-    if (!r.ok) {
-      alert(d.message || 'Password reset failed.');
-      return;
+      const raw = await r.text();
+      let d = {};
+      try { d = raw ? JSON.parse(raw) : {}; } catch {}
+
+      if (!r.ok) {
+        throw new Error(d.message || `Password reset failed (HTTP ${r.status}).`);
+      }
+
+      window.alert('Password reset successfully. Trevor/this driver can now log in using the new password.');
+    } catch (error) {
+      console.error('Password reset error:', error);
+      window.alert('Password reset failed: ' + (error.message || error));
     }
-
-    alert('Password reset successfully. The driver can now log in with the new password.');
   }
+
+  document.addEventListener('click', event => {
+    const resetBtn = event.target.closest('.reset-btn');
+    if (resetBtn) {
+      resetPassword(Number(resetBtn.dataset.id), resetBtn.dataset.name);
+      return;
+    }
+
+    const deactivateBtn = event.target.closest('.deactivate-btn');
+    if (deactivateBtn) {
+      deactivateDriver(Number(deactivateBtn.dataset.id), deactivateBtn.dataset.name);
+    }
+  });
 
   async function deactivateDriver(id, driverName) {
     if (!confirm(`Deactivate ${driverName}?`)) return;
@@ -243,10 +264,6 @@
     return String(value ?? '').replace(/[&<>"']/g, ch => ({
       '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
     }[ch]));
-  }
-
-  function jsEscape(value) {
-    return String(value ?? '').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   }
 </script>
 </body>
