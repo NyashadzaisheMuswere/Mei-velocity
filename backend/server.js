@@ -2,29 +2,42 @@ const express = require("express");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
+const { Pool } = require("pg");
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-const bookingsFile = path.join(__dirname, "bookings.json");
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-// Create bookings file if it doesn't exist
-if (!fs.existsSync(bookingsFile)) {
-  fs.writeFileSync(bookingsFile, "[]");
-}
+// Create database table
+async function initializeDatabase() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS bookings (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      pickup TEXT NOT NULL,
+      dropoff TEXT NOT NULL,
+      date TEXT NOT NULL,
+      time TEXT NOT NULL,
+      vehicle TEXT,
+      distance NUMERIC DEFAULT 0,
+      fare NUMERIC DEFAULT 0,
+      payment TEXT DEFAULT 'Cash',
+      status TEXT DEFAULT 'Pending',
+      "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `);
 
-function getBookings() {
-  return JSON.parse(fs.readFileSync(bookingsFile, "utf8"));
-}
-
-function saveBookings(bookings) {
-  fs.writeFileSync(
-    bookingsFile,
-    JSON.stringify(bookings, null, 2)
-  );
+  console.log("MEI Velocity database ready.");
 }
 
 // Test
@@ -43,7 +56,7 @@ app.get("/api/test", (req, res) => {
 });
 
 // Create booking
-app.post("/api/bookings", (req, res) => {
+app.post("/api/bookings", async (req, res) => {
   try {
     const {
       name,
@@ -65,8 +78,6 @@ app.post("/api/bookings", (req, res) => {
       });
     }
 
-    const bookings = getBookings();
-
     const booking = {
       id: `MEI-${Date.now()}`,
       name,
@@ -79,12 +90,31 @@ app.post("/api/bookings", (req, res) => {
       distance: Number(distance) || 0,
       fare: Number(fare) || 0,
       payment: payment || "Cash",
-      status: "Pending",
-      createdAt: new Date().toISOString()
+      status: "Pending"
     };
 
-    bookings.push(booking);
-    saveBookings(bookings);
+    await pool.query(
+      `
+      INSERT INTO bookings
+      (id, name, phone, pickup, dropoff, date, time, vehicle, distance, fare, payment, status)
+      VALUES
+      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `,
+      [
+        booking.id,
+        booking.name,
+        booking.phone,
+        booking.pickup,
+        booking.dropoff,
+        booking.date,
+        booking.time,
+        booking.vehicle,
+        booking.distance,
+        booking.fare,
+        booking.payment,
+        booking.status
+      ]
+    );
 
     res.status(201).json({
       success: true,
@@ -93,7 +123,7 @@ app.post("/api/bookings", (req, res) => {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error("Booking error:", error);
 
     res.status(500).json({
       success: false,
@@ -103,15 +133,34 @@ app.post("/api/bookings", (req, res) => {
 });
 
 // Get all bookings
-app.get("/api/bookings", (req, res) => {
-  const bookings = getBookings();
+app.get("/api/bookings", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM bookings ORDER BY "createdAt" DESC`
+    );
 
-  res.json({
-    success: true,
-    bookings
+    res.json({
+      success: true,
+      bookings: result.rows
+    });
+
+  } catch (error) {
+    console.error("Get bookings error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to retrieve bookings."
+    });
+  }
+});
+
+initializeDatabase()
+  .then(() => {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`MEI Velocity backend running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Database initialization failed:", error);
+    process.exit(1);
   });
-});
-
-app.listen(PORT, () => {
-  console.log(`MEI Velocity backend running on http://localhost:${PORT}`);
-});
