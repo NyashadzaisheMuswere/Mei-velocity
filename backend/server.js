@@ -1,7 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
 const { Pool } = require("pg");
 
 const app = express();
@@ -17,7 +15,26 @@ const pool = new Pool({
   }
 });
 
-// Create database table
+function adminAuth(req, res, next) {
+  const password = req.headers["x-admin-password"];
+
+  if (!process.env.ADMIN_PASSWORD) {
+    return res.status(500).json({
+      success: false,
+      message: "ADMIN_PASSWORD is not configured."
+    });
+  }
+
+  if (!password || password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized."
+    });
+  }
+
+  next();
+}
+
 async function initializeDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS bookings (
@@ -38,16 +55,14 @@ async function initializeDatabase() {
   `);
 
   console.log("MEI Velocity database ready.");
-}
+});
 
-// Test
 app.get("/", (req, res) => {
   res.json({
     message: "MEI Velocity backend is running"
   });
 });
 
-// Test API
 app.get("/api/test", (req, res) => {
   res.json({
     success: true,
@@ -55,7 +70,7 @@ app.get("/api/test", (req, res) => {
   });
 });
 
-// Create booking
+// CUSTOMER BOOKING
 app.post("/api/bookings", async (req, res) => {
   try {
     const {
@@ -132,8 +147,8 @@ app.post("/api/bookings", async (req, res) => {
   }
 });
 
-// Get all bookings
-app.get("/api/bookings", async (req, res) => {
+// ADMIN: GET BOOKINGS
+app.get("/api/bookings", adminAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT * FROM bookings ORDER BY "createdAt" DESC`
@@ -150,6 +165,57 @@ app.get("/api/bookings", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Unable to retrieve bookings."
+    });
+  }
+});
+
+// ADMIN: UPDATE BOOKING STATUS
+app.patch("/api/bookings/:id/status", adminAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const allowedStatuses = [
+      "Pending",
+      "Confirmed",
+      "Completed",
+      "Cancelled"
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid booking status."
+      });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE bookings
+      SET status = $1
+      WHERE id = $2
+      RETURNING *
+      `,
+      [status, req.params.id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found."
+      });
+    }
+
+    res.json({
+      success: true,
+      booking: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error("Status update error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to update booking."
     });
   }
 });
