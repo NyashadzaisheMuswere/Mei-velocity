@@ -1,16 +1,115 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MEI Velocity — Drivers</title>
-<style>body{font-family:Arial,sans-serif;background:#f4f5f7;margin:0;color:#111}header{background:#111;color:#fff;padding:18px 22px}main{max-width:1000px;margin:25px auto;padding:0 16px}.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 18px #00000012}input,select,button{padding:11px;border:1px solid #ccc;border-radius:8px;font:inherit}input,select{width:100%;box-sizing:border-box}button{cursor:pointer;background:#111;color:#fff;border:0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form{display:grid;gap:12px}.driver{border:1px solid #ddd;border-radius:10px;padding:14px;margin:10px 0;display:flex;justify-content:space-between;gap:12px;align-items:center}.pill{padding:5px 9px;border-radius:20px;background:#eee;font-size:12px}.online{background:#d9f7df}.busy{background:#fff0c2}.off{background:#eee}@media(max-width:650px){.grid{grid-template-columns:1fr}.driver{display:block}.driver button{margin-top:8px}}</style></head>
-<body><header><strong>MEI VELOCITY</strong> — Driver Management</header><main>
-<div class="card"><h2>Add Driver</h2><form id="form" class="form"><div class="grid"><input id="name" placeholder="Driver name" required><input id="phone" placeholder="Phone number" required><input id="vehicle" placeholder="Vehicle e.g. Toyota Spade" required><input id="plate" placeholder="Number plate" required><input id="password" type="password" minlength="6" placeholder="Temporary password (6+ chars)" required></div><button>Add Driver</button></form><p id="msg"></p></div>
-<div class="card"><h2>Drivers</h2><div id="list">Loading…</div></div></main>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MEI Velocity — Drivers</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f5f7;margin:0;color:#111}
+header{background:#111;color:#fff;padding:18px 22px}
+main{max-width:1000px;margin:25px auto;padding:0 16px}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 4px 18px #00000012}
+input,select,button{padding:11px;border:1px solid #ccc;border-radius:8px;font:inherit}
+input,select{width:100%;box-sizing:border-box}
+button{cursor:pointer;background:#111;color:#fff;border:0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.form{display:grid;gap:12px}
+.driver{border:1px solid #ddd;border-radius:10px;padding:14px;margin:10px 0;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.pill{padding:5px 9px;border-radius:20px;background:#eee;font-size:12px}
+.online{background:#d9f7df}.busy{background:#fff0c2}.off{background:#eee}
+.error{color:#b00020}.success{color:#087f23}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.driver{display:block}.driver button{margin-top:8px}}
+</style>
+</head>
+<body>
+<header><strong>MEI VELOCITY</strong> — Driver Management</header>
+<main>
+<div class="card">
+<h2>Add Driver</h2>
+<form id="form" class="form">
+<div class="grid">
+<input id="driverName" placeholder="Driver name" required>
+<input id="driverPhone" placeholder="Phone number" required>
+<input id="driverVehicle" placeholder="Vehicle e.g. Toyota Spade" required>
+<input id="driverPlate" placeholder="Number plate" required>
+<input id="driverPassword" type="password" minlength="6" placeholder="Temporary password (6+ chars)" required>
+</div>
+<button type="submit">Add Driver</button>
+</form>
+<p id="msg"></p>
+</div>
+<div class="card">
+<h2>Drivers</h2>
+<div id="list">Loading…</div>
+</div>
+</main>
 <script>
 const API='https://mei-velocity1.onrender.com';
 let adminPassword=sessionStorage.getItem('meiAdminPassword')||prompt('Enter MEI admin password');
 if(adminPassword)sessionStorage.setItem('meiAdminPassword',adminPassword);
-const headers=()=>({'Content-Type':'application/json','x-admin-password':adminPassword});
-async function load(){const r=await fetch(API+'/api/admin/drivers',{headers:headers()});if(r.status===401){sessionStorage.removeItem('meiAdminPassword');return alert('Invalid admin password. Refresh and try again.')}const d=await r.json();document.getElementById('list').innerHTML=d.drivers.length?d.drivers.map(x=>`<div class="driver"><div><b>${esc(x.name)}</b><br>${esc(x.phone)} · ${esc(x.vehicle)} · ${esc(x.plate)}<br><span class="pill ${x.status==='Online'?'online':x.status==='Busy'?'busy':'off'}">${x.status}</span> <span class="pill">${x.active?'Active':'Inactive'}</span></div><button onclick="deactivate('${x.id}')">${x.active?'Deactivate':'Inactive'}</button></div>`).join(''):'No drivers yet.'}
-async function deactivate(id){if(!confirm('Deactivate this driver?'))return;await fetch(API+'/api/admin/drivers/'+encodeURIComponent(id),{method:'DELETE',headers:headers()});load()}
-document.getElementById('form').onsubmit=async e=>{e.preventDefault();const body={name:name.value,phone:phone.value,vehicle:vehicle.value,plate:plate.value,password:password.value};const r=await fetch(API+'/api/admin/drivers',{method:'POST',headers:headers(),body:JSON.stringify(body)});const d=await r.json();msg.textContent=d.message||'Driver added.';if(r.ok){e.target.reset();load()}};
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}load();
-</script></body></html>
+
+function headers(){
+  return {'Content-Type':'application/json','x-admin-password':adminPassword||''};
+}
+function setMessage(text, ok=false){
+  const el=document.getElementById('msg');
+  el.textContent=text;
+  el.className=ok?'success':'error';
+}
+async function load(){
+  try{
+    const r=await fetch(API+'/api/admin/drivers',{headers:headers()});
+    if(r.status===401){
+      sessionStorage.removeItem('meiAdminPassword');
+      document.getElementById('list').textContent='Invalid admin password. Refresh and try again.';
+      return;
+    }
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.message||'Could not load drivers.');
+    document.getElementById('list').innerHTML=d.drivers.length
+      ? d.drivers.map(x=>`<div class="driver"><div><b>${esc(x.name)}</b><br>${esc(x.phone)} · ${esc(x.vehicle)} · ${esc(x.plate)}<br><span class="pill ${x.status==='Online'?'online':x.status==='Busy'?'busy':'off'}">${esc(x.status)}</span> <span class="pill">${x.active?'Active':'Inactive'}</span></div><button type="button" onclick="deactivate('${esc(x.id)}')">${x.active?'Deactivate':'Inactive'}</button></div>`).join('')
+      : 'No drivers yet.';
+  }catch(err){
+    document.getElementById('list').textContent=err.message||'Could not load drivers.';
+  }
+}
+async function deactivate(id){
+  if(!confirm('Deactivate this driver?')) return;
+  try{
+    const r=await fetch(API+'/api/admin/drivers/'+encodeURIComponent(id),{method:'DELETE',headers:headers()});
+    const d=await r.json();
+    if(!r.ok) return alert(d.message||'Could not deactivate driver.');
+    load();
+  }catch(err){ alert('Could not connect to the server.'); }
+}
+document.getElementById('form').addEventListener('submit',async e=>{
+  e.preventDefault();
+  setMessage('Adding driver...',true);
+  const body={
+    name:document.getElementById('driverName').value.trim(),
+    phone:document.getElementById('driverPhone').value.trim(),
+    vehicle:document.getElementById('driverVehicle').value.trim(),
+    plate:document.getElementById('driverPlate').value.trim(),
+    password:document.getElementById('driverPassword').value
+  };
+  try{
+    const r=await fetch(API+'/api/admin/drivers',{method:'POST',headers:headers(),body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok){
+      setMessage(d.message||'Could not add driver.');
+      return;
+    }
+    e.target.reset();
+    setMessage(d.message||'Driver added successfully.',true);
+    load();
+  }catch(err){
+    setMessage('Could not connect to the server. Please try again.');
+  }
+});
+function esc(s){
+  return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+load();
+</script>
+</body>
+</html>
