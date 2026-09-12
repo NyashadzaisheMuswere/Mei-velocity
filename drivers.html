@@ -124,9 +124,9 @@
         <td data-label="Active">${driver.active ? 'Yes' : 'No'}</td>
         <td data-label="Actions">
           <div class="actions">
-            <button class="secondary reset-btn" data-id="${driver.id}" data-name="${escapeHtml(driver.name)}" type="button">Reset Password</button>
+            <button class="secondary reset-btn" data-id="${escapeHtml(driver.id)}" data-name="${escapeHtml(driver.name)}" type="button">Reset Password</button>
             ${driver.active
-              ? `<button class="danger deactivate-btn" data-id="${driver.id}" data-name="${escapeHtml(driver.name)}" type="button">Deactivate</button>`
+              ? `<button class="danger deactivate-btn" data-id="${escapeHtml(driver.id)}" data-name="${escapeHtml(driver.name)}" type="button">Deactivate</button>`
               : ''}
           </div>
         </td>
@@ -177,13 +177,13 @@
   document.addEventListener('click', event => {
     const resetBtn = event.target.closest('.reset-btn');
     if (resetBtn) {
-      resetPassword(Number(resetBtn.dataset.id), resetBtn.dataset.name);
+      resetPassword(resetBtn.dataset.id, resetBtn.dataset.name);
       return;
     }
 
     const deactivateBtn = event.target.closest('.deactivate-btn');
     if (deactivateBtn) {
-      deactivateDriver(Number(deactivateBtn.dataset.id), deactivateBtn.dataset.name);
+      deactivateDriver(deactivateBtn.dataset.id, deactivateBtn.dataset.name);
     }
   });
 
