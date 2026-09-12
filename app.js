@@ -168,7 +168,7 @@ document.getElementById("bookBtn").onclick = async () => {
   try {
 
     const response = await fetch(
-      "https://mei-velocity.onrender.com/api/bookings",
+      "https://mei-velocity1.onrender.com/api/bookings",
       {
         method: "POST",
 
