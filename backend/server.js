@@ -226,7 +226,7 @@ app.get("/api/driver/offers", driverAuth, async (req, res) => {
         driver_offers.id,
         driver_offers."bookingId",
         driver_offers.status,
-        driver_offers."createdAt",
+        driver_offers."offeredAt",
         bookings.name,
         bookings.phone,
         bookings.pickup,
