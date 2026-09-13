@@ -243,7 +243,7 @@ app.get("/api/driver/offers", driverAuth, async (req, res) => {
       WHERE driver_offers."driverId" = $1
         AND driver_offers.status = 'Pending'
         AND bookings.status = 'Pending'
-      ORDER BY driver_offers."createdAt" DESC
+      ORDER BY driver_offers."offeredAt" DESC
     `, [req.driverId]);
 
     res.json({
