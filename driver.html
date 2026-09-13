@@ -35,6 +35,7 @@
     </div>
 
     <div id="app" class="hidden">
+<div id="offersList"></div>
       <div class="card">
         <h1 id="driverName">Driver</h1>
         <p id="vehicle"></p>
@@ -59,12 +60,126 @@
   </div>
 
   <script>
+
     const API = 'https://mei-velocity1.onrender.com';
 
     const loginCard = document.getElementById('loginCard');
     const app = document.getElementById('app');
     const phoneInput = document.getElementById('phone');
-    const passwordInput = document.getElementById('password');
+    const passwordInput = document.getElementById('password');const offersList = document.getElementById('offersList');
+
+async function loadOffers() {
+  const token = localStorage.getItem('driverToken');
+
+  if (!token) return;
+
+  try {
+    const response = await fetch(`${API}/api/driver/offers`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!data.success) return;
+
+    if (!offersList) return;
+
+    if (!data.offers.length) {
+      offersList.innerHTML = '<p>No ride offers right now.</p>';
+      return;
+    }
+
+    offersList.innerHTML = data.offers.map(offer => `
+      <div class="ride-offer">
+        <h3>New Ride</h3>
+
+        <p><strong>Customer:</strong> ${offer.name}</p>
+        <p><strong>Phone:</strong> ${offer.phone}</p>
+        <p><strong>Pickup:</strong> ${offer.pickup}</p>
+        <p><strong>Dropoff:</strong> ${offer.dropoff}</p>
+        <p><strong>Date:</strong> ${offer.date}</p>
+        <p><strong>Time:</strong> ${offer.time}</p>
+        <p><strong>Vehicle:</strong> ${offer.vehicle}</p>
+        <p><strong>Distance:</strong> ${offer.distance} km</p>
+        <p><strong>Fare:</strong> $${offer.fare}</p>
+        <p><strong>Payment:</strong> ${offer.payment}</p>
+
+        <div class="offer-buttons">
+          <button onclick="acceptOffer('${offer.id}')">
+            Accept Ride
+          </button>
+
+          <button onclick="rejectOffer('${offer.id}')">
+            Reject
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (error) {
+    console.error('Unable to load ride offers:', error);
+  }
+}
+
+async function acceptOffer(offerId) {
+  try {
+    const token = localStorage.getItem('driverToken');
+
+    const response = await fetch(
+      `${API}/api/driver/offers/${offerId}/accept`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    alert(data.message);
+
+    if (data.success) {
+      loadOffers();
+    }
+
+  } catch (error) {
+    console.error('Accept offer error:', error);
+    alert('Unable to accept ride.');
+  }
+}
+
+async function rejectOffer(offerId) {
+  try {
+    const token = localStorage.getItem('driverToken');
+
+    const response = await fetch(
+      `${API}/api/driver/offers/${offerId}/reject`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+      loadOffers();
+    } else {
+      alert(data.message);
+    }
+
+  } catch (error) {
+    console.error('Reject offer error:', error);
+    alert('Unable to reject ride.');
+  }
+}
+
+setInterval(loadOffers, 4000);
     const loginBtn = document.getElementById('loginBtn');
     const loginMsg = document.getElementById('loginMsg');
     const driverName = document.getElementById('driverName');

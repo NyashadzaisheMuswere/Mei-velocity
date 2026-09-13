@@ -115,6 +115,42 @@ async function initializeDatabase() {
       status TEXT DEFAULT 'Pending',
       "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
+  `);  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS "assignedDriverId" TEXT
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS "assignedDriverName" TEXT
+  `);
+
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS "assignedAt" TIMESTAMP WITH TIME ZONE
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS driver_offers (
+      id BIGSERIAL PRIMARY KEY,
+      "bookingId" TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+      "driverId" TEXT NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'Pending',
+      "offeredAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+      "respondedAt" TIMESTAMP WITH TIME ZONE,
+      UNIQUE ("bookingId", "driverId")
+    )
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_driver_offers_driver_status
+    ON driver_offers ("driverId", status)
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_driver_offers_booking_status
+    ON driver_offers ("bookingId", status)
   `);
 
   await pool.query(`
@@ -138,7 +174,292 @@ async function initializeDatabase() {
 
 app.get("/", (req, res) => res.json({ message: "MEI Velocity backend is running" }));
 app.get("/api/test", (req, res) => res.json({ success: true, message: "MEI Velocity API is working" }));
+// DISPATCH ENGINE
+async function expireOldOffers() {
+  await pool.query(`
+    UPDATE driver_offers
+    SET status='Expired', "respondedAt"=NOW()
+    WHERE status='Pending' AND "expiresAt" <= NOW()
+  `);
+}
 
+async function dispatchBooking(bookingId) {
+  await expireOldOffers();
+
+  const drivers = await pool.query(`
+    SELECT id
+    FROM drivers
+    WHERE active=true AND status='Online'
+  `);
+
+  let created = 0;
+
+  for (const driver of drivers.rows) {
+    const result = await pool.query(`
+      INSERT INTO driver_offers
+      ("bookingId","driverId",status,"expiresAt")
+      VALUES ($1,$2,'Pending',NOW()+INTERVAL '30 seconds')
+      ON CONFLICT ("bookingId","driverId")
+      DO UPDATE SET
+        status='Pending',
+        "offeredAt"=NOW(),
+        "expiresAt"=NOW()+INTERVAL '30 seconds',
+        "respondedAt"=NULL
+      WHERE driver_offers.status='Expired'
+      RETURNING id
+    `, [bookingId, driver.id]);
+
+    if (result.rows.length) {
+      created++;
+    }
+  }
+
+  return created;
+}// DRIVER OFFER ROUTES
+
+app.get("/api/driver/offers", driverAuth, async (req, res) => {
+  try {
+    await expireOldOffers();
+
+    const result = await pool.query(`
+      SELECT
+        driver_offers.id,
+        driver_offers."bookingId",
+        driver_offers.status,
+        driver_offers."createdAt",
+        bookings.name,
+        bookings.phone,
+        bookings.pickup,
+        bookings.dropoff,
+        bookings.date,
+        bookings.time,
+        bookings.vehicle,
+        bookings.distance,
+        bookings.fare,
+        bookings.payment
+      FROM driver_offers
+      JOIN bookings
+        ON bookings.id = driver_offers."bookingId"
+      WHERE driver_offers."driverId" = $1
+        AND driver_offers.status = 'Pending'
+        AND bookings.status = 'Pending'
+      ORDER BY driver_offers."createdAt" DESC
+    `, [req.driverId]);
+
+    res.json({
+      success: true,
+      offers: result.rows
+    });
+
+  } catch (error) {
+    console.error("Driver offers error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to load driver offers."
+    });
+  }
+});
+
+
+app.post("/api/driver/offers/:id/reject", driverAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      UPDATE driver_offers
+      SET status = 'Rejected'
+      WHERE id = $1
+        AND "driverId" = $2
+        AND status = 'Pending'
+      RETURNING *
+    `, [req.params.id, req.driverId]);
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Offer is no longer available."
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Ride offer rejected."
+    });
+
+  } catch (error) {
+    console.error("Reject offer error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to reject offer."
+    });
+  }
+});
+
+
+app.post("/api/driver/offers/:id/accept", driverAuth, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    await client.query(`
+      UPDATE driver_offers
+      SET status = 'Expired'
+      WHERE status = 'Pending'
+        AND "expiresAt" < NOW()
+    `);
+
+    const offerResult = await client.query(`
+      SELECT *
+      FROM driver_offers
+      WHERE id = $1
+        AND "driverId" = $2
+      FOR UPDATE
+    `, [req.params.id, req.driverId]);
+
+    if (!offerResult.rows.length) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        success: false,
+        message: "Ride offer not found."
+      });
+    }
+
+    const offer = offerResult.rows[0];
+
+    if (offer.status !== "Pending") {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        success: false,
+        message: "This ride is no longer available."
+      });
+    }
+
+    const bookingResult = await client.query(`
+      SELECT *
+      FROM bookings
+      WHERE id = $1
+      FOR UPDATE
+    `, [offer.bookingId]);
+
+    if (!bookingResult.rows.length) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found."
+      });
+    }
+
+    const booking = bookingResult.rows[0];
+
+    if (
+      booking.status !== "Pending" ||
+      booking.assignedDriverId
+    ) {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        success: false,
+        message: "This ride has already been assigned."
+      });
+    }
+
+    const driverResult = await client.query(`
+      SELECT *
+      FROM drivers
+      WHERE id = $1
+        AND active = true
+      FOR UPDATE
+    `, [req.driverId]);
+
+    if (!driverResult.rows.length) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        success: false,
+        message: "Driver account not found."
+      });
+    }
+
+    const driver = driverResult.rows[0];
+
+    if (driver.status !== "Online") {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        success: false,
+        message: "You must be Online to accept a ride."
+      });
+    }
+
+    const assignedAt = new Date();
+
+    await client.query(`
+      UPDATE bookings
+      SET
+        status = 'Confirmed',
+        "assignedDriverId" = $1,
+        "assignedDriverName" = $2,
+        "assignedAt" = $3
+      WHERE id = $4
+    `, [
+      driver.id,
+      driver.name,
+      assignedAt,
+      booking.id
+    ]);
+
+    await client.query(`
+      UPDATE drivers
+      SET status = 'Busy'
+      WHERE id = $1
+    `, [driver.id]);
+
+    await client.query(`
+      UPDATE driver_offers
+      SET status = 'Accepted'
+      WHERE id = $1
+    `, [offer.id]);
+
+    await client.query(`
+      UPDATE driver_offers
+      SET status = 'Expired'
+      WHERE "bookingId" = $1
+        AND id <> $2
+        AND status = 'Pending'
+    `, [booking.id, offer.id]);
+
+    await client.query("COMMIT");
+
+    res.json({
+      success: true,
+      message: "Ride accepted successfully.",
+      booking: {
+        ...booking,
+        status: "Confirmed",
+        assignedDriverId: driver.id,
+        assignedDriverName: driver.name,
+        assignedAt
+      }
+    });
+
+  } catch (error) {
+    await client.query("ROLLBACK");
+
+    console.error("Accept offer error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to accept ride."
+    });
+
+  } finally {
+    client.release();
+  }
+});
 // CUSTOMER BOOKING
 app.post("/api/bookings", async (req, res) => {
   try {
@@ -154,20 +475,42 @@ app.post("/api/bookings", async (req, res) => {
       fare: Number(fare) || 0,
       payment: payment || "Cash",
       status: "Pending"
-    };
-    await pool.query(`
-      INSERT INTO bookings
-      (id, name, phone, pickup, dropoff, date, time, vehicle, distance, fare, payment, status)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-    `, [booking.id, booking.name, booking.phone, booking.pickup, booking.dropoff, booking.date, booking.time,
-        booking.vehicle, booking.distance, booking.fare, booking.payment, booking.status]);
-    res.status(201).json({ success: true, message: "Ride booked successfully.", booking });
-  } catch (error) {
-    console.error("Booking error:", error);
-    res.status(500).json({ success: false, message: "Unable to create booking." });
-  }
+    };await pool.query(`
+  INSERT INTO bookings
+  (id, name, phone, pickup, dropoff, date, time, vehicle, distance, fare, payment, status)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+`, [
+  booking.id,
+  booking.name,
+  booking.phone,
+  booking.pickup,
+  booking.dropoff,
+  booking.date,
+  booking.time,
+  booking.vehicle,
+  booking.distance,
+  booking.fare,
+  booking.payment,
+  booking.status
+]);
+
+const offeredTo = await dispatchBooking(booking.id);
+
+res.status(201).json({
+  success: true,
+  message: "Ride booked successfully.",
+  booking,
+  offeredTo
 });
 
+} catch (error) {
+  console.error("Booking error:", error);
+  res.status(500).json({
+    success: false,
+    message: "Unable to create booking."
+  });
+}
+});
 // ADMIN: BOOKINGS
 app.get("/api/bookings", adminAuth, async (req, res) => {
   try {
