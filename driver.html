@@ -69,7 +69,7 @@
     const passwordInput = document.getElementById('password');const offersList = document.getElementById('offersList');
 
 async function loadOffers() {
-  const token = localStorage.getItem('driverToken');
+  const token = localStorage.getItem('meiDriverToken');
 
   if (!token) return;
 
@@ -125,7 +125,7 @@ async function loadOffers() {
 
 async function acceptOffer(offerId) {
   try {
-    const token = localStorage.getItem('driverToken');
+    const token = localStorage.getItem('meiDriverToken');
 
     const response = await fetch(
       `${API}/api/driver/offers/${offerId}/accept`,
@@ -153,7 +153,7 @@ async function acceptOffer(offerId) {
 
 async function rejectOffer(offerId) {
   try {
-    const token = localStorage.getItem('driverToken');
+    const token = localStorage.getItem('meiDriverToken');
 
     const response = await fetch(
       `${API}/api/driver/offers/${offerId}/reject`,
