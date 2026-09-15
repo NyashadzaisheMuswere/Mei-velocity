@@ -131,6 +131,11 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS "driverStatus" TEXT DEFAULT 'Accepted'
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS driver_offers (
       id BIGSERIAL PRIMARY KEY,
       "bookingId" TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
@@ -403,7 +408,8 @@ app.post("/api/driver/offers/:id/accept", driverAuth, async (req, res) => {
         status = 'Confirmed',
         "assignedDriverId" = $1,
         "assignedDriverName" = $2,
-        "assignedAt" = $3
+        "assignedAt" = $3,
+        "driverStatus" = 'Accepted'
       WHERE id = $4
     `, [
       driver.id,
@@ -460,6 +466,118 @@ app.post("/api/driver/offers/:id/accept", driverAuth, async (req, res) => {
     client.release();
   }
 });
+// DRIVER CURRENT RIDE
+const DRIVER_RIDE_STATUSES = ["Accepted", "On the Way", "Arrived", "Picked Up", "Completed"];
+
+app.get("/api/driver/current-ride", driverAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT *
+      FROM bookings
+      WHERE "assignedDriverId" = $1
+        AND status = 'Confirmed'
+        AND "driverStatus" IN ('Accepted','On the Way','Arrived','Picked Up')
+      ORDER BY "assignedAt" DESC NULLS LAST, "createdAt" DESC
+      LIMIT 1
+    `, [req.driverId]);
+
+    res.json({
+      success: true,
+      ride: result.rows[0] || null
+    });
+  } catch (error) {
+    console.error("Current ride error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Unable to load current ride."
+    });
+  }
+});
+
+app.patch("/api/driver/current-ride/status", driverAuth, async (req, res) => {
+  const { status } = req.body;
+
+  if (!DRIVER_RIDE_STATUSES.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid ride status."
+    });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const rideResult = await client.query(`
+      SELECT *
+      FROM bookings
+      WHERE "assignedDriverId" = $1
+        AND status = 'Confirmed'
+        AND "driverStatus" IN ('Accepted','On the Way','Arrived','Picked Up')
+      ORDER BY "assignedAt" DESC NULLS LAST, "createdAt" DESC
+      LIMIT 1
+      FOR UPDATE
+    `, [req.driverId]);
+
+    if (!rideResult.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        success: false,
+        message: "No current ride found."
+      });
+    }
+
+    const ride = rideResult.rows[0];
+    const currentIndex = DRIVER_RIDE_STATUSES.indexOf(ride.driverStatus);
+    const nextIndex = DRIVER_RIDE_STATUSES.indexOf(status);
+
+    if (nextIndex !== currentIndex + 1) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: `Next ride status must be "${DRIVER_RIDE_STATUSES[currentIndex + 1]}".`
+      });
+    }
+
+    const completed = status === "Completed";
+
+    const updated = await client.query(`
+      UPDATE bookings
+      SET
+        "driverStatus" = $1,
+        status = CASE WHEN $2 THEN 'Completed' ELSE status END
+      WHERE id = $3
+      RETURNING *
+    `, [status, completed, ride.id]);
+
+    if (completed) {
+      await client.query(`
+        UPDATE drivers
+        SET status = 'Online'
+        WHERE id = $1
+      `, [req.driverId]);
+    }
+
+    await client.query("COMMIT");
+
+    res.json({
+      success: true,
+      message: completed ? "Ride completed successfully." : "Ride status updated.",
+      ride: updated.rows[0]
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Current ride status error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Unable to update ride status."
+    });
+  } finally {
+    client.release();
+  }
+});
+
 // CUSTOMER BOOKING
 app.post("/api/bookings", async (req, res) => {
   try {

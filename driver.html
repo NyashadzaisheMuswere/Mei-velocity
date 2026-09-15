@@ -35,7 +35,6 @@
     </div>
 
     <div id="app" class="hidden">
-<div id="offersList"></div>
       <div class="card">
         <h1 id="driverName">Driver</h1>
         <p id="vehicle"></p>
@@ -52,9 +51,13 @@
       </div>
 
       <div class="card">
+        <h2>Current Ride</h2>
+        <div id="currentRide"><p>No active ride.</p></div>
+      </div>
+
+      <div class="card">
         <h2>Ride offers</h2>
-        <p>No ride offers yet.</p>
-        <p>Automatic dispatch will appear here in the next step.</p>
+        <div id="offersList"><p>No ride offers right now.</p></div>
       </div>
     </div>
   </div>
@@ -66,25 +69,101 @@
     const loginCard = document.getElementById('loginCard');
     const app = document.getElementById('app');
     const phoneInput = document.getElementById('phone');
-    const passwordInput = document.getElementById('password');const offersList = document.getElementById('offersList');
+    const passwordInput = document.getElementById('password');
+    const offersList = document.getElementById('offersList');
+    const currentRide = document.getElementById('currentRide');
 
-async function loadOffers() {
-  const token = localStorage.getItem('meiDriverToken');
-
-  if (!token) return;
+async function loadCurrentRide() {
+  const activeToken = localStorage.getItem('meiDriverToken');
+  if (!activeToken || !currentRide) return;
 
   try {
-    const response = await fetch(`${API}/api/driver/offers`, {
+    const response = await fetch(`${API}/api/driver/current-ride`, {
+      headers: { Authorization: `Bearer ${activeToken}` }
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      currentRide.innerHTML = '<p>Unable to load current ride.</p>';
+      return;
+    }
+
+    if (!data.ride) {
+      currentRide.innerHTML = '<p>No active ride.</p>';
+      return;
+    }
+
+    const ride = data.ride;
+    const nextAction = {
+      'Accepted': 'On the Way',
+      'On the Way': 'Arrived',
+      'Arrived': 'Picked Up',
+      'Picked Up': 'Completed'
+    }[ride.driverStatus];
+
+    currentRide.innerHTML = `
+      <div class="ride-offer">
+        <h3>Active Ride</h3>
+        <p><strong>Customer:</strong> ${ride.name}</p>
+        <p><strong>Phone:</strong> ${ride.phone}</p>
+        <p><strong>Pickup:</strong> ${ride.pickup}</p>
+        <p><strong>Dropoff:</strong> ${ride.dropoff}</p>
+        <p><strong>Date:</strong> ${ride.date}</p>
+        <p><strong>Time:</strong> ${ride.time}</p>
+        <p><strong>Vehicle:</strong> ${ride.vehicle}</p>
+        <p><strong>Distance:</strong> ${ride.distance} km</p>
+        <p><strong>Fare:</strong> $${ride.fare}</p>
+        <p><strong>Payment:</strong> ${ride.payment}</p>
+        <p><strong>Ride status:</strong> <span class="status">${ride.driverStatus}</span></p>
+        ${nextAction ? `<button onclick="updateRideStatus('${nextAction}')">${nextAction}</button>` : ''}
+      </div>
+    `;
+  } catch (error) {
+    console.error('Unable to load current ride:', error);
+  }
+}
+
+async function updateRideStatus(newStatus) {
+  const activeToken = localStorage.getItem('meiDriverToken');
+  if (!activeToken) return;
+
+  try {
+    const response = await fetch(`${API}/api/driver/current-ride/status`, {
+      method: 'PATCH',
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${activeToken}`
+      },
+      body: JSON.stringify({ status: newStatus })
     });
 
     const data = await response.json();
 
-    if (!data.success) return;
+    if (!response.ok || !data.success) {
+      alert(data.message || 'Unable to update ride status.');
+      return;
+    }
 
-    if (!offersList) return;
+    await me();
+    await loadCurrentRide();
+    await loadOffers();
+  } catch (error) {
+    console.error('Ride status update error:', error);
+    alert('Unable to update ride status.');
+  }
+}
+
+async function loadOffers() {
+  const activeToken = localStorage.getItem('meiDriverToken');
+  if (!activeToken) return;
+
+  try {
+    const response = await fetch(`${API}/api/driver/offers`, {
+      headers: { Authorization: `Bearer ${activeToken}` }
+    });
+    const data = await response.json();
+
+    if (!data.success || !offersList) return;
 
     if (!data.offers.length) {
       offersList.innerHTML = '<p>No ride offers right now.</p>';
@@ -94,7 +173,6 @@ async function loadOffers() {
     offersList.innerHTML = data.offers.map(offer => `
       <div class="ride-offer">
         <h3>New Ride</h3>
-
         <p><strong>Customer:</strong> ${offer.name}</p>
         <p><strong>Phone:</strong> ${offer.phone}</p>
         <p><strong>Pickup:</strong> ${offer.pickup}</p>
@@ -105,19 +183,12 @@ async function loadOffers() {
         <p><strong>Distance:</strong> ${offer.distance} km</p>
         <p><strong>Fare:</strong> $${offer.fare}</p>
         <p><strong>Payment:</strong> ${offer.payment}</p>
-
         <div class="offer-buttons">
-          <button onclick="acceptOffer('${offer.id}')">
-            Accept Ride
-          </button>
-
-          <button onclick="rejectOffer('${offer.id}')">
-            Reject
-          </button>
+          <button onclick="acceptOffer('${offer.id}')">Accept Ride</button>
+          <button onclick="rejectOffer('${offer.id}')">Reject</button>
         </div>
       </div>
     `).join('');
-
   } catch (error) {
     console.error('Unable to load ride offers:', error);
   }
@@ -125,26 +196,20 @@ async function loadOffers() {
 
 async function acceptOffer(offerId) {
   try {
-    const token = localStorage.getItem('meiDriverToken');
-
-    const response = await fetch(
-      `${API}/api/driver/offers/${offerId}/accept`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+    const activeToken = localStorage.getItem('meiDriverToken');
+    const response = await fetch(`${API}/api/driver/offers/${offerId}/accept`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${activeToken}` }
+    });
 
     const data = await response.json();
-
     alert(data.message);
 
     if (data.success) {
-      loadOffers();
+      await me();
+      await loadCurrentRide();
+      await loadOffers();
     }
-
   } catch (error) {
     console.error('Accept offer error:', error);
     alert('Unable to accept ride.');
@@ -153,33 +218,30 @@ async function acceptOffer(offerId) {
 
 async function rejectOffer(offerId) {
   try {
-    const token = localStorage.getItem('meiDriverToken');
-
-    const response = await fetch(
-      `${API}/api/driver/offers/${offerId}/reject`,
-      {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+    const activeToken = localStorage.getItem('meiDriverToken');
+    const response = await fetch(`${API}/api/driver/offers/${offerId}/reject`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${activeToken}` }
+    });
 
     const data = await response.json();
 
     if (data.success) {
-      loadOffers();
+      await loadOffers();
     } else {
       alert(data.message);
     }
-
   } catch (error) {
     console.error('Reject offer error:', error);
     alert('Unable to reject ride.');
   }
 }
 
-setInterval(loadOffers, 4000);
+setInterval(() => {
+  loadCurrentRide();
+  loadOffers();
+}, 4000);
+
     const loginBtn = document.getElementById('loginBtn');
     const loginMsg = document.getElementById('loginMsg');
     const driverName = document.getElementById('driverName');
@@ -268,6 +330,8 @@ setInterval(loadOffers, 4000);
       vehicle.textContent = (driver.vehicle || '') + (driver.plate ? ' · ' + driver.plate : '');
       status.textContent = driver.status || 'Offline';
       setAppMessage('', true);
+      loadCurrentRide();
+      loadOffers();
     }
 
     async function setStatus(newStatus) {
