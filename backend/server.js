@@ -629,6 +629,50 @@ res.status(201).json({
   });
 }
 });
+
+// CUSTOMER: RIDE STATUS
+// Requires both booking ID and the phone number used for the booking.
+app.get("/api/bookings/:id/status", async (req, res) => {
+  try {
+    const bookingId = String(req.params.id || "").trim();
+    const phone = String(req.query.phone || "").trim();
+
+    if (!bookingId || !phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Booking number and phone number are required."
+      });
+    }
+
+    const result = await pool.query(`
+      SELECT
+        b.*,
+        d.name AS "driverName",
+        d.vehicle AS "driverVehicle",
+        d.plate AS "driverPlate"
+      FROM bookings b
+      LEFT JOIN drivers d ON d.id = b."assignedDriverId"
+      WHERE b.id = $1 AND b.phone = $2
+      LIMIT 1
+    `, [bookingId, phone]);
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found."
+      });
+    }
+
+    res.json({ success: true, booking: result.rows[0] });
+  } catch (error) {
+    console.error("Customer ride status error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Unable to retrieve ride status."
+    });
+  }
+});
+
 // ADMIN: BOOKINGS
 app.get("/api/bookings", adminAuth, async (req, res) => {
   try {

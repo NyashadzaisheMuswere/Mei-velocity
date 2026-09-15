@@ -6,6 +6,27 @@
 <title>MEI Velocity | Harare Taxi & Transport</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+.ride-tracker{margin-top:18px;padding:20px;border:1px solid rgba(255,255,255,.16);border-radius:14px;background:rgba(0,0,0,.28);text-align:left}
+.ride-tracker-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.ride-tracker-head small,.driver-card small{display:block;opacity:.7;font-size:.72rem;letter-spacing:.08em}
+.ride-tracker-head h3{margin:4px 0 0;font-size:1.1rem}
+.ride-booking-id{font-size:.78rem;opacity:.75}
+.ride-steps{display:flex;align-items:flex-start;margin:22px 0 18px;overflow-x:auto;padding-bottom:4px}
+.ride-step{min-width:76px;text-align:center;opacity:.45}
+.ride-step span{display:flex;width:30px;height:30px;margin:0 auto 7px;border-radius:50%;align-items:center;justify-content:center;border:1px solid currentColor;font-weight:700}
+.ride-step b{font-size:.68rem;line-height:1.15;display:block}
+.ride-step.active,.ride-step.current{opacity:1}
+.ride-step.current span{box-shadow:0 0 0 4px rgba(255,255,255,.08)}
+.ride-line{height:1px;background:rgba(255,255,255,.2);min-width:22px;margin-top:15px}
+.driver-card{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:14px;border-radius:10px;background:rgba(255,255,255,.07)}
+.driver-card strong{display:block;margin-top:4px}
+.ride-tracker-message{margin:14px 0 4px}
+.ride-tracker-updated{opacity:.55}
+@media(max-width:650px){.ride-tracker{padding:15px}.ride-step{min-width:68px}.driver-card{grid-template-columns:1fr}}
+</style>
+
 </head>
 <body>
 <header class="nav">
@@ -136,6 +157,39 @@
   <p id="status">Enter your details and locations.</p>
 
   <div id="success" class="success"></div>
+
+  <div id="rideTracker" class="ride-tracker" style="display:none;">
+    <div class="ride-tracker-head">
+      <div>
+        <small>YOUR RIDE</small>
+        <h3 id="rideTrackerTitle">Booking Received</h3>
+      </div>
+      <span id="rideBookingId" class="ride-booking-id"></span>
+    </div>
+
+    <div class="ride-steps" aria-label="Ride progress">
+      <div class="ride-step" data-step="received"><span>1</span><b>Booking<br>Received</b></div>
+      <div class="ride-line"></div>
+      <div class="ride-step" data-step="assigned"><span>2</span><b>Driver<br>Assigned</b></div>
+      <div class="ride-line"></div>
+      <div class="ride-step" data-step="onway"><span>3</span><b>Driver<br>On the Way</b></div>
+      <div class="ride-line"></div>
+      <div class="ride-step" data-step="arrived"><span>4</span><b>Driver<br>Arrived</b></div>
+      <div class="ride-line"></div>
+      <div class="ride-step" data-step="pickedup"><span>5</span><b>Ride<br>Started</b></div>
+      <div class="ride-line"></div>
+      <div class="ride-step" data-step="completed"><span>6</span><b>Ride<br>Completed</b></div>
+    </div>
+
+    <div id="driverCard" class="driver-card" style="display:none;">
+      <div><small>YOUR DRIVER</small><strong id="driverName">—</strong></div>
+      <div><small>VEHICLE</small><strong id="driverVehicle">—</strong></div>
+      <div><small>PLATE</small><strong id="driverPlate">—</strong></div>
+    </div>
+
+    <p id="rideTrackerMessage" class="ride-tracker-message">We are looking for an available driver.</p>
+    <small id="rideTrackerUpdated" class="ride-tracker-updated"></small>
+  </div>
 
 </div>
 
