@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -327,7 +327,7 @@ setInterval(() => {
       app.classList.remove('hidden');
 
       driverName.textContent = driver.name || 'Driver';
-      vehicle.textContent = (driver.vehicle || '') + (driver.plate ? ' · ' + driver.plate : '');
+      vehicle.textContent = (driver.vehicle || '') + (driver.plate ? ' Â· ' + driver.plate : '');
       status.textContent = driver.status || 'Offline';
       setAppMessage('', true);
       loadCurrentRide();
@@ -384,7 +384,77 @@ setInterval(() => {
       if (event.key === 'Enter') passwordInput.focus();
     });
 
-    me();
+    let gpsWatchId = null;
+  let lastGpsSentAt = 0;
+
+  async function sendDriverLocation(position) {
+    const activeToken = localStorage.getItem('meiDriverToken');
+    if (!activeToken) return;
+
+    const now = Date.now();
+    if (now - lastGpsSentAt < 5000) return;
+
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+
+    try {
+      const response = await fetch(`${API}/api/driver/location`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${activeToken}`
+        },
+        body: JSON.stringify({ lat, lng })
+      });
+
+      if (response.ok) {
+        lastGpsSentAt = now;
+      }
+    } catch (error) {
+      console.error('Unable to send GPS location:', error);
+    }
+  }
+
+  function startGpsTracking() {
+    if (gpsWatchId !== null || !navigator.geolocation) return;
+
+    gpsWatchId = navigator.geolocation.watchPosition(
+      sendDriverLocation,
+      error => console.error('GPS error:', error),
+      {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 10000
+      }
+    );
+  }
+
+  function stopGpsTracking() {
+    if (gpsWatchId !== null) {
+      navigator.geolocation.clearWatch(gpsWatchId);
+      gpsWatchId = null;
+    }
+  }
+
+  const originalLoadCurrentRide = loadCurrentRide;
+  loadCurrentRide = async function() {
+    await originalLoadCurrentRide();
+
+    const activeToken = localStorage.getItem('meiDriverToken');
+    if (!activeToken) {
+      stopGpsTracking();
+      return;
+    }
+
+    const rideText = currentRide ? currentRide.textContent : '';
+    if (rideText.includes('Active Ride')) {
+      startGpsTracking();
+    } else {
+      stopGpsTracking();
+    }
+  };
+  me();
   </script>
 </body>
 </html>
+

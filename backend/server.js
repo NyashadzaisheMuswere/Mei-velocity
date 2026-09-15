@@ -118,6 +118,13 @@ async function initializeDatabase() {
   `);  await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "assignedDriverId" TEXT
+  );  await pool.query(
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS "driverLat" NUMERIC,
+    ADD COLUMN IF NOT EXISTS "driverLng" NUMERIC,
+    ADD COLUMN IF NOT EXISTS "driverLocationUpdatedAt" TIMESTAMP WITH TIME ZONE
+  );  await pool.query(
+
   `);
 
   await pool.query(`
@@ -578,6 +585,51 @@ app.patch("/api/driver/current-ride/status", driverAuth, async (req, res) => {
   }
 });
 
+
+app.patch("/api/driver/location", driverAuth, async (req, res) => {
+  const lat = Number(req.body.lat);
+  const lng = Number(req.body.lng);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid GPS coordinates."
+    });
+  }
+
+  try {
+    const result = await pool.query(`
+      UPDATE bookings
+      SET
+        "driverLat" = $1,
+        "driverLng" = $2,
+        "driverLocationUpdatedAt" = NOW()
+      WHERE "assignedDriverId" = $3
+        AND status = 'Confirmed'
+        AND "driverStatus" IN ('Accepted','On the Way','Arrived','Picked Up')
+      RETURNING id, "driverLat", "driverLng", "driverLocationUpdatedAt"
+    `, [lat, lng, req.driverId]);
+
+    if (!result.rows.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No active ride found."
+      });
+    }
+
+    res.json({
+      success: true,
+      location: result.rows[0]
+    });
+  } catch (error) {
+    console.error("Driver location error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Unable to update driver location."
+    });
+  }
+});
+
 // CUSTOMER BOOKING
 app.post("/api/bookings", async (req, res) => {
   try {
@@ -805,3 +857,5 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
 initializeDatabase()
   .then(() => app.listen(PORT, "0.0.0.0", () => console.log(`MEI Velocity backend running on port ${PORT}`)))
   .catch((error) => { console.error("Database initialization failed:", error); process.exit(1); });
+
+
