@@ -203,12 +203,12 @@ async function dispatchBooking(bookingId) {
     const result = await pool.query(`
       INSERT INTO driver_offers
       ("bookingId","driverId",status,"expiresAt")
-      VALUES ($1,$2,'Pending',NOW()+INTERVAL '30 seconds')
+      VALUES ($1,$2,'Pending',NOW()+INTERVAL '30 minutes')
       ON CONFLICT ("bookingId","driverId")
       DO UPDATE SET
         status='Pending',
         "offeredAt"=NOW(),
-        "expiresAt"=NOW()+INTERVAL '30 seconds',
+        "expiresAt"=NOW()+INTERVAL '30 minutes',
         "respondedAt"=NULL
       WHERE driver_offers.status='Expired'
       RETURNING id
