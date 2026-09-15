@@ -396,7 +396,7 @@ function displayBookings(bookings) {
   </td>
 
   <td>
-    ${escapeHTML(booking.driverStatus || "Not started")}
+    ${escapeHTML(booking.assignedDriverId ? (booking.driverStatus || "Accepted") : "Not started")}
   </td>
 
       <td>
@@ -528,6 +528,7 @@ function escapeHTML(value) {
 
 </body>
 </html>
+
 
 
 
