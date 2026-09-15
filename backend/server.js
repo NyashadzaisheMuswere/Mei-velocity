@@ -676,7 +676,7 @@ app.get("/api/bookings/:id/status", async (req, res) => {
 // ADMIN: BOOKINGS
 app.get("/api/bookings", adminAuth, async (req, res) => {
   try {
-    const result = await pool.query(`SELECT * FROM bookings ORDER BY "createdAt" DESC`);
+    const result = await pool.query(`SELECT b.*, d.name AS "driverName", d.vehicle AS "driverVehicle", d.plate AS "driverPlate" FROM bookings b LEFT JOIN drivers d ON d.id = b."assignedDriverId" ORDER BY b."createdAt" DESC`);
     res.json({ success: true, bookings: result.rows });
   } catch (error) {
     console.error("Get bookings error:", error);

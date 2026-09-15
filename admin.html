@@ -254,7 +254,7 @@
             <th>Distance</th>
             <th>Fare</th>
             <th>Payment</th>
-            <th>Status</th>
+            <th>Driver</th><th>Ride Status</th><th>Status</th>
           </tr>
         </thead>
 
@@ -390,6 +390,15 @@ function displayBookings(bookings) {
         ${escapeHTML(booking.payment || "")}
       </td>
 
+  <td>
+    ${escapeHTML(booking.driverName || "Not assigned")}<br>
+    ${escapeHTML(booking.driverVehicle || "")} ${escapeHTML(booking.driverPlate || "")}
+  </td>
+
+  <td>
+    ${escapeHTML(booking.driverStatus || "Not started")}
+  </td>
+
       <td>
 
         <select
@@ -488,6 +497,9 @@ async function loadBookings() {
 
 }
 
+setInterval(() => {
+  if (adminPassword) loadBookings();
+}, 5000);
 
 function logout() {
 
@@ -516,3 +528,8 @@ function escapeHTML(value) {
 
 </body>
 </html>
+
+
+
+
+
