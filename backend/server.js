@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const { Pool } = require("pg");
@@ -857,5 +857,6 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
 initializeDatabase()
   .then(() => app.listen(PORT, "0.0.0.0", () => console.log(`MEI Velocity backend running on port ${PORT}`)))
   .catch((error) => { console.error("Database initialization failed:", error); process.exit(1); });
+
 
 
