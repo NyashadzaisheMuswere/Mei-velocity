@@ -115,28 +115,25 @@ async function initializeDatabase() {
       status TEXT DEFAULT 'Pending',
       "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
-  `);  await pool.query(`
+  `);
+  await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "assignedDriverId" TEXT
-  );  await pool.query(
+  `);
+  await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "driverLat" NUMERIC,
     ADD COLUMN IF NOT EXISTS "driverLng" NUMERIC,
     ADD COLUMN IF NOT EXISTS "driverLocationUpdatedAt" TIMESTAMP WITH TIME ZONE
-  );  await pool.query(
-
   `);
-
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "assignedDriverName" TEXT
   `);
-
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "assignedAt" TIMESTAMP WITH TIME ZONE
   `);
-
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "driverStatus" TEXT DEFAULT 'Accepted'
@@ -857,6 +854,7 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
 initializeDatabase()
   .then(() => app.listen(PORT, "0.0.0.0", () => console.log(`MEI Velocity backend running on port ${PORT}`)))
   .catch((error) => { console.error("Database initialization failed:", error); process.exit(1); });
+
 
 
 
