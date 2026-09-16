@@ -45,7 +45,7 @@
           <button id="offlineBtn" type="button">Go Offline</button>
         </div>
 
-        <button id="busyBtn" type="button">Set Busy</button>
+        <button id="busyBtn" type="button">Set Busy</button>`r`n        <button id="demoGpsBtn" type="button">Start Demo GPS</button>
         <button id="logoutBtn" type="button">Log out</button>
         <p id="msg"></p>
       </div>
@@ -429,6 +429,52 @@ setInterval(() => {
     );
   }
 
+  let demoGpsTimer = null;
+  let demoLat = -17.8252;
+  let demoLng = 31.0335;
+
+  async function sendDemoLocation() {
+    const activeToken = localStorage.getItem('meiDriverToken');
+    if (!activeToken) return;
+
+    try {
+      const response = await fetch(`${API}/api/driver/location`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${activeToken}`
+        },
+        body: JSON.stringify({ lat: demoLat, lng: demoLng })
+      });
+
+      if (response.ok) {
+        demoLng += 0.0003;
+      }
+    } catch (error) {
+      console.error('Unable to send demo GPS:', error);
+    }
+  }
+
+  function startDemoGps() {
+    if (demoGpsTimer !== null) return;
+
+    stopGpsTracking();
+    sendDemoLocation();
+    demoGpsTimer = setInterval(sendDemoLocation, 5000);
+
+    const button = document.getElementById('demoGpsBtn');
+    if (button) button.textContent = 'Stop Demo GPS';
+  }
+
+  function stopDemoGps() {
+    if (demoGpsTimer !== null) {
+      clearInterval(demoGpsTimer);
+      demoGpsTimer = null;
+    }
+
+    const button = document.getElementById('demoGpsBtn');
+    if (button) button.textContent = 'Start Demo GPS';
+  }
   function stopGpsTracking() {
     if (gpsWatchId !== null) {
       navigator.geolocation.clearWatch(gpsWatchId);
@@ -436,6 +482,13 @@ setInterval(() => {
     }
   }
 
+  document.getElementById('demoGpsBtn')?.addEventListener('click', () => {
+    if (demoGpsTimer === null) {
+      startDemoGps();
+    } else {
+      stopDemoGps();
+    }
+  });
   const originalLoadCurrentRide = loadCurrentRide;
   loadCurrentRide = async function() {
     await originalLoadCurrentRide();
@@ -457,4 +510,7 @@ setInterval(() => {
   </script>
 </body>
 </html>
+
+
+
 
