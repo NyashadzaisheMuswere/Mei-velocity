@@ -1,4 +1,4 @@
-const RATE = 0.85;
+﻿const RATE = 0.85;
 const API_BASE = "https://mei-velocity1.onrender.com";
 let suggestionTimer;
 let customerRidePollTimer;
@@ -107,6 +107,76 @@ function customerRideMessage(booking) {
   }
 }
 
+let driverMap = null;
+let driverMarker = null;
+
+function updateDriverMap(booking) {
+  const mapWrap = document.getElementById("driverMapWrap");
+  const mapElement = document.getElementById("driverMap");
+  const mapStatus = document.getElementById("driverMapStatus");
+
+  if (!mapWrap || !mapElement || !mapStatus) return;
+
+  const activeStatuses = ["Confirmed"];
+  const driverStatuses = ["Accepted", "On the Way", "Arrived", "Picked Up"];
+
+  if (
+    !booking?.assignedDriverId ||
+    !activeStatuses.includes(booking.status) ||
+    !driverStatuses.includes(booking.driverStatus)
+  ) {
+    mapWrap.style.display = "none";
+    return;
+  }
+
+  mapWrap.style.display = "block";
+
+  if (!driverMap) {
+    driverMap = L.map(mapElement, {
+      zoomControl: true
+    }).setView([-17.8252, 31.0335], 13);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(driverMap);
+  }
+
+  const lat = Number(booking.driverLat);
+  const lng = Number(booking.driverLng);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    mapStatus.textContent = "Waiting for driver's live location...";
+    return;
+  }
+
+  const position = [lat, lng];
+
+  if (!driverMarker) {
+    driverMarker = L.marker(position).addTo(driverMap);
+    driverMarker.bindPopup("MEI VELOCITY driver");
+  } else {
+    driverMarker.setLatLng(position);
+  }
+
+  driverMap.setView(position, Math.max(driverMap.getZoom(), 15));
+
+  if (booking.driverLocationUpdatedAt) {
+    const updated = new Date(booking.driverLocationUpdatedAt);
+    const secondsAgo = Math.max(0, Math.round((Date.now() - updated.getTime()) / 1000));
+
+    mapStatus.textContent =
+      secondsAgo < 60
+        ? `Driver location updated ${secondsAgo}s ago`
+        : "Driver location hasn't updated recently.";
+  } else {
+    mapStatus.textContent = "Driver location is updating...";
+  }
+
+  setTimeout(() => {
+    if (driverMap) driverMap.invalidateSize();
+  }, 100);
+}
 function renderCustomerRide(booking) {
   const tracker = document.getElementById("rideTracker");
   if (!tracker) return;
@@ -126,7 +196,7 @@ function renderCustomerRide(booking) {
     driverCard.style.display = "grid";
     document.getElementById("driverName").textContent = booking.driverName || booking.assignedDriverName || "Assigned driver";
     document.getElementById("driverVehicle").textContent = booking.driverVehicle || booking.vehicle || "Vehicle assigned";
-    document.getElementById("driverPlate").textContent = booking.driverPlate || "—";
+    document.getElementById("driverPlate").textContent = booking.driverPlate || "â€”";
   } else {
     driverCard.style.display = "none";
   }
@@ -145,6 +215,7 @@ async function fetchCustomerRideStatus() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || "Unable to check ride status.");
     renderCustomerRide(data.booking);
+    updateDriverMap(data.booking);
     if (data.booking && ["Completed", "Cancelled"].includes(data.booking.status)) {
       stopCustomerRidePolling();
     }
@@ -238,6 +309,7 @@ document.getElementById("bookBtn").onclick = async () => {
 
     saveCustomerBooking(data.booking);
     renderCustomerRide(data.booking);
+    updateDriverMap(data.booking);
     startCustomerRidePolling();
   } catch (error) {
     document.getElementById("status").textContent = "Booking failed: " + error.message;
@@ -245,3 +317,6 @@ document.getElementById("bookBtn").onclick = async () => {
 };
 
 restoreCustomerBooking();
+
+
+

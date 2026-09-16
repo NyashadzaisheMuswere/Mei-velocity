@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -35,28 +35,28 @@
     <a href="#home">Home</a><a href="#book">Book a Ride</a><a href="#services">Our Services</a>
     <a href="#vehicles">Our Vehicles</a><a href="#fares">Fares</a><a href="#about">About Us</a><a href="#contact">Contact</a>
   </nav>
-  <a class="phone" href="tel:+263781144071">☎ +263 78 114 4071</a>
+  <a class="phone" href="tel:+263781144071">â˜Ž +263 78 114 4071</a>
 </header>
 
 <section class="hero" id="home">
   <div class="hero-bg"></div><div class="hero-shade"></div>
   <div class="hero-content">
-    <div class="coverage">HARARE • 40 KM RADIUS</div>
+    <div class="coverage">HARARE â€¢ 40 KM RADIUS</div>
    <h1>
   Driven by values.<br>
   <span>Delivered with pride.</span>
 </h1>
     <p class="tagline">SAFE. RELIABLE. ON TIME.</p>
     <div class="trust">
-      <div><b>✓</b><span>Trusted<br>Drivers</span></div>
-      <div><b>◷</b><span>On Time<br>Always</span></div>
-      <div><b>♙</b><span>Your Safety<br>Our Priority</span></div>
+      <div><b>âœ“</b><span>Trusted<br>Drivers</span></div>
+      <div><b>â—·</b><span>On Time<br>Always</span></div>
+      <div><b>â™™</b><span>Your Safety<br>Our Priority</span></div>
     </div>
 
     <div class="booking" id="book">
 
   <div class="booking-top">
-    <h2>🚕 Book Your Ride</h2>
+    <h2>ðŸš• Book Your Ride</h2>
 
     <div class="tabs">
       <button class="active" type="button">Ride Now</button>
@@ -116,7 +116,7 @@
     </div>
 
     <button id="fareBtn" class="get-fare" type="button">
-      GET FARE →
+      GET FARE â†’
     </button>
 
   </div>
@@ -139,12 +139,12 @@
 
       <label>
         <input type="radio" name="payment" value="Cash" checked>
-        💵 Cash (Pay driver)
+        ðŸ’µ Cash (Pay driver)
       </label>
 
       <label>
         <input type="radio" name="payment" value="Card">
-        💳 Card (Pay online)
+        ðŸ’³ Card (Pay online)
       </label>
     </div>
 
@@ -182,12 +182,16 @@
     </div>
 
     <div id="driverCard" class="driver-card" style="display:none;">
-      <div><small>YOUR DRIVER</small><strong id="driverName">—</strong></div>
-      <div><small>VEHICLE</small><strong id="driverVehicle">—</strong></div>
-      <div><small>PLATE</small><strong id="driverPlate">—</strong></div>
+      <div><small>YOUR DRIVER</small><strong id="driverName">â€”</strong></div>
+      <div><small>VEHICLE</small><strong id="driverVehicle">â€”</strong></div>
+      <div><small>PLATE</small><strong id="driverPlate">â€”</strong></div>
     </div>
 
-    <p id="rideTrackerMessage" class="ride-tracker-message">We are looking for an available driver.</p>
+    <div id="driverMapWrap" class="driver-map-wrap" style="display:none;">
+    <div id="driverMap" class="driver-map"></div>
+    <p id="driverMapStatus" class="driver-map-status">Waiting for driver location...</p>
+  </div>
+  <p id="rideTrackerMessage" class="ride-tracker-message">We are looking for an available driver.</p>
     <small id="rideTrackerUpdated" class="ride-tracker-updated"></small>
   </div>
 
@@ -299,7 +303,7 @@
 </section>
 
 <section class="benefits">
-  <div>🛡️<b>CLEAN & WELL<br>MAINTAINED</b></div><div>👥<b>PROFESSIONAL<br>DRIVERS</b></div><div>◷<b>PUNCTUAL &<br>SAFE SERVICE</b></div><div>💲<b>TRANSPARENT<br>FARES</b></div><div>☎<b>CUSTOMER<br>SUPPORT</b></div>
+  <div>ðŸ›¡ï¸<b>CLEAN & WELL<br>MAINTAINED</b></div><div>ðŸ‘¥<b>PROFESSIONAL<br>DRIVERS</b></div><div>â—·<b>PUNCTUAL &<br>SAFE SERVICE</b></div><div>ðŸ’²<b>TRANSPARENT<br>FARES</b></div><div>â˜Ž<b>CUSTOMER<br>SUPPORT</b></div>
 </section>
 
 <section class="section two-col" id="fares">
@@ -307,11 +311,11 @@
  <div class="panel">
   <h2>OUR <span>SERVICE AREAS</span></h2>
 
-  <p>📍 Harare — Main Route</p>
-  <p>📍 Robert Gabriel Mugabe International Airport</p>
-  <p>📍 Semi Levy Village Borrowdale</p>
-  <p>📍 UZ Campus</p>
-  <p>📍 Surrounding areas</p>
+  <p>ðŸ“ Harare â€” Main Route</p>
+  <p>ðŸ“ Robert Gabriel Mugabe International Airport</p>
+  <p>ðŸ“ Semi Levy Village Borrowdale</p>
+  <p>ðŸ“ UZ Campus</p>
+  <p>ðŸ“ Surrounding areas</p>
 
   <h3>40 KM RADIUS</h3>
 
@@ -321,11 +325,11 @@
 
 <section class="section two-col" id="about">
   <div class="panel"><h2>WHY CHOOSE <span>MEI VELOCITY?</span></h2><ul><li>Clean and well maintained vehicles</li><li>Professional and trusted drivers</li><li>Punctual and safe service</li><li>Reasonable, transparent fares</li><li>Customer focused support</li></ul></div>
-  <div class="panel"><h2>DRIVEN BY <span>VALUES.</span></h2><p>Delivered with pride. We don't just move people — we move lives forward.</p></div>
+  <div class="panel"><h2>DRIVEN BY <span>VALUES.</span></h2><p>Delivered with pride. We don't just move people â€” we move lives forward.</p></div>
 </section>
 
-<section class="cta" id="contact"><div><small>BOOK YOUR RIDE TODAY!</small><strong>+263 78 114 4071</strong></div><a href="#book">BOOK A RIDE NOW →</a></section>
-<footer><img src="assets/mei_logo.jpg" alt="MEI Velocity"><span>Harare, Zimbabwe</span><span>Driven by values. Delivered with pride.</span><span>© 2026 MEI Velocity. All Rights Reserved.</span></footer>
+<section class="cta" id="contact"><div><small>BOOK YOUR RIDE TODAY!</small><strong>+263 78 114 4071</strong></div><a href="#book">BOOK A RIDE NOW â†’</a></section>
+<footer><img src="assets/mei_logo.jpg" alt="MEI Velocity"><span>Harare, Zimbabwe</span><span>Driven by values. Delivered with pride.</span><span>Â© 2026 MEI Velocity. All Rights Reserved.</span></footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="app.js"></script>
