@@ -1,4 +1,4 @@
-﻿const RATE = 0.85;
+﻿const RATE = 0.75;
 const API_BASE = "https://mei-velocity1.onrender.com";
 let suggestionTimer;
 let customerRidePollTimer;
@@ -315,6 +315,52 @@ document.getElementById("bookBtn").onclick = async () => {
     document.getElementById("status").textContent = "Booking failed: " + error.message;
   }
 };
+
+// The app-style home routes into the existing booking flow and site sections.
+function openRideBooking(mode = "taxi") {
+  const booking = document.getElementById("book");
+  booking.classList.add("booking-open");
+  const tabs = [...document.querySelectorAll(".tabs button")];
+  tabs.forEach((tab, index) => tab.classList.toggle("active", mode === "schedule" ? index === 1 : index === 0));
+  if (mode === "schedule") {
+    const date = document.getElementById("date");
+    if (!date.value) {
+      const today = new Date();
+      date.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    }
+    document.getElementById("time").focus({ preventScroll: true });
+  }
+  booking.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.getElementById("name").focus({ preventScroll: true });
+}
+
+document.querySelectorAll('[data-booking-mode="taxi"]').forEach(button => {
+  button.addEventListener("click", () => openRideBooking("taxi"));
+});
+document.querySelectorAll('[data-booking-mode="delivery"]').forEach(button => {
+  button.addEventListener("click", () => document.getElementById("services").scrollIntoView({ behavior: "smooth" }));
+});
+document.querySelector('[data-action="schedule"]').addEventListener("click", event => {
+  event.preventDefault();
+  openRideBooking("schedule");
+});
+document.querySelector('[data-action="deliveries"]').addEventListener("click", event => {
+  event.preventDefault();
+  document.getElementById("services").scrollIntoView({ behavior: "smooth" });
+});
+document.querySelector('[data-action="shop"]').addEventListener("click", event => {
+  event.preventDefault();
+  document.getElementById("services").scrollIntoView({ behavior: "smooth" });
+});
+document.querySelector('[data-action="pros"]').addEventListener("click", event => {
+  event.preventDefault();
+  document.getElementById("contact").scrollIntoView({ behavior: "smooth" });
+});
+document.querySelector(".promo-row").addEventListener("click", () => {
+  const support = document.querySelector(".support-link");
+  support.innerHTML = "Promo codes are not available yet. <strong>Call MEI Velocity</strong>";
+  support.style.display = "block";
+});
 
 restoreCustomerBooking();
 

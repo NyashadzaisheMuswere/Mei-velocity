@@ -29,28 +29,33 @@
 
 </head>
 <body>
-<header class="nav">
-  <a class="brand" href="#home"><img src="assets/mei_logo.jpg" alt="MEI Velocity logo"></a>
-  <nav>
-    <a href="#home">Home</a><a href="#book">Book a Ride</a><a href="#services">Our Services</a>
-    <a href="#vehicles">Our Vehicles</a><a href="#fares">Fares</a><a href="#about">About Us</a><a href="#contact">Contact</a>
-  </nav>
-  <a class="phone" href="tel:+263781144071">☎ +263 78 114 4071</a>
-</header>
-
 <section class="hero" id="home">
-  <div class="hero-bg"></div><div class="hero-shade"></div>
+  <div class="hero-bg" aria-hidden="true"></div><div class="hero-shade"></div>
   <div class="hero-content">
-    <div class="coverage">HARARE • 40 KM RADIUS</div>
-   <h1>
-  Driven by values.<br>
-  <span>Delivered with pride.</span>
-</h1>
-    <p class="tagline">SAFE. RELIABLE. ON TIME.</p>
-    <div class="trust">
-      <div><b>✓</b><span>Trusted<br>Drivers</span></div>
-      <div><b>◷</b><span>On Time<br>Always</span></div>
-      <div><b>♙</b><span>Your Safety<br>Our Priority</span></div>
+    <header class="app-topbar">
+      <a class="app-brand" href="#home" aria-label="MEI Velocity home"><img src="assets/mei_logo.jpg" alt="MEI Velocity"></a>
+      <a class="app-account" href="tel:+263781144071" aria-label="Call MEI Velocity">☎</a>
+    </header>
+    <nav class="app-shortcuts" aria-label="Explore MEI Velocity">
+      <a href="#book" data-action="schedule"><span class="shortcut-icon">▣</span><span>Schedule</span></a>
+      <a href="#services" data-action="deliveries"><span class="shortcut-icon">▰</span><span>Deliveries</span></a>
+      <a href="#services" data-action="shop"><span class="shortcut-icon">▧</span><span>Shop</span></a>
+      <a href="#contact" data-action="pros"><span class="shortcut-icon">✳</span><span>Pros</span></a>
+    </nav>
+    <div class="map-label map-label-one">HARARE</div><div class="map-label map-label-two">AVONDALE</div>
+    <div class="map-label map-label-three">BORROWDALE</div>
+    <div class="map-pin" aria-label="Your location"><span></span></div>
+    <div class="map-location"><span class="location-dot"></span><span>Harare, Zimbabwe</span></div>
+    <div class="bottom-sheet" id="homeSheet">
+      <button class="sheet-handle" type="button" aria-label="Open ride booking"></button>
+      <h1>Where are you going?</h1>
+      <p class="sheet-subtitle">Choose how you’d like to get there</p>
+      <div class="ride-options">
+        <button class="ride-option taxi-option" type="button" data-booking-mode="taxi"><span class="option-icon">🚕</span><span><strong>Taxi</strong><small>Book a ride</small></span><b>›</b></button>
+        <button class="ride-option delivery-option" type="button" data-booking-mode="delivery"><span class="option-icon">📦</span><span><strong>Delivery</strong><small>Send a package</small></span><b>›</b></button>
+      </div>
+      <button class="promo-row" type="button"><span class="promo-icon">✦</span><span>Have a promo code?</span><b>›</b></button>
+      <a class="support-link" href="tel:+263781144071">Need help? <strong>Call MEI Velocity</strong></a>
     </div>
 
     <div class="booking" id="book">
@@ -192,6 +197,8 @@
   </div>
 
 </div>
+  </div>
+</section>
 
 <section class="section services" id="services">
   <div class="heading">
