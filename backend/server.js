@@ -1,4 +1,5 @@
-﻿const express = require("express");
+﻿require("dotenv").config();
+const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 const { Pool } = require("pg");
@@ -33,6 +34,58 @@ function makeDriverToken(driverId) {
   const payload = Buffer.from(JSON.stringify({ driverId, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 })).toString("base64url");
   const signature = crypto.createHmac("sha256", authSecret()).update(payload).digest("base64url");
   return `${payload}.${signature}`;
+}
+
+function makeCustomerToken(customerId) {
+  const payload = Buffer.from(JSON.stringify({ customerId, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 })).toString("base64url");
+  const signature = crypto.createHmac("sha256", process.env.CUSTOMER_AUTH_SECRET).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
+
+function verifyCustomerToken(token) {
+  try {
+    const [payload, signature] = String(token || "").split(".");
+    if (!payload || !signature) return null;
+    if (!process.env.CUSTOMER_AUTH_SECRET) return null;
+    const expected = crypto.createHmac("sha256", process.env.CUSTOMER_AUTH_SECRET).update(payload).digest("base64url");
+    const actualBytes = Buffer.from(signature);
+    const expectedBytes = Buffer.from(expected);
+    if (actualBytes.length !== expectedBytes.length || !crypto.timingSafeEqual(actualBytes, expectedBytes)) return null;
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    return data.customerId && data.exp > Date.now() ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+function customerAuth(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const data = verifyCustomerToken(token);
+  if (!data) return res.status(401).json({ success: false, message: "Please verify your phone number to continue." });
+  req.customerId = data.customerId;
+  next();
+}
+
+function optionalCustomerAuth(req, res, next) {
+  const header = req.headers.authorization || "";
+  if (!header) return next();
+  const data = verifyCustomerToken(header.startsWith("Bearer ") ? header.slice(7) : "");
+  if (!data) return res.status(401).json({ success: false, message: "Customer session expired. Please sign in again." });
+  req.customerId = data.customerId;
+  next();
+}
+
+function phoneCodeHash(phone, code) {
+  return crypto.createHmac("sha256", process.env.CUSTOMER_AUTH_SECRET).update(`${phone}:${code}`).digest("hex");
+}
+
+function normalizePhoneNumber(value) {
+  let phone = String(value || "").trim().replace(/[\s()-]/g, "");
+  if (phone.startsWith("00")) phone = `+${phone.slice(2)}`;
+  else if (phone.startsWith("0")) phone = `+263${phone.slice(1)}`;
+  else if (/^263\d+$/.test(phone)) phone = `+${phone}`;
+  return phone;
 }
 
 function verifyDriverToken(token) {
@@ -100,6 +153,25 @@ function publicDriver(row) {
 
 async function initializeDatabase() {
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS customers (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL,
+      phone TEXT NOT NULL UNIQUE,
+      "verifiedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_verification_codes (
+      phone TEXT PRIMARY KEY,
+      username TEXT NOT NULL,
+      "codeHash" TEXT NOT NULL,
+      "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+      "sentAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      attempts INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS bookings (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -115,6 +187,15 @@ async function initializeDatabase() {
       status TEXT DEFAULT 'Pending',
       "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
+  `);
+  await pool.query(`
+    ALTER TABLE bookings
+    ADD COLUMN IF NOT EXISTS "customerId" TEXT REFERENCES customers(id),
+    ADD COLUMN IF NOT EXISTS "promoCode" TEXT,
+    ADD COLUMN IF NOT EXISTS discount NUMERIC DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS "baseFare" NUMERIC DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS rating INTEGER,
+    ADD COLUMN IF NOT EXISTS "ratedAt" TIMESTAMP WITH TIME ZONE
   `);
   await pool.query(`
     ALTER TABLE bookings
@@ -224,7 +305,20 @@ async function dispatchBooking(bookingId) {
   }
 
   return created;
-}// DRIVER OFFER ROUTES
+}
+
+async function dispatchPendingBookings() {
+  const pending = await pool.query(`
+    SELECT id FROM bookings
+    WHERE status='Pending' AND "assignedDriverId" IS NULL
+    ORDER BY "createdAt" ASC
+  `);
+  let created = 0;
+  for (const booking of pending.rows) created += await dispatchBooking(booking.id);
+  return created;
+}
+
+// DRIVER OFFER ROUTES
 
 app.get("/api/driver/offers", driverAuth, async (req, res) => {
   try {
@@ -565,10 +659,20 @@ app.patch("/api/driver/current-ride/status", driverAuth, async (req, res) => {
 
     await client.query("COMMIT");
 
+    let pendingOffersCreated = 0;
+    if (completed) {
+      try {
+        pendingOffersCreated = await dispatchPendingBookings();
+      } catch (dispatchError) {
+        console.error("Pending ride dispatch after completion error:", dispatchError);
+      }
+    }
+
     res.json({
       success: true,
       message: completed ? "Ride completed successfully." : "Ride status updated.",
-      ride: updated.rows[0]
+      ride: updated.rows[0],
+      pendingOffersCreated
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -627,41 +731,195 @@ app.patch("/api/driver/location", driverAuth, async (req, res) => {
   }
 });
 
-// CUSTOMER BOOKING
-app.post("/api/bookings", async (req, res) => {
+// CUSTOMER PHONE VERIFICATION AND ACCOUNT HISTORY
+app.post("/api/customer/request-code", async (req, res) => {
+  const username = String(req.body.username || "").trim();
+  const phone = normalizePhoneNumber(req.body.phone);
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  if (!sid || !token || !from || !process.env.CUSTOMER_AUTH_SECRET) return res.status(503).json({ success: false, message: "Phone verification is not configured yet." });
+  if (username.length < 2 || username.length > 40 || !/^\+[1-9]\d{7,14}$/.test(phone)) {
+    return res.status(400).json({ success: false, message: "Enter a username and phone number in international format, such as +263…" });
+  }
   try {
-    const { name, phone, pickup, dropoff, date, time, vehicle, distance, fare, payment } = req.body;
-    if (!name || !phone || !pickup || !dropoff || !date || !time) {
-      return res.status(400).json({ success: false, message: "Please provide all required booking details." });
+    const recent = await pool.query(`SELECT "sentAt" FROM customer_verification_codes WHERE phone=$1`, [phone]);
+    if (recent.rows.length && Date.now() - new Date(recent.rows[0].sentAt).getTime() < 60000) {
+      return res.status(429).json({ success: false, message: "Please wait one minute before requesting another code." });
+    }
+    const code = String(crypto.randomInt(100000, 1000000));
+    const body = new URLSearchParams({ To: phone, From: from, Body: `Your MEI Velocity verification code is ${code}. It expires in 10 minutes.` });
+    const authorization = Buffer.from(`${sid}:${token}`).toString("base64");
+    const sent = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
+      method: "POST",
+      headers: { Authorization: `Basic ${authorization}`, "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+    if (!sent.ok) return res.status(502).json({ success: false, message: "We could not send the code. Check the phone number and try again." });
+    await pool.query(`
+      INSERT INTO customer_verification_codes (phone, username, "codeHash", "expiresAt", "sentAt", attempts)
+      VALUES ($1,$2,$3,NOW() + INTERVAL '10 minutes',NOW(),0)
+      ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "codeHash"=EXCLUDED."codeHash",
+        "expiresAt"=EXCLUDED."expiresAt", "sentAt"=NOW(), attempts=0
+    `, [phone, username, phoneCodeHash(phone, code)]);
+    res.json({ success: true, message: "Verification code sent. It expires in 10 minutes." });
+  } catch (error) {
+    console.error("Customer code request failed:", error.message);
+    res.status(500).json({ success: false, message: "Unable to send a verification code right now." });
+  }
+});
+
+app.post("/api/customer/verify-code", async (req, res) => {
+  const phone = normalizePhoneNumber(req.body.phone);
+  const code = String(req.body.code || "").trim();
+  try {
+    const result = await pool.query(`SELECT * FROM customer_verification_codes WHERE phone=$1`, [phone]);
+    const challenge = result.rows[0];
+    if (!challenge || new Date(challenge.expiresAt).getTime() <= Date.now() || challenge.attempts >= 5) {
+      return res.status(400).json({ success: false, message: "That code has expired. Request a new one." });
+    }
+    await pool.query(`UPDATE customer_verification_codes SET attempts=attempts+1 WHERE phone=$1`, [phone]);
+    const expected = Buffer.from(challenge.codeHash, "hex");
+    const actual = Buffer.from(phoneCodeHash(phone, code), "hex");
+    if (!/^\d{6}$/.test(code) || expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+      return res.status(400).json({ success: false, message: "The verification code is not correct." });
+    }
+    const customerId = `CUS-${crypto.randomUUID()}`;
+    const customer = await pool.query(`
+      INSERT INTO customers (id, username, phone) VALUES ($1,$2,$3)
+      ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "verifiedAt"=NOW()
+      RETURNING id, username, phone
+    `, [customerId, challenge.username, phone]);
+    await pool.query(`DELETE FROM customer_verification_codes WHERE phone=$1`, [phone]);
+    res.json({ success: true, customer: customer.rows[0], token: makeCustomerToken(customer.rows[0].id) });
+  } catch (error) {
+    console.error("Customer verification failed:", error.message);
+    res.status(500).json({ success: false, message: "Unable to verify this phone number right now." });
+  }
+});
+
+app.get("/api/customer/bookings", customerAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, pickup, dropoff, date, time, vehicle, distance, fare, "baseFare", discount, "promoCode", status, rating, "ratedAt", "createdAt"
+      FROM bookings WHERE "customerId"=$1 ORDER BY "createdAt" DESC LIMIT 50
+    `, [req.customerId]);
+    res.json({ success: true, bookings: result.rows });
+  } catch (error) {
+    console.error("Customer history failed:", error.message);
+    res.status(500).json({ success: false, message: "Unable to retrieve ride history." });
+  }
+});
+
+app.patch("/api/customer/bookings/:id/rating", customerAuth, async (req, res) => {
+  const rating = Number(req.body.rating);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return res.status(400).json({ success: false, message: "Choose a rating from 1 to 5." });
+  }
+  try {
+    const result = await pool.query(`
+      UPDATE bookings SET rating=$1, "ratedAt"=NOW()
+      WHERE id=$2 AND "customerId"=$3 AND status='Completed'
+      RETURNING id, rating, "ratedAt"
+    `, [rating, req.params.id, req.customerId]);
+    if (!result.rows.length) return res.status(409).json({ success: false, message: "Only completed rides in your account can be rated." });
+    res.json({ success: true, rating: result.rows[0].rating, ratedAt: result.rows[0].ratedAt });
+  } catch (error) {
+    console.error("Ride rating save failed:", error.message);
+    res.status(500).json({ success: false, message: "Unable to save your rating." });
+  }
+});
+
+app.get("/api/customer/bookings/:id/status", customerAuth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT b.*, d.name AS "driverName", d.vehicle AS "driverVehicle", d.plate AS "driverPlate"
+      FROM bookings b LEFT JOIN drivers d ON d.id=b."assignedDriverId"
+      WHERE b.id=$1 AND b."customerId"=$2 LIMIT 1
+    `, [req.params.id, req.customerId]);
+    if (!result.rows.length) return res.status(404).json({ success: false, message: "Ride not found in this account." });
+    res.json({ success: true, booking: result.rows[0] });
+  } catch (error) {
+    console.error("Account ride status failed:", error.message);
+    res.status(500).json({ success: false, message: "Unable to retrieve ride status." });
+  }
+});
+
+app.get("/api/promotions", (req, res) => {
+  res.json({ success: true, offers: [{ code: "WELCOME10", title: "Welcome ride credit", description: "Save up to $10 on one ride. One use per phone number." }] });
+});
+
+app.post("/api/promotions/validate", (req, res) => {
+  const code = String(req.body.code || "").trim().toUpperCase();
+  if (code !== "WELCOME10") return res.status(404).json({ success: false, message: "Offer code not found." });
+  res.json({ success: true, offer: { code, discount: 10, title: "Welcome ride credit", terms: "Up to $10 off one ride per phone number." } });
+});
+
+// CUSTOMER BOOKING
+app.post("/api/bookings", customerAuth, async (req, res) => {
+  try {
+    const { pickup, dropoff, date, time, vehicle, distance, fare, payment } = req.body;
+    const customerResult = await pool.query(`SELECT username, phone FROM customers WHERE id=$1`, [req.customerId]);
+    const customer = customerResult.rows[0];
+    if (!customer) return res.status(401).json({ success: false, message: "Please sign in again before booking." });
+    const name = customer.username;
+    const phone = customer.phone;
+    const promoCode = String(req.body.promoCode || "").trim().toUpperCase();
+    if (!name || !pickup || !dropoff || !date || !time || !/^\+[1-9]\d{7,14}$/.test(phone)) {
+      return res.status(400).json({ success: false, message: "Please provide all booking details and a valid international phone number." });
+    }
+    if (promoCode && promoCode !== "WELCOME10") return res.status(400).json({ success: false, message: "Offer code not found." });
+    const baseFare = Math.max(0, (Number(distance) || 0) * 0.75);
+    const discount = promoCode ? Math.min(baseFare, 10) : 0;
+    const referenceFare = Math.max(0, baseFare - discount);
+    const offeredFare = Number(fare);
+    if (!Number.isFinite(offeredFare) || offeredFare < 0 || offeredFare > baseFare * 2) {
+      return res.status(400).json({ success: false, message: "Enter a valid fare offer up to twice the estimated fare." });
     }
     const booking = {
-      id: `MEI-${Date.now()}`,
+      id: `MEI-${crypto.randomUUID()}`,
       name, phone, pickup, dropoff, date, time,
       vehicle: vehicle || "Standard Ride",
       distance: Number(distance) || 0,
-      fare: Number(fare) || 0,
+      baseFare,
+      discount,
+      promoCode: promoCode || null,
+      fare: Math.min(offeredFare, referenceFare),
       payment: payment || "Cash",
       status: "Pending"
-    };await pool.query(`
-  INSERT INTO bookings
-  (id, name, phone, pickup, dropoff, date, time, vehicle, distance, fare, payment, status)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-`, [
-  booking.id,
-  booking.name,
-  booking.phone,
-  booking.pickup,
-  booking.dropoff,
-  booking.date,
-  booking.time,
-  booking.vehicle,
-  booking.distance,
-  booking.fare,
-  booking.payment,
-  booking.status
-]);
+    };
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      if (promoCode) {
+        await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [String(phone).trim()]);
+        const alreadyUsed = await client.query(`SELECT 1 FROM bookings WHERE phone=$1 AND "promoCode"='WELCOME10' LIMIT 1`, [phone]);
+        if (alreadyUsed.rows.length) {
+          await client.query("ROLLBACK");
+          return res.status(409).json({ success: false, message: "This welcome credit has already been used with that phone number." });
+        }
+      }
+      await client.query(`
+        INSERT INTO bookings
+        (id, "customerId", name, phone, pickup, dropoff, date, time, vehicle, distance, fare, "baseFare", discount, "promoCode", payment, status)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+      `, [booking.id, req.customerId || null, booking.name, booking.phone, booking.pickup, booking.dropoff,
+        booking.date, booking.time, booking.vehicle, booking.distance, booking.fare, booking.baseFare,
+        booking.discount, booking.promoCode, booking.payment, booking.status]);
+      await client.query("COMMIT");
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
 
-const offeredTo = await dispatchBooking(booking.id);
+let offeredTo = 0;
+try {
+  offeredTo = await dispatchBooking(booking.id);
+} catch (dispatchError) {
+  console.error("Ride saved, but initial driver dispatch failed:", dispatchError);
+}
 
 res.status(201).json({
   success: true,
@@ -722,6 +980,54 @@ app.get("/api/bookings/:id/status", async (req, res) => {
   }
 });
 
+// CUSTOMER: CANCEL AN UNASSIGNED RIDE REQUEST
+app.post("/api/bookings/:id/cancel", async (req, res) => {
+  const bookingId = String(req.params.id || "").trim();
+  const phone = normalizePhoneNumber(req.body.phone);
+  if (!bookingId || !/^\+[1-9]\d{7,14}$/.test(phone)) {
+    return res.status(400).json({ success: false, message: "Enter the phone number used for this booking." });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query(`
+      SELECT * FROM bookings
+      WHERE id=$1 AND phone=$2
+      FOR UPDATE
+    `, [bookingId, phone]);
+
+    if (!result.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, message: "Ride not found. Check the booking and phone number." });
+    }
+
+    const booking = result.rows[0];
+    if (booking.status !== "Pending" || booking.assignedDriverId) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ success: false, message: "This ride can no longer be cancelled here. Please contact MEI Velocity for help." });
+    }
+
+    const cancelled = await client.query(`
+      UPDATE bookings SET status='Cancelled'
+      WHERE id=$1
+      RETURNING *
+    `, [bookingId]);
+    await client.query(`
+      UPDATE driver_offers SET status='Expired', "respondedAt"=NOW()
+      WHERE "bookingId"=$1 AND status='Pending'
+    `, [bookingId]);
+    await client.query("COMMIT");
+    res.json({ success: true, message: "Ride request cancelled.", booking: cancelled.rows[0] });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Customer ride cancellation error:", error);
+    res.status(500).json({ success: false, message: "Unable to cancel this ride right now." });
+  } finally {
+    client.release();
+  }
+});
+
 // ADMIN: BOOKINGS
 app.get("/api/bookings", adminAuth, async (req, res) => {
   try {
@@ -734,16 +1040,45 @@ app.get("/api/bookings", adminAuth, async (req, res) => {
 });
 
 app.patch("/api/bookings/:id/status", adminAuth, async (req, res) => {
+  const client = await pool.connect();
   try {
     const allowedStatuses = ["Pending", "Confirmed", "Completed", "Cancelled"];
     const { status } = req.body;
-    if (!allowedStatuses.includes(status)) return res.status(400).json({ success: false, message: "Invalid booking status." });
-    const result = await pool.query(`UPDATE bookings SET status=$1 WHERE id=$2 RETURNING *`, [status, req.params.id]);
-    if (!result.rows.length) return res.status(404).json({ success: false, message: "Booking not found." });
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid booking status." });
+    }
+    await client.query("BEGIN");
+    const current = await client.query(`SELECT id, "assignedDriverId" FROM bookings WHERE id=$1 FOR UPDATE`, [req.params.id]);
+    if (!current.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, message: "Booking not found." });
+    }
+    const finalState = ["Completed", "Cancelled"].includes(status);
+    const result = await client.query(`
+      UPDATE bookings
+      SET status=$1,
+          "driverStatus"=CASE WHEN $1='Completed' THEN 'Completed' WHEN $1='Cancelled' AND "assignedDriverId" IS NOT NULL THEN 'Cancelled' ELSE "driverStatus" END
+      WHERE id=$2
+      RETURNING *
+    `, [status, req.params.id]);
+    if (finalState) {
+      await client.query(`UPDATE driver_offers SET status='Expired', "respondedAt"=NOW() WHERE "bookingId"=$1 AND status='Pending'`, [req.params.id]);
+      if (current.rows[0].assignedDriverId) {
+        await client.query(`UPDATE drivers SET status='Online' WHERE id=$1 AND status='Busy'`, [current.rows[0].assignedDriverId]);
+      }
+    }
+    await client.query("COMMIT");
+    if (finalState) {
+      try { await dispatchPendingBookings(); }
+      catch (dispatchError) { console.error("Pending ride dispatch after admin update error:", dispatchError); }
+    }
     res.json({ success: true, booking: result.rows[0] });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Status update error:", error);
     res.status(500).json({ success: false, message: "Unable to update booking." });
+  } finally {
+    client.release();
   }
 });
 
@@ -844,7 +1179,15 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
       WHERE id=$4 AND active=true RETURNING *
     `, [status, lat === undefined ? null : Number(lat), lng === undefined ? null : Number(lng), req.driverId]);
     if (!result.rows.length) return res.status(404).json({ success: false, message: "Driver not found." });
-    res.json({ success: true, driver: publicDriver(result.rows[0]) });
+    let pendingOffersCreated = 0;
+    if (status === "Online") {
+      try {
+        pendingOffersCreated = await dispatchPendingBookings();
+      } catch (dispatchError) {
+        console.error("Pending ride dispatch error:", dispatchError);
+      }
+    }
+    res.json({ success: true, driver: publicDriver(result.rows[0]), pendingOffersCreated });
   } catch (error) {
     console.error("Driver status error:", error);
     res.status(500).json({ success: false, message: "Unable to update driver status." });
