@@ -66,3 +66,135 @@ body{background:#080d14}
 .hero:has(.booking-open) .map-pin,.hero:has(.booking-open) .map-location{display:none}
 .status{color:#586573}.section.services{scroll-margin-top:20px}
 @media(max-width:600px){.app-topbar{left:16px;right:16px}.app-shortcuts{top:76px;gap:6px}.shortcut-icon{width:42px;height:42px;border-radius:15px}.app-shortcuts a{min-width:62px;font-size:10px}.bottom-sheet{padding-left:17px;padding-right:17px}.bottom-sheet h1{font-size:21px}.ride-option{min-height:82px;padding:10px 8px;gap:8px}.option-icon{width:36px;height:36px}.hero:has(.booking-open) .bottom-sheet{top:58%}.booking.booking-open{padding:20px 14px}}
+
+/* Map, route search, ride choices, and saved ride history */
+.hero-bg{z-index:0}.home-map{position:absolute;inset:0;z-index:1;background:#1c292e}.hero-shade{z-index:2;pointer-events:none}.hero-content{z-index:3}.home-map .leaflet-control-attribution{font-size:9px;opacity:1;background:rgba(255,255,255,.88)!important;color:#263238!important}.home-map .leaflet-control-attribution a{color:#0759a5!important}
+.map-locate{position:absolute;z-index:3;right:20px;bottom:clamp(365px,43vh,480px);width:44px;height:44px;border:1px solid #ffffff35;border-radius:14px;background:#111a22ed;color:white;font-size:23px;box-shadow:0 5px 18px #0006;cursor:pointer}
+.map-location{z-index:2}
+.bottom-sheet.route-mode{padding-bottom:max(14px,env(safe-area-inset-bottom));max-height:80svh;overflow:auto}
+.bottom-sheet.route-mode .ride-options{display:none}.trip-search{display:grid;gap:10px;margin-top:13px}.trip-field{position:relative;display:block;border:1px solid #35424d;border-radius:12px;background:#19232c;padding:7px 44px 6px 12px}.trip-field>span{display:block;font-size:10px;color:#a5b0b9;margin-bottom:2px}.trip-field input{width:100%;border:0;background:transparent;color:#fff;outline:none;font:inherit;font-size:14px;min-height:28px}.trip-field input::placeholder{color:#75828d}.trip-field button{position:absolute;right:7px;top:50%;transform:translateY(-35%);width:32px;height:32px;border:0;border-radius:9px;background:#28343e;color:#fff;font-size:19px}.trip-timing{display:grid;grid-template-columns:1fr 1fr;gap:8px}.timing-choice{min-height:37px;border:1px solid #35424d;border-radius:10px;background:#19232c;color:#b7c0c7;font-size:12px}.timing-choice.active{background:#263a4b;border-color:#75a9dc;color:#fff}.schedule-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.schedule-fields input{width:100%;padding:10px;border:1px solid #35424d;border-radius:9px;background:#19232c;color:#fff}.find-rides{min-height:46px;border:0;border-radius:12px;background:#ff7900;color:#fff;font-weight:800;font-size:14px}.location-disclosure,.trip-message{font-size:10px;color:#99a5ae;margin:0}.trip-message:not(:empty){font-size:12px;color:#ffd398}
+.ride-quotes{margin-top:14px}.quote-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.quote-heading strong,.quote-heading small{display:block}.quote-heading strong{font-size:14px}.quote-heading small{font-size:10px;color:#aab4bc;margin-top:3px}.quote-heading button{border:0;background:none;color:#ffad6a;font-size:11px}.quote-cards{display:grid;gap:8px}.quote-card{display:flex;align-items:center;gap:10px;width:100%;padding:11px;border:1px solid #35414b;border-radius:12px;background:#19232c;color:white;text-align:left}.quote-card.selected,.quote-card:hover{border-color:#ff9a4d;background:#212d37}.quote-card .vehicle-symbol{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:#293642;font-size:20px}.quote-info{flex:1}.quote-info strong,.quote-info small{display:block}.quote-info strong{font-size:13px}.quote-info small{font-size:10px;color:#aab4bc;margin-top:3px}.quote-price{font-size:15px;font-weight:800;white-space:nowrap}.quote-price small{display:block;font-size:9px;color:#aab4bc;font-weight:400;text-align:right}
+.promo-row,.support-link{position:relative}.bottom-sheet.route-mode .promo-row{margin-top:9px;padding-top:10px}.ride-history{scroll-margin-top:24px}.history-list{max-width:850px;margin:20px auto;display:grid;gap:10px}.history-card{display:grid;grid-template-columns:1fr auto;gap:7px 18px;padding:16px;border:1px solid #2a4054;border-radius:12px;background:#0a1521}.history-card strong{font-size:14px}.history-card small,.history-card span{color:#aab7c4;font-size:12px}.history-card .history-fare{grid-column:2;grid-row:1/3;align-self:center;color:#ff9a4d;font-size:16px;font-weight:800}.history-clear{display:block;margin:12px auto;border:0;background:none;color:#aab7c4;text-decoration:underline}
+.booking.booking-open{display:block}.hero:has(.booking-open) .bottom-sheet{display:none}.booking .field[data-vehicle-field]{display:none}
+@media(max-width:600px){.map-locate{right:16px;bottom:320px}.bottom-sheet.route-mode{max-height:82svh}.quote-card{padding:9px}.history-card{padding:13px}}
+[hidden]{display:none!important}.map-locate{bottom:clamp(310px,52vh,610px)}@media(max-width:600px){.map-locate{bottom:clamp(300px,52vh,510px)}}
+.hero:has(#homeMap) .hero-shade{background:transparent}
+.promo-entry{padding:10px;margin:0 0 10px;border:1px solid #394650;border-radius:11px;background:#19232c}.promo-entry>div{display:flex;gap:7px}.promo-entry input{flex:1;min-width:0;padding:10px;border:1px solid #3c4852;border-radius:8px;background:#111820;color:white}.promo-entry button{padding:0 13px;border:0;border-radius:8px;background:#ff7900;color:white;font-weight:700}.promo-entry small{display:block;margin-top:7px;color:#bbc5cc;font-size:10px}
+.account-dialog{width:min(420px,calc(100vw - 28px));border:1px solid #384651;border-radius:22px;background:#111820;color:#fff;padding:27px;box-shadow:0 20px 80px #000a}.account-dialog::backdrop{background:#05090dbb;backdrop-filter:blur(5px)}.account-dialog h2{margin:7px 0;font-size:23px}.account-dialog>p{color:#aab5bd;font-size:13px;line-height:1.5}.account-mark{font-weight:900;color:#ff9a4d;font-size:11px;letter-spacing:.14em}.account-dialog label{display:block;margin:14px 0;font-size:12px;color:#c2cbd2}.account-dialog label input{display:block;width:100%;margin-top:6px;box-sizing:border-box;padding:12px;border:1px solid #394650;border-radius:9px;background:#19232c;color:#fff;font:inherit;font-size:14px}.dialog-close{position:absolute;right:15px;top:12px}.dialog-close button{border:0;background:none;color:#dce2e7;font-size:26px}.account-primary{width:100%;min-height:46px;border:0;border-radius:10px;background:#ff7900;color:#fff;font-weight:800}.account-message{min-height:17px;font-size:12px!important;color:#ffd398!important}.account-message:empty{display:none}
+
+/* MEI Velocity ride app: clean, map-first booking inspired by familiar ride apps. */
+:root{--mei-green:#b3d735;--mei-green-dark:#86a91d;--mei-ink:#202521;--mei-muted:#68716a;--mei-line:#e3e8e2;--mei-surface:#f6f8f5}
+.hero:has(#homeMap){background:#e9eee8;color:var(--mei-ink)}
+.hero:has(#homeMap) .hero-bg{background:#eef1eb;background-image:linear-gradient(90deg,transparent 49.7%,rgba(129,146,128,.16) 49.9%,rgba(129,146,128,.16) 50.2%,transparent 50.4%),linear-gradient(0deg,transparent 49.7%,rgba(129,146,128,.16) 49.9%,rgba(129,146,128,.16) 50.2%,transparent 50.4%)}
+.hero:has(#homeMap) .hero-shade{background:transparent}
+.app-brand{background:#fff;border:1px solid rgba(30,40,28,.08);box-shadow:0 4px 18px rgba(22,32,20,.1)}
+.app-account{color:var(--mei-ink);background:#fff;border:1px solid var(--mei-line);box-shadow:0 4px 18px rgba(22,32,20,.1)}
+.app-shortcuts{gap:clamp(6px,2vw,18px)}
+.app-shortcuts a{color:#30372f;text-shadow:none;font-size:10px;font-weight:700}
+.shortcut-icon{color:var(--mei-ink);background:#fff;border:1px solid rgba(30,40,28,.08);box-shadow:0 4px 16px rgba(22,32,20,.1);backdrop-filter:blur(8px)}
+.map-label{color:#4f5b4d;text-shadow:0 1px 2px rgba(255,255,255,.85);opacity:.75}
+.map-location{background:#fff;color:#273027;border:1px solid var(--mei-line);box-shadow:0 4px 14px rgba(22,32,20,.12);backdrop-filter:none}
+.location-dot{background:var(--mei-green-dark);box-shadow:0 0 0 4px rgba(179,215,53,.2)}
+.map-locate{color:#283128;background:#fff;border-color:var(--mei-line);box-shadow:0 4px 16px rgba(22,32,20,.15)}
+.bottom-sheet.route-mode{left:0;right:0;bottom:0;max-height:min(74svh,650px);padding:12px max(18px,calc((100% - 620px)/2)) max(18px,env(safe-area-inset-bottom));overflow:auto;background:#fff;color:var(--mei-ink);border:1px solid rgba(31,45,28,.08);border-bottom:0;border-radius:24px 24px 0 0;box-shadow:0 -8px 32px rgba(35,48,30,.16)}
+.bottom-sheet.route-mode .sheet-handle{width:42px;height:5px;margin-bottom:15px;background:#d3d9d1}
+.bottom-sheet.route-mode h1{font-size:23px;letter-spacing:-.035em;color:#202521}
+.bottom-sheet.route-mode .sheet-subtitle{margin:5px 0 14px;color:var(--mei-muted);font-size:12px}
+.bottom-sheet.route-mode .trip-search{margin-top:0;gap:9px}
+.trip-field{min-height:62px;padding:9px 52px 8px 42px;border:1px solid var(--mei-line);border-radius:12px;background:var(--mei-surface)}
+.trip-field::before{position:absolute;left:15px;top:22px;width:12px;height:12px;border:3px solid var(--mei-green-dark);border-radius:50%;content:""}
+.destination-field::before{border-radius:3px;background:var(--mei-green-dark);width:11px;height:11px}
+.trip-field>span{font-size:10px;color:var(--mei-muted);margin-bottom:2px}
+.trip-field input{min-height:25px;color:#202521;font-size:14px}
+.trip-field input::placeholder{color:#858d84}
+.trip-field button{right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:#eaf2d3;color:#57720f;font-size:19px}
+.trip-timing{gap:0;padding:3px;border-radius:11px;background:#f0f3ed}
+.timing-choice{min-height:39px;border:0;border-radius:9px;background:transparent;color:#596157;font-size:12px;font-weight:700}
+.timing-choice.active{background:#fff;border:1px solid #e3e8df;color:#263024;box-shadow:0 1px 4px rgba(24,40,20,.08)}
+.schedule-fields input{border:1px solid var(--mei-line);border-radius:10px;background:#fff;color:#202521;color-scheme:light}
+.find-rides{min-height:49px;border-radius:12px;background:var(--mei-green);color:#202719;font-weight:800;font-size:14px;box-shadow:0 3px 8px rgba(125,158,25,.15)}
+.find-rides:hover{background:#a9cd2d}
+.location-disclosure,.trip-message{color:#697269}
+.trip-message:not(:empty){color:#57720f}
+.bottom-sheet.route-mode .promo-row{margin-top:7px;padding:11px 2px 3px;border-top:1px solid #edf0eb;color:#41483f;font-size:12px}
+.bottom-sheet.route-mode .promo-icon{background:#edf4d7;color:#668414}
+.bottom-sheet.route-mode .promo-row b{color:#7c857a}
+.promo-entry{background:#f6f8f5;border-color:var(--mei-line)}
+.promo-entry input{background:#fff;border-color:var(--mei-line);color:#202521}
+.promo-entry button,.account-primary{background:var(--mei-green);color:#202719}
+.ride-quotes{color:var(--mei-ink)}
+.quote-heading small,.quote-info small{color:#788176}
+.quote-heading button{color:var(--mei-green-dark)}
+.quote-card{border-color:var(--mei-line);background:#fff;color:var(--mei-ink)}
+.quote-card.selected,.quote-card:hover{border-color:var(--mei-green-dark);background:#f7faef}
+.quote-card .vehicle-symbol{background:#eef2e8}
+.quote-price small{color:#788176}
+.account-dialog{color:var(--mei-ink);background:#fff;border-color:var(--mei-line)}
+.account-dialog>p,.account-dialog label{color:#697269}
+.account-dialog label input{background:#f7f9f6;border-color:var(--mei-line);color:var(--mei-ink)}
+.account-message{color:#718f1c!important}
+@media(max-width:600px){.app-topbar{left:15px;right:15px}.app-shortcuts{top:74px;left:10px;right:10px}.shortcut-icon{width:40px;height:40px;border-radius:14px}.app-shortcuts a{min-width:60px;font-size:9px}.bottom-sheet.route-mode{max-height:min(72svh,640px);padding-left:16px;padding-right:16px}.bottom-sheet.route-mode h1{font-size:21px}.trip-field{min-height:58px}.map-locate{right:15px}}
+.booking.booking-open .ride-tracker{color:#263024;background:#f6f8f5;border-color:#e3e8e2;box-shadow:none}
+.booking.booking-open .ride-tracker-head small,.booking.booking-open .driver-card small,.booking.booking-open .ride-tracker-updated{color:#6d776a}
+.booking.booking-open .ride-step span{border-color:#aab4a5}
+.booking.booking-open .ride-step.active span{background:#b3d735;border-color:#9fbe2d;color:#202719}
+.booking.booking-open .ride-line{background:#d7ded2}
+.booking.booking-open .driver-card{background:#edf2e7}
+.customer-driver-map{margin-top:14px;padding:10px;border:1px solid #e3e8e2;border-radius:12px;background:#fff}
+.customer-driver-map #driverMap{height:210px;border-radius:9px;overflow:hidden}
+.customer-driver-map p{margin:8px 2px 0;color:#68716a;font-size:12px}
+.ride-tracker-actions{display:flex;gap:8px;margin-top:12px}
+.ride-tracker-actions button{min-height:42px;padding:10px 14px;border:1px solid #d8dfd3;border-radius:10px;background:#fff;color:#333c30;font-weight:700}
+.ride-tracker-actions #bookAnotherRideButton{border-color:var(--mei-green);background:var(--mei-green);color:#202719}
+.ride-tracker-actions button:disabled{opacity:.55}
+.ride-tracker-actions #cancelRideButton{border-color:#ead1ce;color:#a33a32}
+.booking.booking-open .payment label:has(input:disabled){opacity:.55}
+.saved-locations{display:flex;align-items:center;gap:7px;overflow:auto;padding-top:8px}.saved-locations:empty{display:none}.saved-locations>small{flex:none;color:#727b71;font-size:10px}.saved-locations>button{flex:none;max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 10px;border:1px solid #e1e7dc;border-radius:18px;background:#f7f9f5;color:#394235;font-size:10px}.offer-field{grid-column:1/-1}.offer-field>label,.offer-field>small{display:block}.offer-field>small{color:#899187;font-size:11px;margin-top:5px}.offer-field input{width:100%;box-sizing:border-box}.notification-pref{display:flex!important;align-items:center;gap:8px}.notification-pref input{width:auto!important;margin:0!important}
+.ride-rating{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0;padding:12px;border:1px solid #dfe5d9;border-radius:11px;background:#f8faf6}.ride-rating label{font-size:12px;font-weight:700}.ride-rating select{padding:9px;border:1px solid #d8dfd3;border-radius:8px;background:#fff;color:#283128}.ride-rating button{padding:9px 12px;border:0;border-radius:8px;background:var(--mei-green);color:#202719;font-weight:800}.ride-rating small{flex-basis:100%;color:#68716a;font-size:11px}
+
+/* Clear the booking screen of map controls that otherwise overlap its header on mobile. */
+.hero:has(.booking.booking-open){height:auto;min-height:100svh;overflow:visible;padding:0;background:#f5f7f3;color:var(--mei-ink)}
+.hero:has(.booking.booking-open) .hero-content{height:auto;min-height:0;margin:0 auto;padding:16px 0 28px}
+.hero:has(.booking.booking-open) .hero-bg,
+.hero:has(.booking.booking-open) .home-map,
+.hero:has(.booking.booking-open) .hero-shade,
+.hero:has(.booking.booking-open) .app-topbar,
+.hero:has(.booking.booking-open) .app-shortcuts,
+.hero:has(.booking.booking-open) .map-label,
+.hero:has(.booking.booking-open) .map-locate,
+.hero:has(.booking.booking-open) .map-location{display:none!important}
+.hero:has(.booking.booking-open) .booking.booking-open{display:block;width:min(100%,900px);margin:0 auto;padding:18px clamp(14px,4vw,28px) 28px;border:0;border-radius:0;background:#f5f7f3;color:var(--mei-ink);box-shadow:none}
+.booking.booking-open .booking-top{align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.booking.booking-open .booking-top h2{font-size:22px;line-height:1.25}
+.booking.booking-open .tabs{display:flex;gap:6px;flex-wrap:wrap}
+.booking.booking-open .tabs button{border-radius:8px}
+.booking.booking-open .inputs{grid-template-columns:1fr;gap:12px;margin-top:12px}
+.booking.booking-open .field input,.booking.booking-open .summary select{min-height:48px;font-size:16px}
+.booking.booking-open .summary{grid-template-columns:1fr;gap:9px}
+.booking.booking-open .offer-field input{min-height:48px}
+.booking.booking-open #status{font-size:14px;line-height:1.45}
+@media(min-width:760px){.hero:has(.booking.booking-open) .booking.booking-open .inputs{grid-template-columns:1fr 1fr}.booking.booking-open .summary{grid-template-columns:1fr 1fr 2.3fr}}
+#notificationPreference[hidden]{display:none!important}
+
+/* Dedicated ride review and driver tracking views. */
+html[data-workflow="confirm"] #home,html[data-workflow="confirm"] .section,html[data-workflow="confirm"] .benefits,html[data-workflow="confirm"] .cta,html[data-workflow="confirm"] footer,html[data-workflow="confirm"] #accountDialog,html[data-workflow="ride"] #home,html[data-workflow="ride"] .section,html[data-workflow="ride"] .benefits,html[data-workflow="ride"] .cta,html[data-workflow="ride"] footer,html[data-workflow="ride"] #accountDialog{display:none!important}
+html[data-workflow="confirm"] body{background:#f5f7f3;color:#202521}html[data-workflow="ride"] body{background:#f3f6f0;color:#202521}
+#confirmPage[hidden],#ridePage[hidden]{display:none!important}#confirmPage:not([hidden]){display:block}.workflow-header{height:62px;display:flex;align-items:center;gap:14px;padding:8px max(16px,calc((100% - 680px)/2));background:#fff;border-bottom:1px solid #e3e8e0}.back-link{color:#202521;text-decoration:none;font-weight:700}.workflow-logo{width:88px;height:42px;object-fit:contain;margin-left:auto}.workflow-content{width:min(100% - 28px,600px);margin:24px auto 48px}.workflow-content h1{font-size:26px;line-height:1.2;margin:0 0 5px}.workflow-lead{margin:0 0 18px;color:#6d766b}.workflow-card{padding:17px;margin:13px 0;background:#fff;border:1px solid #e3e8e0;border-radius:16px;box-shadow:0 5px 18px #2433220a}.route-row{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center;padding:10px 0}.route-row+.route-row{border-top:1px solid #eef0ed}.route-dot{width:13px;height:13px;border:3px solid #85a71e;border-radius:50%;justify-self:center}.route-dot.dest{border:0;border-radius:4px;background:#85a71e}.route-row small,.driver-detail small{display:block;color:#6d766b;font-size:11px}.route-row strong{display:block;font-size:14px;font-weight:600}.ride-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ride-meta span{padding:7px 10px;border-radius:18px;background:#f0f4ea;font-size:12px;font-weight:700}.price-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.price-row strong{font-size:24px}.workflow-content label{display:block;margin-top:12px;font-size:12px;font-weight:700}.price-input{width:100%;min-height:50px;margin-top:7px;padding:12px;border:1px solid #d6ded1;border-radius:10px;background:#fff;font:inherit;font-size:18px}.flow-help{margin:7px 0 0;color:#6d766b;font-size:12px}.promo-badge{padding:6px 9px;border-radius:12px;background:#f0f4e8;color:#536c16;font-size:11px;font-weight:700}.flow-payment{padding:12px;border:1px solid #e3e8e0;border-radius:10px;background:#fafbf9}.flow-account{display:flex;align-items:center;gap:10px}.flow-account strong{font-size:13px}.flow-account button{margin-left:auto;border:0;background:transparent;text-decoration:underline;color:#58644d}.flow-button{width:100%;min-height:50px;border:0;border-radius:12px;background:#b3d735;color:#202719;font:inherit;font-weight:800;cursor:pointer}.flow-button:disabled{opacity:.6}.flow-message{min-height:20px;color:#64704d;font-size:13px}.workflow-dialog{width:min(420px,calc(100vw - 26px));border:1px solid #e3e8e0;border-radius:20px;padding:24px;background:#fff;color:#202521;box-shadow:0 20px 80px #0005}.workflow-dialog::backdrop{background:#18201899;backdrop-filter:blur(3px)}.workflow-dialog h2{margin:0;font-size:21px}.workflow-dialog p{color:#6d766b;font-size:13px}.workflow-dialog label{display:block;margin:12px 0;font-size:12px;font-weight:700}.workflow-dialog input{display:block;width:100%;min-height:44px;margin-top:5px;padding:10px;border:1px solid #e3e8e0;border-radius:9px;font:inherit}.workflow-dialog .flow-button{margin-top:7px}.dialog-close{position:absolute;right:14px;top:8px;border:0;background:none;font-size:25px;color:#6a7466}.workflow-dialog [hidden]{display:none!important}
+#ridePage:not([hidden]){display:block;min-height:100svh}.tracking-map{position:relative;height:54svh;min-height:310px;background:#dce5d6}.tracking-map #rideMap{width:100%;height:100%}.map-status-pill{position:absolute;z-index:500;top:14px;left:50%;transform:translateX(-50%);max-width:calc(100% - 26px);padding:9px 14px;border-radius:22px;background:#fff;box-shadow:0 5px 20px #18241826;font-size:12px;font-weight:800;white-space:nowrap}.tracking-sheet{position:relative;width:min(100%,700px);margin:-25px auto 0;padding:22px 17px max(25px,env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#fff;box-shadow:0 -7px 25px #14201412}.tracking-sheet h1{margin:0 0 4px;font-size:23px}.tracking-subtitle{margin:0;color:#6d766b;font-size:13px}.tracking-progress{display:flex;gap:6px;margin:17px 0}.tracking-progress span{height:5px;flex:1;border-radius:5px;background:#e6eae2}.tracking-progress span.active{background:#85a71e}.driver-panel{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:11px;padding:13px;border:1px solid #e3e8e0;border-radius:14px;background:#fafbf9}.driver-panel[hidden],#ratingArea[hidden]{display:none!important}.driver-avatar{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#eff4e5;font-size:23px}.driver-detail strong{display:block;font-size:15px}.plate-chip{padding:6px 9px;border:1px solid #dfe3db;border-radius:7px;background:white;font-weight:800;font-size:12px}.tracking-route{display:grid;gap:9px;margin:14px 0;padding:13px;border-radius:13px;background:#f5f7f3}.tracking-route>div{display:grid;grid-template-columns:14px 1fr;gap:9px;align-items:center;font-size:12px}.tracking-route small{display:block;color:#6d766b}.tracking-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tracking-actions .flow-button{background:#edf1e9;color:#30382d}.tracking-actions a{display:grid;place-items:center;min-height:48px;border-radius:11px;background:#edf1e9;color:#202521;font-weight:800;text-decoration:none}.rating-area{margin:12px 0;padding:13px;border-radius:13px;background:#f5f7f3}.rating-area select{min-height:42px;padding:8px;border:1px solid #e3e8e0;border-radius:8px;background:#fff}.rating-area button{min-height:42px;margin-left:7px;padding:0 12px;border:0;border-radius:9px;background:#b3d735;font-weight:800}.leaflet-control-attribution{font-size:9px!important}.driver-marker{display:grid;place-items:center;width:38px;height:38px;border:3px solid #fff;border-radius:50%;background:#b3d735;box-shadow:0 3px 13px #0005;font-size:20px}.tracking-home{display:inline-block;padding:10px 13px;border-radius:20px;background:#fff;color:#202521;text-decoration:none;font-size:13px;font-weight:700}
+@media(min-width:760px){html[data-workflow="ride"] body{height:100svh;overflow:hidden}#ridePage:not([hidden]){display:grid;grid-template-columns:minmax(0,1.4fr) minmax(390px,.9fr);height:100svh}.tracking-map{height:100svh;min-height:100svh}.tracking-sheet{align-self:center;width:min(100% - 36px,600px);margin:20px auto;border-radius:22px;padding:26px}.tracking-header{position:absolute;z-index:600;top:12px;left:14px}.workflow-content{margin-top:34px}.workflow-card{padding:20px}}
+
+html[data-workflow="confirm"] #confirmPage[hidden]{display:block!important}
+
+
+html[data-workflow="confirm"] #ridePage{display:none!important}
+.workflow-content>.lead{margin:0 0 18px;color:#6d766b;font-size:14px;line-height:1.45}
+.workflow-content .help{margin:7px 0 0;color:#6d766b;font-size:12px;line-height:1.4}
+.route-dot.destination{border:0;border-radius:4px;background:#85a71e}
+.payment-option{display:flex;align-items:center;gap:9px;margin:10px 0 0;padding:11px 12px;border:1px solid #e3e8e0;border-radius:10px;background:#fafbf9;font-size:14px}
+.account-chip{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid #e3e8e0;border-radius:13px;background:#fff}
+.account-chip>strong{flex:1;font-size:13px}
+.account-chip>button{padding:8px 12px;border:0;border-radius:9px;background:#eef3e6;color:#35431e;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.workflow-content>.primary-button,.workflow-dialog>.primary-button{width:100%;min-height:50px;margin-top:13px;padding:12px 16px;border:0;border-radius:12px;background:#b3d735;color:#202719;font:inherit;font-weight:800;cursor:pointer}
+.workflow-content>.primary-button:disabled,.workflow-dialog>.primary-button:disabled{opacity:.6}
+.workflow-dialog form+.primary-button{margin-top:12px}
+.tracking-actions>.secondary-button{min-height:48px;border:0;border-radius:11px;background:#fff0e3;color:#883e00;font:inherit;font-weight:800;cursor:pointer}

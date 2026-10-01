@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MEI Velocity | Harare Taxi & Transport</title>
-<link rel="stylesheet" href="styles.css">
+<script>const workflowView=new URLSearchParams(location.search).get("view");if(workflowView==="confirm"||workflowView==="ride")document.documentElement.dataset.workflow=workflowView;</script>
+<link rel="stylesheet" href="styles.css?v=rideflow3">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
@@ -30,11 +31,11 @@
 </head>
 <body>
 <section class="hero" id="home">
-  <div class="hero-bg" aria-hidden="true"></div><div class="hero-shade"></div>
+  <div class="hero-bg" aria-hidden="true"></div><div id="homeMap" class="home-map" aria-label="Map of Harare"></div><div class="hero-shade"></div>
   <div class="hero-content">
     <header class="app-topbar">
       <a class="app-brand" href="#home" aria-label="MEI Velocity home"><img src="assets/mei_logo.jpg" alt="MEI Velocity"></a>
-      <a class="app-account" href="tel:+263781144071" aria-label="Call MEI Velocity">☎</a>
+      <button class="app-account" id="accountButton" type="button" aria-label="Ride history and account">◉</button>
     </header>
     <nav class="app-shortcuts" aria-label="Explore MEI Velocity">
       <a href="#book" data-action="schedule"><span class="shortcut-icon">▣</span><span>Schedule</span></a>
@@ -44,17 +45,32 @@
     </nav>
     <div class="map-label map-label-one">HARARE</div><div class="map-label map-label-two">AVONDALE</div>
     <div class="map-label map-label-three">BORROWDALE</div>
-    <div class="map-pin" aria-label="Your location"><span></span></div>
-    <div class="map-location"><span class="location-dot"></span><span>Harare, Zimbabwe</span></div>
-    <div class="bottom-sheet" id="homeSheet">
+    <button class="map-locate" id="locateMe" type="button" aria-label="Use my current location">◎</button>
+    <div class="map-location" id="mapLocation"><span class="location-dot"></span><span>Harare, Zimbabwe</span></div>
+    <div class="bottom-sheet route-mode" id="homeSheet">
       <button class="sheet-handle" type="button" aria-label="Open ride booking"></button>
       <h1>Where are you going?</h1>
-      <p class="sheet-subtitle">Choose how you’d like to get there</p>
+      <p class="sheet-subtitle">Set your pickup and destination</p>
       <div class="ride-options">
         <button class="ride-option taxi-option" type="button" data-booking-mode="taxi"><span class="option-icon">🚕</span><span><strong>Taxi</strong><small>Book a ride</small></span><b>›</b></button>
         <button class="ride-option delivery-option" type="button" data-booking-mode="delivery"><span class="option-icon">📦</span><span><strong>Delivery</strong><small>Send a package</small></span><b>›</b></button>
       </div>
-      <button class="promo-row" type="button"><span class="promo-icon">✦</span><span>Have a promo code?</span><b>›</b></button>
+      <div class="trip-search" id="tripSearch">
+        <label class="trip-field pickup-field"><span>Pickup location</span><input id="homePickup" list="homePickupSuggestions" placeholder="Choose pickup point" autocomplete="off"><button id="locatePickup" type="button" aria-label="Use current location">◎</button><datalist id="homePickupSuggestions"></datalist></label>
+        <label class="trip-field destination-field"><span>Destination</span><input id="homeDropoff" placeholder="Where are you going?" autocomplete="off" list="homeDropoffSuggestions"><datalist id="homeDropoffSuggestions"></datalist></label>
+        <div class="trip-timing"><button type="button" class="timing-choice active" data-when="now">Ride now</button><button type="button" class="timing-choice" data-when="later">Schedule</button></div>
+        <div class="schedule-fields" id="scheduleFields" hidden><input id="homeDate" type="date" aria-label="Ride date"><input id="homeTime" type="time" aria-label="Ride time"></div>
+        <button class="find-rides" id="findRides" type="button">Find rides</button>
+        <p class="location-disclosure">Address search and route calculation send your chosen pickup and destination to OpenStreetMap services.</p>
+        <p class="trip-message" id="tripMessage" role="status"></p>
+      </div>
+      <div id="savedLocations" class="saved-locations" aria-label="Recent locations"></div>
+      <div class="ride-quotes" id="rideQuotes" hidden>
+        <div class="quote-heading"><div><strong>Choose your vehicle</strong><small id="quoteDistance"></small></div><button type="button" id="changeRoute">Edit route</button></div>
+        <div class="promo-entry" id="promoEntry" hidden><div><input id="promoCode" placeholder="Enter offer code" autocomplete="off"><button id="applyPromo" type="button">Apply</button></div><small id="promoMessage"></small></div>
+        <div class="quote-cards" id="quoteCards"></div>
+      </div>
+      <button class="promo-row" type="button"><span class="promo-icon">✦</span><span>Offers &amp; free rides · up to $10 credit</span><b>›</b></button>
       <a class="support-link" href="tel:+263781144071">Need help? <strong>Call MEI Velocity</strong></a>
     </div>
 
@@ -64,22 +80,12 @@
     <h2>🚕 Book Your Ride</h2>
 
     <div class="tabs">
-      <button class="active" type="button">Ride Now</button>
-      <button type="button">Schedule Ride</button>
+      <button class="active" type="button" data-booking-when="now">Ride Now</button>
+      <button type="button" data-booking-when="later">Schedule Ride</button>
     </div>
   </div>
 
   <div class="inputs">
-
-    <div class="field">
-      <label>Your Name</label>
-      <input id="name" type="text" placeholder="Enter your name">
-    </div>
-
-    <div class="field">
-      <label>Phone Number</label>
-      <input id="phone" type="tel" placeholder="+263 XX XXX XXXX">
-    </div>
 
     <div class="field">
   <label>Pick-up Location</label>
@@ -112,7 +118,7 @@
       <input id="time" type="time">
     </div>
 
-    <div class="field">
+    <div class="field" data-vehicle-field>
       <label>Vehicle</label>
       <select id="vehicle">
         <option value="Toyota Spade">Toyota Spade</option>
@@ -148,18 +154,24 @@
       </label>
 
       <label>
-        <input type="radio" name="payment" value="Card">
-        💳 Card (Pay online)
+        <input type="radio" name="payment" value="Card" disabled>
+        💳 Card payments (coming soon)
       </label>
     </div>
 
+    <div class="field offer-field">
+      <label>Your fare offer (USD)</label>
+      <input id="rideOffer" type="number" min="0" step="0.50" inputmode="decimal" aria-describedby="offerHelp">
+      <small id="offerHelp">Drivers can review your offer when deciding whether to accept.</small>
+    </div>
+
     <button id="bookBtn" class="book-btn" type="button">
-      BOOK RIDE
+      REQUEST THIS RIDE
     </button>
 
   </div>
 
-  <p id="status">Enter your details and locations.</p>
+  <p id="status">Choose your route and ride option.</p>
 
   <div id="success" class="success"></div>
 
@@ -193,11 +205,47 @@
     </div>
 
     <p id="rideTrackerMessage" class="ride-tracker-message">We are looking for an available driver.</p>
+    <div id="rideRating" class="ride-rating" hidden>
+      <label for="rideRatingValue">Rate this ride</label>
+      <select id="rideRatingValue" aria-label="Ride rating">
+        <option value="5">5 · Excellent</option><option value="4">4 · Good</option><option value="3">3 · Okay</option><option value="2">2 · Poor</option><option value="1">1 · Very poor</option>
+      </select>
+      <button id="submitRideRating" type="button">Send rating</button>
+      <small id="rideRatingMessage" role="status"></small>
+    </div>
     <small id="rideTrackerUpdated" class="ride-tracker-updated"></small>
+    <div id="driverMapWrap" class="customer-driver-map" style="display:none;">
+      <div id="driverMap" aria-label="Live driver location map"></div>
+      <p id="driverMapStatus" role="status">Waiting for driver's live location...</p>
+    </div>
+    <div class="ride-tracker-actions">
+      <button id="cancelRideButton" type="button" hidden>Cancel ride request</button>
+      <button id="bookAnotherRideButton" type="button" hidden>Book another ride</button>
+    </div>
   </div>
 
 </div>
   </div>
+</section>
+
+<dialog id="accountDialog" class="account-dialog">
+  <form method="dialog" class="dialog-close"><button aria-label="Close">×</button></form>
+  <div class="account-mark">MEI VELOCITY</div>
+  <h2>Sign in or create your account</h2>
+  <p>Verify your phone number to book rides and keep your trip history with your MEI Velocity profile.</p>
+  <label>Your name<input id="accountUsername" autocomplete="username" required></label>
+  <label>Phone number<input id="accountPhone" type="tel" placeholder="+263…" autocomplete="tel" required></label>
+  <button id="sendCode" type="button" class="account-primary">Send verification code</button>
+  <label id="codeField" hidden>Verification code<input id="accountCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+  <button id="verifyCode" type="button" class="account-primary" hidden>Verify and continue</button>
+  <label class="notification-pref" id="notificationPreference" hidden><input id="rideNotifications" type="checkbox"> Notify me when my ride status changes</label>
+  <button id="signOutButton" type="button" class="account-signout" hidden>Sign out</button>
+  <p id="accountMessage" class="account-message" role="status"></p>
+</dialog>
+
+<section class="section ride-history" id="rideHistory">
+  <div class="heading"><h2>YOUR <span>RIDE HISTORY</span></h2><p>Bookings saved on this device or synced to your account.</p></div>
+  <div id="rideHistoryList" class="history-list"><p>No saved rides yet.</p></div>
 </section>
 
 <section class="section services" id="services">
@@ -249,7 +297,7 @@
     </article>
 
   </div>
-
+</section>
 
 <section class="section vehicles" id="vehicles">
 
@@ -334,7 +382,52 @@
 <section class="cta" id="contact"><div><small>BOOK YOUR RIDE TODAY!</small><strong>+263 78 114 4071</strong></div><a href="#book">BOOK A RIDE NOW →</a></section>
 <footer><img src="assets/mei_logo.jpg" alt="MEI Velocity"><span>Harare, Zimbabwe</span><span>Driven by values. Delivered with pride.</span><span>© 2026 MEI Velocity. All Rights Reserved.</span></footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="app.js"></script>
+<main id="confirmPage" class="workflow-wrap" hidden>
+  <header class="workflow-header"><a class="back-link" href="index.html">← Back to rides</a><img class="workflow-logo" src="assets/mei_logo.jpg" alt="MEI Velocity"></header>
+  <div class="workflow-content">
+    <h1>Review your ride</h1><p class="lead">Confirm the details and your fare offer. We’ll show your driver on the next screen.</p>
+    <section class="workflow-card">
+      <div class="route-row"><span class="route-dot"></span><div><small>Pickup</small><strong id="confirmPickup"></strong></div></div>
+      <div class="route-row"><span class="route-dot destination"></span><div><small>Destination</small><strong id="confirmDropoff"></strong></div></div>
+      <div class="ride-meta"><span id="confirmVehicle"></span><span id="confirmDistance"></span><span id="confirmSchedule"></span></div>
+    </section>
+    <section class="workflow-card"><div class="price-row"><div><small>Suggested fare</small><strong id="confirmSuggestedFare"></strong></div><span id="confirmPromo" class="promo-badge" hidden>WELCOME10 applied</span></div>
+      <label for="confirmFare">Your fare offer (USD)</label><input id="confirmFare" class="price-input" type="number" min="0" step="0.50" inputmode="decimal"><p class="help">Drivers can review your offer when deciding whether to accept.</p></section>
+    <section class="workflow-card"><strong>Payment</strong><p class="payment-option"><span>💵</span><span>Cash · Pay your driver</span></p><p class="help">Card payments will be available when a payment provider is connected.</p></section>
+    <section class="workflow-card account-chip"><span>👤</span><strong id="confirmAccountLabel">Sign in or create an account before requesting</strong><button id="confirmAccountButton" type="button">Sign in</button></section>
+    <button id="confirmRequest" class="primary-button" type="button">Request this ride</button><p id="confirmMessage" class="message" role="status"></p>
+  </div>
+</main>
+
+<dialog id="confirmAccountDialog" class="workflow-dialog">
+  <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
+  <h2 id="confirmDialogTitle">Sign in or create your account</h2><p id="confirmDialogIntro">Verify your phone number before booking.</p>
+  <label>Your name<input id="confirmUsername" autocomplete="name" required></label>
+  <label>Phone number<input id="confirmPhone" type="tel" placeholder="+263…" autocomplete="tel" required></label>
+  <button id="confirmSendCode" class="primary-button" type="button">Send verification code</button>
+  <label id="confirmCodeRow" hidden>Verification code<input id="confirmCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
+  <button id="confirmVerify" class="primary-button" type="button" hidden>Verify and continue</button>
+  <p id="confirmAuthMessage" class="message" role="status"></p>
+</dialog>
+
+<main id="ridePage" class="tracking-page" hidden>
+  <header class="tracking-header"><a class="tracking-home" href="index.html">← Home</a></header>
+  <div class="tracking-map"><div id="rideMap" aria-label="Live ride map"></div><div id="rideStatusPill" class="map-status-pill">Looking for your driver…</div></div>
+  <section class="tracking-sheet">
+    <h1 id="rideTitle">Finding your driver</h1><p id="rideMessage" class="tracking-subtitle">Your request has been sent to MEI Velocity drivers.</p>
+    <div id="rideProgress" class="tracking-progress" aria-label="Ride progress"><span></span><span></span><span></span><span></span><span></span></div>
+    <section id="driverPanel" class="driver-panel" hidden><div class="driver-avatar">🚘</div><div class="driver-detail"><small>YOUR DRIVER</small><strong id="trackingDriverName">—</strong><small id="trackingDriverVehicle">Vehicle details</small></div><span id="trackingDriverPlate" class="plate-chip">—</span></section>
+    <div class="tracking-route"><div><span class="route-dot"></span><span><small>Pickup</small><strong id="ridePickup"></strong></span></div><div><span class="route-dot destination"></span><span><small>Destination</small><strong id="rideDropoff"></strong></span></div></div>
+    <p id="locationMessage" class="help">The driver’s live location appears here when they share it.</p>
+    <section id="ratingArea" class="rating-area" hidden><strong>How was your ride?</strong><p><select id="rideRatingSelect" aria-label="Ride rating"><option value="5">5 · Excellent</option><option value="4">4 · Good</option><option value="3">3 · Okay</option><option value="2">2 · Poor</option><option value="1">1 · Very poor</option></select><button id="rideRatingSubmit" type="button">Send rating</button></p><small id="rideRatingFeedback"></small></section>
+    <div class="tracking-actions"><button id="cancelRide" class="secondary-button" type="button" hidden>Cancel request</button><a href="index.html">Book another ride</a></div>
+    <p id="trackingError" class="message" role="status"></p>
+  </section>
+</main>
+
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="map-config.js"></script>
+<script defer src="app.js?v=rideflow5"></script>
+
 </body>
 </html>

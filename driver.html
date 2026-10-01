@@ -73,6 +73,12 @@
     const offersList = document.getElementById('offersList');
     const currentRide = document.getElementById('currentRide');
 
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[character]);
+    }
+
 async function loadCurrentRide() {
   const activeToken = localStorage.getItem('meiDriverToken');
   if (!activeToken || !currentRide) return;
@@ -104,17 +110,17 @@ async function loadCurrentRide() {
     currentRide.innerHTML = `
       <div class="ride-offer">
         <h3>Active Ride</h3>
-        <p><strong>Customer:</strong> ${ride.name}</p>
-        <p><strong>Phone:</strong> ${ride.phone}</p>
-        <p><strong>Pickup:</strong> ${ride.pickup}</p>
-        <p><strong>Dropoff:</strong> ${ride.dropoff}</p>
-        <p><strong>Date:</strong> ${ride.date}</p>
-        <p><strong>Time:</strong> ${ride.time}</p>
-        <p><strong>Vehicle:</strong> ${ride.vehicle}</p>
-        <p><strong>Distance:</strong> ${ride.distance} km</p>
-        <p><strong>Fare:</strong> $${ride.fare}</p>
-        <p><strong>Payment:</strong> ${ride.payment}</p>
-        <p><strong>Ride status:</strong> <span class="status">${ride.driverStatus}</span></p>
+        <p><strong>Customer:</strong> ${escapeHtml(ride.name)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(ride.phone)}</p>
+        <p><strong>Pickup:</strong> ${escapeHtml(ride.pickup)}</p>
+        <p><strong>Dropoff:</strong> ${escapeHtml(ride.dropoff)}</p>
+        <p><strong>Date:</strong> ${escapeHtml(ride.date)}</p>
+        <p><strong>Time:</strong> ${escapeHtml(ride.time)}</p>
+        <p><strong>Vehicle:</strong> ${escapeHtml(ride.vehicle)}</p>
+        <p><strong>Distance:</strong> ${escapeHtml(ride.distance)} km</p>
+        <p><strong>Fare:</strong> $${escapeHtml(ride.fare)}</p>
+        <p><strong>Payment:</strong> ${escapeHtml(ride.payment)}</p>
+        <p><strong>Ride status:</strong> <span class="status">${escapeHtml(ride.driverStatus)}</span></p>
         ${nextAction ? `<button onclick="updateRideStatus('${nextAction}')">${nextAction}</button>` : ''}
       </div>
     `;
@@ -173,16 +179,16 @@ async function loadOffers() {
     offersList.innerHTML = data.offers.map(offer => `
       <div class="ride-offer">
         <h3>New Ride</h3>
-        <p><strong>Customer:</strong> ${offer.name}</p>
-        <p><strong>Phone:</strong> ${offer.phone}</p>
-        <p><strong>Pickup:</strong> ${offer.pickup}</p>
-        <p><strong>Dropoff:</strong> ${offer.dropoff}</p>
-        <p><strong>Date:</strong> ${offer.date}</p>
-        <p><strong>Time:</strong> ${offer.time}</p>
-        <p><strong>Vehicle:</strong> ${offer.vehicle}</p>
-        <p><strong>Distance:</strong> ${offer.distance} km</p>
-        <p><strong>Fare:</strong> $${offer.fare}</p>
-        <p><strong>Payment:</strong> ${offer.payment}</p>
+        <p><strong>Customer:</strong> ${escapeHtml(offer.name)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(offer.phone)}</p>
+        <p><strong>Pickup:</strong> ${escapeHtml(offer.pickup)}</p>
+        <p><strong>Dropoff:</strong> ${escapeHtml(offer.dropoff)}</p>
+        <p><strong>Date:</strong> ${escapeHtml(offer.date)}</p>
+        <p><strong>Time:</strong> ${escapeHtml(offer.time)}</p>
+        <p><strong>Vehicle:</strong> ${escapeHtml(offer.vehicle)}</p>
+        <p><strong>Distance:</strong> ${escapeHtml(offer.distance)} km</p>
+        <p><strong>Fare:</strong> $${escapeHtml(offer.fare)}</p>
+        <p><strong>Payment:</strong> ${escapeHtml(offer.payment)}</p>
         <div class="offer-buttons">
           <button onclick="acceptOffer('${offer.id}')">Accept Ride</button>
           <button onclick="rejectOffer('${offer.id}')">Reject</button>
