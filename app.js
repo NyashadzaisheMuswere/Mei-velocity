@@ -1,5 +1,7 @@
 const RATE = 0.75;
-const API_BASE = "https://mei-velocity1.onrender.com";
+const API_BASE = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ? "http://localhost:5000"
+  : "https://mei-velocity1.onrender.com";
 function apiErrorMessage(error) {
   if (error instanceof TypeError && /failed to fetch|networkerror/i.test(error.message || "")) {
     return "Could not connect to MEI Velocity. Check your internet connection and try again.";

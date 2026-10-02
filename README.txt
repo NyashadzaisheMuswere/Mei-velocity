@@ -40,17 +40,17 @@ CUSTOMER APP FLOW:
 - Customers can rate completed rides from the tracker or account ride history; ratings are stored with the booking in PostgreSQL.
 - Signed-in customers can opt into browser notifications for ride status changes.
 - WELCOME10 gives a one-time $10 ride credit per phone number.
-- Customer signup verifies phone ownership with a six-digit code sent through Twilio.
+- Customer signup verifies phone ownership with a six-digit code. Production uses Twilio Verify; local development can use a terminal-only test code.
 - Drivers receive new requests while online and pick up waiting requests when they come online or complete another ride. The fare offer is shown to drivers with the request.
 - Cash payments are supported. Card payments are marked unavailable until a payment gateway is connected.
 
 To enable phone verification in the backend deployment environment, configure:
 - TWILIO_ACCOUNT_SID
 - TWILIO_AUTH_TOKEN
-- TWILIO_FROM_NUMBER
+- TWILIO_VERIFY_SERVICE_SID (recommended; create a Verify Service in Twilio)
 - CUSTOMER_AUTH_SECRET (a long, random secret used to sign customer sessions)
 
-The customer signup flow reports that verification is unavailable until all four settings are configured.
+For paid Programmable Messaging fallback, configure TWILIO_FROM_NUMBER instead of TWILIO_VERIFY_SERVICE_SID.
 
 MAP TILES:
 - Home and live driver-location maps use OpenStreetMap raster tiles directly, so CARTO's current API-key-required tile response is avoided.
@@ -58,7 +58,7 @@ MAP TILES:
 - No map API key is required for the configured development map source.
 
 RUN LOCALLY:
-1. In one terminal, open the project root folder and run `python -m http.server 8080`.
-2. Open `http://localhost:8080`. Customer sign-in, booking, and ride tracking use the MEI Velocity Render API from the local page.
-3. The local backend in `backend` is optional for driver/admin pages. Run `npm start` there only when you want those pages to use the local API at port 5000.
-4. Phone verification requires the deployed Render backend to include the customer account routes and have Twilio settings configured. The current Render URL responds with `404 Cannot POST /api/customer/request-code`, so the backend deployment must be updated before account verification and customer ride booking can work. The browser now reports this clearly instead of showing a JSON parsing error. Do not put Twilio credentials in the frontend or this static project.
+1. In `backend/.env`, configure DATABASE_URL. Set NODE_ENV=development and LOCAL_OTP_MODE=true for local-only testing. Twilio settings and CUSTOMER_AUTH_SECRET are not needed in this mode; the backend creates a temporary local signing key. For production, configure CUSTOMER_AUTH_SECRET and Twilio Verify settings.
+2. Open a terminal in the `backend` folder and run `npm start`. Leave it running; the test OTP appears in this terminal after you press Send verification code.
+3. In another terminal at the project root, run `python -m http.server 8080` and open `http://localhost:8080`.
+4. Local pages automatically use the backend at localhost:5000. The local OTP mode only works when the backend is running on localhost and NODE_ENV is not production. Never set LOCAL_OTP_MODE=true on Render; live signup should use Twilio Verify.

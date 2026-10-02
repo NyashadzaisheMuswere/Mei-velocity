@@ -4,6 +4,14 @@ const cors = require("cors");
 const crypto = require("crypto");
 const { Pool } = require("pg");
 
+const LOCAL_CUSTOMER_AUTH_SECRET = crypto.randomBytes(32).toString("hex");
+
+function customerAuthSecret() {
+  if (process.env.CUSTOMER_AUTH_SECRET) return process.env.CUSTOMER_AUTH_SECRET;
+  if (process.env.LOCAL_OTP_MODE === "true" && process.env.NODE_ENV !== "production") return LOCAL_CUSTOMER_AUTH_SECRET;
+  return null;
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -38,7 +46,7 @@ function makeDriverToken(driverId) {
 
 function makeCustomerToken(customerId) {
   const payload = Buffer.from(JSON.stringify({ customerId, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 })).toString("base64url");
-  const signature = crypto.createHmac("sha256", process.env.CUSTOMER_AUTH_SECRET).update(payload).digest("base64url");
+  const signature = crypto.createHmac("sha256", customerAuthSecret()).update(payload).digest("base64url");
   return `${payload}.${signature}`;
 }
 
@@ -46,8 +54,9 @@ function verifyCustomerToken(token) {
   try {
     const [payload, signature] = String(token || "").split(".");
     if (!payload || !signature) return null;
-    if (!process.env.CUSTOMER_AUTH_SECRET) return null;
-    const expected = crypto.createHmac("sha256", process.env.CUSTOMER_AUTH_SECRET).update(payload).digest("base64url");
+    const secret = customerAuthSecret();
+    if (!secret) return null;
+    const expected = crypto.createHmac("sha256", secret).update(payload).digest("base64url");
     const actualBytes = Buffer.from(signature);
     const expectedBytes = Buffer.from(expected);
     if (actualBytes.length !== expectedBytes.length || !crypto.timingSafeEqual(actualBytes, expectedBytes)) return null;
@@ -77,7 +86,7 @@ function optionalCustomerAuth(req, res, next) {
 }
 
 function phoneCodeHash(phone, code) {
-  return crypto.createHmac("sha256", process.env.CUSTOMER_AUTH_SECRET).update(`${phone}:${code}`).digest("hex");
+  return crypto.createHmac("sha256", customerAuthSecret()).update(`${phone}:${code}`).digest("hex");
 }
 
 function normalizePhoneNumber(value) {
@@ -732,13 +741,22 @@ app.patch("/api/driver/location", driverAuth, async (req, res) => {
 });
 
 // CUSTOMER PHONE VERIFICATION AND ACCOUNT HISTORY
+function isLocalCustomerOtpEnabled(req) {
+  const host = String(req.hostname || "").toLowerCase();
+  return process.env.LOCAL_OTP_MODE === "true"
+    && process.env.NODE_ENV !== "production"
+    && (host === "localhost" || host === "127.0.0.1");
+}
+
 app.post("/api/customer/request-code", async (req, res) => {
   const username = String(req.body.username || "").trim();
   const phone = normalizePhoneNumber(req.body.phone);
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;
-  if (!sid || !token || !from || !process.env.CUSTOMER_AUTH_SECRET) return res.status(503).json({ success: false, message: "Phone verification is not configured yet." });
+  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  const localOtp = isLocalCustomerOtpEnabled(req);
+  if ((!localOtp && (!sid || !token || (!verifyServiceSid && !from))) || !customerAuthSecret()) return res.status(503).json({ success: false, message: localOtp ? "Customer sign-in is not configured yet." : "Phone verification is not configured yet. Add the Twilio Verify Service SID in the server settings." });
   if (username.length < 2 || username.length > 40 || !/^\+[1-9]\d{7,14}$/.test(phone)) {
     return res.status(400).json({ success: false, message: "Enter a username and phone number in international format, such as +263…" });
   }
@@ -747,22 +765,47 @@ app.post("/api/customer/request-code", async (req, res) => {
     if (recent.rows.length && Date.now() - new Date(recent.rows[0].sentAt).getTime() < 60000) {
       return res.status(429).json({ success: false, message: "Please wait one minute before requesting another code." });
     }
-    const code = String(crypto.randomInt(100000, 1000000));
-    const body = new URLSearchParams({ To: phone, From: from, Body: `Your MEI Velocity verification code is ${code}. It expires in 10 minutes.` });
-    const authorization = Buffer.from(`${sid}:${token}`).toString("base64");
-    const sent = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
-      method: "POST",
-      headers: { Authorization: `Basic ${authorization}`, "Content-Type": "application/x-www-form-urlencoded" },
-      body
-    });
-    if (!sent.ok) return res.status(502).json({ success: false, message: "We could not send the code. Check the phone number and try again." });
+    const localCode = localOtp ? String(crypto.randomInt(100000, 1000000)) : null;
+    let fallbackCode = null;
+    if (localOtp) {
+      console.log(`[LOCAL OTP] Verification code for ${phone}: ${localCode}`);
+    } else {
+      const authorization = Buffer.from(`${sid}:${token}`).toString("base64");
+      const sent = verifyServiceSid
+        ? await fetch(`https://verify.twilio.com/v2/Services/${encodeURIComponent(verifyServiceSid)}/Verifications`, {
+            method: "POST",
+            headers: { Authorization: `Basic ${authorization}`, "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ To: phone, Channel: "sms" })
+          })
+        : await (async () => {
+            const code = String(crypto.randomInt(100000, 1000000));
+            const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
+              method: "POST",
+              headers: { Authorization: `Basic ${authorization}`, "Content-Type": "application/x-www-form-urlencoded" },
+              body: new URLSearchParams({ To: phone, From: from, Body: `Your MEI Velocity verification code is ${code}. It expires in 10 minutes.` })
+            });
+            return { response, code };
+          })();
+      const response = sent.response || sent;
+      fallbackCode = sent.code || null;
+      if (!response.ok) {
+        const detail = await response.json().catch(() => ({}));
+        console.error("Twilio code request rejected:", detail.code, detail.message);
+        return res.status(502).json({ success: false, message: detail.code ? `Twilio could not send the code (error ${detail.code}). Check the trial restrictions and verified recipient number.` : "Twilio could not send the code. Check the Twilio settings and verified recipient number." });
+      }
+    }
+    const codeHash = localOtp
+      ? phoneCodeHash(phone, localCode)
+      : verifyServiceSid
+        ? phoneCodeHash(phone, `verify:${crypto.randomUUID()}`)
+        : phoneCodeHash(phone, fallbackCode);
     await pool.query(`
       INSERT INTO customer_verification_codes (phone, username, "codeHash", "expiresAt", "sentAt", attempts)
       VALUES ($1,$2,$3,NOW() + INTERVAL '10 minutes',NOW(),0)
       ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "codeHash"=EXCLUDED."codeHash",
         "expiresAt"=EXCLUDED."expiresAt", "sentAt"=NOW(), attempts=0
-    `, [phone, username, phoneCodeHash(phone, code)]);
-    res.json({ success: true, message: "Verification code sent. It expires in 10 minutes." });
+    `, [phone, username, codeHash]);
+    res.json({ success: true, message: localOtp ? "Local test code printed in the VS Code backend terminal. It expires in 10 minutes." : "Verification code sent. It expires in 10 minutes." });
   } catch (error) {
     console.error("Customer code request failed:", error.message);
     res.status(500).json({ success: false, message: "Unable to send a verification code right now." });
@@ -779,10 +822,35 @@ app.post("/api/customer/verify-code", async (req, res) => {
       return res.status(400).json({ success: false, message: "That code has expired. Request a new one." });
     }
     await pool.query(`UPDATE customer_verification_codes SET attempts=attempts+1 WHERE phone=$1`, [phone]);
-    const expected = Buffer.from(challenge.codeHash, "hex");
-    const actual = Buffer.from(phoneCodeHash(phone, code), "hex");
-    if (!/^\d{6}$/.test(code) || expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
-      return res.status(400).json({ success: false, message: "The verification code is not correct." });
+    if (!/^\d{4,10}$/.test(code)) {
+      return res.status(400).json({ success: false, message: "Enter the verification code from the SMS." });
+    }
+    if (isLocalCustomerOtpEnabled(req)) {
+      const expected = Buffer.from(challenge.codeHash, "hex");
+      const actual = Buffer.from(phoneCodeHash(phone, code), "hex");
+      if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+        return res.status(400).json({ success: false, message: "The verification code is not correct." });
+      }
+    } else if (process.env.TWILIO_VERIFY_SERVICE_SID) {
+      const sid = process.env.TWILIO_ACCOUNT_SID;
+      const token = process.env.TWILIO_AUTH_TOKEN;
+      const authorization = Buffer.from(`${sid}:${token}`).toString("base64");
+      const checked = await fetch(`https://verify.twilio.com/v2/Services/${encodeURIComponent(process.env.TWILIO_VERIFY_SERVICE_SID)}/VerificationCheck`, {
+        method: "POST",
+        headers: { Authorization: `Basic ${authorization}`, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ To: phone, Code: code })
+      });
+      const verification = await checked.json().catch(() => ({}));
+      if (!checked.ok || verification.status !== "approved") {
+        if (!checked.ok) console.error("Twilio Verify check rejected:", verification.code, verification.message);
+        return res.status(400).json({ success: false, message: verification.status === "pending" ? "That code is not correct. Check the SMS and try again." : "Twilio could not verify that code. Request a new code and try again." });
+      }
+    } else {
+      const expected = Buffer.from(challenge.codeHash, "hex");
+      const actual = Buffer.from(phoneCodeHash(phone, code), "hex");
+      if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+        return res.status(400).json({ success: false, message: "The verification code is not correct." });
+      }
     }
     const customerId = `CUS-${crypto.randomUUID()}`;
     const customer = await pool.query(`
@@ -914,18 +982,17 @@ app.post("/api/bookings", customerAuth, async (req, res) => {
       client.release();
     }
 
-let offeredTo = 0;
-try {
-  offeredTo = await dispatchBooking(booking.id);
-} catch (dispatchError) {
-  console.error("Ride saved, but initial driver dispatch failed:", dispatchError);
-}
-
 res.status(201).json({
   success: true,
   message: "Ride booked successfully.",
   booking,
-  offeredTo
+  dispatching: true
+});
+
+setImmediate(() => {
+  dispatchBooking(booking.id)
+    .then(offeredTo => console.info(`Ride ${booking.id} offered to ${offeredTo} driver(s).`))
+    .catch(dispatchError => console.error("Ride saved, but initial driver dispatch failed:", dispatchError));
 });
 
 } catch (error) {
