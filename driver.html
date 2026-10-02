@@ -365,6 +365,11 @@ async function rejectOffer(offerId) {
 setInterval(() => {
   loadCurrentRide();
   loadOffers();
+}, 12000);
+
+// Refresh chat independently, without rebuilding the entire current-ride card.
+setInterval(() => {
+  if (driverChatRideId) loadDriverChat(driverChatRideId);
 }, 4000);
 
     const loginBtn = document.getElementById('loginBtn');
