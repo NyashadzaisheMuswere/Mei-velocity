@@ -46,6 +46,8 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Could not open this ride chat.");
       showMessages(data.messages || []);
+      const latestDriverMessage = (data.messages || []).slice().reverse().find(message => message.senderType === "driver");
+      if (latestDriverMessage) localStorage.setItem(`meiVelocityChatRead:${bookingId}`, String(latestDriverMessage.id));
       status.textContent = "Messages refresh automatically.";
       form.hidden = false;
     } catch (error) {

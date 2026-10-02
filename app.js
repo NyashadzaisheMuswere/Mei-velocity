@@ -1095,8 +1095,26 @@ if (!new URLSearchParams(window.location.search).has("view")) {
     if(completed){if(booking.rating){text("rideRatingFeedback",`Thanks for rating this ride ${booking.rating}/5.`);document.getElementById("rideRatingSelect").hidden=true;document.getElementById("rideRatingSubmit").hidden=true;}else{text("rideRatingFeedback",customerSession?.token?"Your feedback helps us improve.":"Sign in on the home page to save your rating.");}}
     const state=`${booking.status}:${booking.driverStatus}`;if(lastState&&lastState!==state&&localStorage.getItem("meiVelocityRideNotifications")==="true"&&"Notification"in window&&Notification.permission==="granted")new Notification("MEI Velocity ride update",{body:info.message});lastState=state;
   }
+  async function refreshDriverMessageNotice(booking){
+    const notice=document.getElementById("driverMessageNotice");
+    const link=document.getElementById("messageDriverLink");
+    const available=Boolean(booking?.assignedDriverId&&((booking.status==="Confirmed"&&["Accepted","On the Way","Arrived","Picked Up"].includes(booking.driverStatus))||(booking.status==="Completed"&&booking.driverStatus==="Completed")));
+    if(!available||!customerSession?.token){notice.hidden=true;return;}
+    try{
+      const response=await fetch(`${API_BASE}/api/customer/bookings/${encodeURIComponent(booking.id)}/messages`,{headers:{Authorization:`Bearer ${customerSession.token}`}});
+      if(!response.ok)return;
+      const data=await response.json();const latestDriverMessage=(data.messages||[]).slice().reverse().find(message=>message.senderType==="driver");
+      if(!latestDriverMessage){notice.hidden=true;return;}
+      const readId=Number(localStorage.getItem(`meiVelocityChatRead:${booking.id}`)||0);
+      if(Number(latestDriverMessage.id)>readId){
+        notice.hidden=false;notice.textContent=`New message from your driver: ${latestDriverMessage.body}`;link.textContent="Open driver message";
+      }else{
+        notice.hidden=true;link.textContent=booking.status==="Completed"?"Continue chat":"Message driver";
+      }
+    }catch{ /* Keep ride tracking available if the chat check is temporarily offline. */ }
+  }
   async function poll(){
-    try{const r=await fetch(`${API_BASE}/api/bookings/${encodeURIComponent(activeRide.id)}/status?phone=${encodeURIComponent(activeRide.phone)}`);const d=await r.json();if(!r.ok)throw new Error(d.message||"Could not refresh the ride.");renderBooking(d.booking);text("trackingError","");
+    try{const r=await fetch(`${API_BASE}/api/bookings/${encodeURIComponent(activeRide.id)}/status?phone=${encodeURIComponent(activeRide.phone)}`);const d=await r.json();if(!r.ok)throw new Error(d.message||"Could not refresh the ride.");renderBooking(d.booking);await refreshDriverMessageNotice(d.booking);text("trackingError","");
       const rides=JSON.parse(localStorage.getItem("meiVelocityRideHistory")||"[]");const saved=rides.find(x=>x.id===activeRide.id);if(saved){saved.status=d.booking.status||saved.status;if(d.booking.rating)saved.rating=d.booking.rating;localStorage.setItem("meiVelocityRideHistory",JSON.stringify(rides));}
     }catch(error){text("trackingError",error.message);}
   }

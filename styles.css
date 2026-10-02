@@ -199,6 +199,7 @@ html[data-workflow="confirm"] #ridePage{display:none!important}
 .workflow-dialog form+.primary-button{margin-top:12px}
 .tracking-actions>.secondary-button{min-height:48px;border:0;border-radius:11px;background:#fff0e3;color:#883e00;font:inherit;font-weight:800;cursor:pointer}
 .tracking-actions a[hidden]{display:none!important}
+.driver-message-notice{margin:10px 0;padding:11px 13px;border:1px solid #d8e6ad;border-radius:10px;background:#f1f7dd;color:#34420d;font-size:13px;overflow-wrap:anywhere}.driver-message-notice[hidden]{display:none!important}
 .ride-chat{margin:14px 0;padding:14px;border:1px solid #e3e8e0;border-radius:14px;background:#fff}.ride-chat[hidden]{display:none!important}.ride-chat h2{margin:0 0 10px;font-size:17px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:260px;min-height:56px;overflow:auto;padding:4px 2px}.chat-message{max-width:88%;padding:9px 11px;border-radius:12px;background:#f1f3ee;overflow-wrap:anywhere;font-size:13px}.chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:3px;color:#697164;font-size:10px}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px}.chat-form input{min-width:0;min-height:44px;padding:9px 11px;border:1px solid #dce2d7;border-radius:9px;font:inherit}.chat-form button{min-height:44px;padding:0 16px;border:0;border-radius:9px;background:#b3d735;font:inherit;font-weight:800;cursor:pointer}
 
 /* Responsive layout safeguards for small phones, tablets, desktops, and short screens. */
