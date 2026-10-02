@@ -214,7 +214,8 @@ async function loadCurrentRide() {
 
     currentRide.innerHTML = `
       <div class="ride-offer">
-        <h3>Active Ride</h3>
+        <h3>${ride.status === 'Completed' ? 'Latest Completed Ride' : 'Active Ride'}</h3>
+        ${ride.status === 'Completed' ? '<p>The ride has ended. You can still read and reply in this chat.</p>' : ''}
         <p><strong>Customer:</strong> ${escapeHtml(ride.name)}</p>
         <p><strong>Phone:</strong> ${escapeHtml(ride.phone)}</p>
         <p><strong>Pickup:</strong> ${escapeHtml(ride.pickup)}</p>
