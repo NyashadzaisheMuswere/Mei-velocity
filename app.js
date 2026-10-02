@@ -1041,7 +1041,7 @@ if (!new URLSearchParams(window.location.search).has("view")) {
   }
 
   const page = document.getElementById("ridePage"); page.hidden = false;
-  let activeRide = null; let pollTimer = null; let map = null; let pickupMarker = null; let dropMarker = null; let driverMarker = null; let routeLine = null; let approachLine = null; let lastState = "";
+  let activeRide = null; let pollTimer = null; let map = null; let pickupMarker = null; let dropMarker = null; let driverMarker = null; let routeLine = null; let approachLine = null; let lastState = ""; let lastCustomerChatSignature = "";
   const queryId = new URLSearchParams(window.location.search).get("bookingId");
   try { activeRide = JSON.parse(localStorage.getItem("meiVelocityCustomerBooking") || "null"); } catch { activeRide = null; }
   if (queryId && activeRide?.id !== queryId) {
@@ -1094,8 +1094,44 @@ if (!new URLSearchParams(window.location.search).has("view")) {
     if(completed){if(booking.rating){text("rideRatingFeedback",`Thanks for rating this ride ${booking.rating}/5.`);document.getElementById("rideRatingSelect").hidden=true;document.getElementById("rideRatingSubmit").hidden=true;}else{text("rideRatingFeedback",customerSession?.token?"Your feedback helps us improve.":"Sign in on the home page to save your rating.");}}
     const state=`${booking.status}:${booking.driverStatus}`;if(lastState&&lastState!==state&&localStorage.getItem("meiVelocityRideNotifications")==="true"&&"Notification"in window&&Notification.permission==="granted")new Notification("MEI Velocity ride update",{body:info.message});lastState=state;
   }
+  function renderCustomerChat(messages){
+    const list=document.getElementById("customerChatMessages");
+    const signature=messages.map(message=>message.id).join(",");
+    if(signature===lastCustomerChatSignature)return;
+    lastCustomerChatSignature=signature;
+    list.replaceChildren();
+    messages.forEach(message=>{
+      const item=document.createElement("article");item.className="chat-message"+(message.senderType==="customer"?" mine":"");
+      const sender=document.createElement("small");const date=new Date(message.createdAt);sender.textContent=`${message.senderType==="customer"?"You":message.senderName} · ${Number.isNaN(date.getTime())?"":date.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}`;
+      const body=document.createElement("div");body.textContent=message.body;item.append(sender,body);list.append(item);
+    });
+    list.scrollTop=list.scrollHeight;
+  }
+  async function refreshCustomerChat(booking){
+    const panel=document.getElementById("customerRideChat");
+    const isActive=Boolean(booking?.assignedDriverId&&booking.status==="Confirmed"&&["Accepted","On the Way","Arrived","Picked Up"].includes(booking.driverStatus));
+    panel.hidden=!isActive;
+    if(!isActive)return;
+    const status=document.getElementById("customerChatStatus");
+    if(!customerSession?.token){status.textContent="Sign in again to message your driver.";return;}
+    try{
+      const response=await fetch(`${API_BASE}/api/customer/bookings/${encodeURIComponent(booking.id)}/messages`,{headers:{Authorization:`Bearer ${customerSession.token}`}});
+      const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load messages.");
+      renderCustomerChat(data.messages||[]);status.textContent="Messages refresh automatically.";
+    }catch(error){status.textContent=error.message;}
+  }
+  document.getElementById("customerChatForm").addEventListener("submit",async event=>{
+    event.preventDefault();const input=document.getElementById("customerChatInput");const button=event.currentTarget.querySelector("button");const body=input.value.trim();
+    if(!body||!activeRide?.id||!customerSession?.token)return;
+    button.disabled=true;document.getElementById("customerChatStatus").textContent="Sending…";
+    try{
+      const response=await fetch(`${API_BASE}/api/customer/bookings/${encodeURIComponent(activeRide.id)}/messages`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${customerSession.token}`},body:JSON.stringify({body})});
+      const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to send message.");
+      input.value="";lastCustomerChatSignature="";await refreshCustomerChat({id:activeRide.id,assignedDriverId:true,status:"Confirmed",driverStatus:"Accepted"});
+    }catch(error){document.getElementById("customerChatStatus").textContent=error.message;}finally{button.disabled=false;}
+  });
   async function poll(){
-    try{const r=await fetch(`${API_BASE}/api/bookings/${encodeURIComponent(activeRide.id)}/status?phone=${encodeURIComponent(activeRide.phone)}`);const d=await r.json();if(!r.ok)throw new Error(d.message||"Could not refresh the ride.");renderBooking(d.booking);text("trackingError","");
+    try{const r=await fetch(`${API_BASE}/api/bookings/${encodeURIComponent(activeRide.id)}/status?phone=${encodeURIComponent(activeRide.phone)}`);const d=await r.json();if(!r.ok)throw new Error(d.message||"Could not refresh the ride.");renderBooking(d.booking);await refreshCustomerChat(d.booking);text("trackingError","");
       const rides=JSON.parse(localStorage.getItem("meiVelocityRideHistory")||"[]");const saved=rides.find(x=>x.id===activeRide.id);if(saved){saved.status=d.booking.status||saved.status;if(d.booking.rating)saved.rating=d.booking.rating;localStorage.setItem("meiVelocityRideHistory",JSON.stringify(rides));}
     }catch(error){text("trackingError",error.message);}
   }

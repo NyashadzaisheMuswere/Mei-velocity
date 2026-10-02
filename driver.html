@@ -19,6 +19,7 @@
     .hidden{display:none}
     .success{color:#087b2e}
     .error{color:#b00020}
+    .ride-chat{margin-top:18px;padding:14px;border:1px solid #e3e8e0;border-radius:12px;background:#fff}.ride-chat h3{margin:0 0 10px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:240px;min-height:54px;overflow:auto}.chat-message{max-width:88%;padding:9px 11px;border-radius:12px;background:#f1f3ee;overflow-wrap:anywhere;font-size:13px}.chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:3px;color:#697164;font-size:10px}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin-top:10px}.chat-form input{min-width:0;margin:0;padding:10px}.chat-form button{width:auto;margin:0;padding:0 15px;background:#b3d735;color:#17200a;font-weight:700}
   </style>
 </head>
 <body>
@@ -79,6 +80,56 @@
       })[character]);
     }
 
+    let driverChatSignature = '';
+    async function loadDriverChat(rideId) {
+      const activeToken = localStorage.getItem('meiDriverToken');
+      const list = document.getElementById('driverChatMessages');
+      if (!activeToken || !list) return;
+      const status = document.getElementById('driverChatStatus');
+      try {
+        const response = await fetch(`${API}/api/driver/bookings/${encodeURIComponent(rideId)}/messages`, {headers:{Authorization:`Bearer ${activeToken}`}});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Unable to load messages.');
+        const messages = data.messages || [];
+        const signature = messages.map(message => message.id).join(',');
+        if (signature !== driverChatSignature) {
+          driverChatSignature = signature;
+          list.replaceChildren();
+          messages.forEach(message => {
+            const item = document.createElement('article');
+            item.className = 'chat-message' + (message.senderType === 'driver' ? ' mine' : '');
+            const sender = document.createElement('small');
+            const date = new Date(message.createdAt);
+            sender.textContent = `${message.senderType === 'driver' ? 'You' : message.senderName} · ${Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+            const body = document.createElement('div'); body.textContent = message.body;
+            item.append(sender, body); list.append(item);
+          });
+          list.scrollTop = list.scrollHeight;
+        }
+        status.textContent = 'Messages refresh automatically.';
+      } catch (error) { status.textContent = error.message; }
+
+      const form = document.getElementById('driverChatForm');
+      if (form) form.onsubmit = async event => {
+        event.preventDefault();
+        const input = document.getElementById('driverChatInput');
+        const button = form.querySelector('button');
+        const body = input.value.trim();
+        if (!body) return;
+        button.disabled = true; status.textContent = 'Sending…';
+        try {
+          const response = await fetch(`${API}/api/driver/bookings/${encodeURIComponent(rideId)}/messages`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${activeToken}`},body:JSON.stringify({body})});
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'Unable to send message.');
+          input.value = '';
+          const currentInput = document.getElementById('driverChatInput');
+          if (currentInput) currentInput.value = '';
+          driverChatSignature = ''; await loadDriverChat(rideId);
+        } catch (error) { status.textContent = error.message; }
+        finally { button.disabled = false; }
+      };
+    }
+
 async function loadCurrentRide() {
   const activeToken = localStorage.getItem('meiDriverToken');
   if (!activeToken || !currentRide) return;
@@ -95,11 +146,16 @@ async function loadCurrentRide() {
     }
 
     if (!data.ride) {
+      driverChatSignature = '';
       currentRide.innerHTML = '<p>No active ride.</p>';
       return;
     }
 
     const ride = data.ride;
+    const previousChatInput = document.getElementById('driverChatInput');
+    const chatDraft = previousChatInput?.value || '';
+    const chatHadFocus = previousChatInput === document.activeElement;
+    const chatCursor = previousChatInput?.selectionStart ?? chatDraft.length;
     const nextAction = {
       'Accepted': 'On the Way',
       'On the Way': 'Arrived',
@@ -122,8 +178,18 @@ async function loadCurrentRide() {
         <p><strong>Payment:</strong> ${escapeHtml(ride.payment)}</p>
         <p><strong>Ride status:</strong> <span class="status">${escapeHtml(ride.driverStatus)}</span></p>
         ${nextAction ? `<button onclick="updateRideStatus('${nextAction}')">${nextAction}</button>` : ''}
+        <section class="ride-chat"><h3>Message customer</h3><div id="driverChatMessages" class="chat-messages" aria-live="polite"></div><form id="driverChatForm" class="chat-form"><input id="driverChatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required><button type="submit">Send</button></form><p id="driverChatStatus" role="status"></p></section>
       </div>
     `;
+    const nextChatInput = document.getElementById('driverChatInput');
+    if (nextChatInput && chatDraft) {
+      nextChatInput.value = chatDraft;
+      if (chatHadFocus) {
+        nextChatInput.focus({preventScroll:true});
+        nextChatInput.setSelectionRange(chatCursor, chatCursor);
+      }
+    }
+    loadDriverChat(ride.id);
   } catch (error) {
     console.error('Unable to load current ride:', error);
   }

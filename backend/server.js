@@ -206,6 +206,18 @@ async function initializeDatabase() {
     )
   `);
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS booking_messages (
+      id BIGSERIAL PRIMARY KEY,
+      "bookingId" TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+      "senderType" TEXT NOT NULL CHECK ("senderType" IN ('customer', 'driver')),
+      "senderId" TEXT NOT NULL,
+      "senderName" TEXT NOT NULL,
+      body TEXT NOT NULL CHECK (char_length(body) BETWEEN 1 AND 1000),
+      "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_booking_messages_booking ON booking_messages ("bookingId", id)`);
+  await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "customerId" TEXT REFERENCES customers(id),
     ADD COLUMN IF NOT EXISTS "promoCode" TEXT,
@@ -609,6 +621,81 @@ app.get("/api/driver/current-ride", driverAuth, async (req, res) => {
   }
 });
 
+// RIDE CHAT: only the assigned driver and verified customer can access it.
+const CHAT_ACTIVE_RIDE_SQL = `status = 'Confirmed' AND "driverStatus" IN ('Accepted','On the Way','Arrived','Picked Up')`;
+
+async function readRideMessages(bookingId) {
+  const result = await pool.query(`
+    SELECT id, "senderType", "senderId", "senderName", body, "createdAt"
+    FROM (
+      SELECT id, "senderType", "senderId", "senderName", body, "createdAt"
+      FROM booking_messages WHERE "bookingId"=$1
+      ORDER BY id DESC LIMIT 100
+    ) recent ORDER BY id ASC
+  `, [bookingId]);
+  return result.rows;
+}
+
+async function saveRideMessage({ bookingId, senderType, senderId, senderName, body }) {
+  const result = await pool.query(`
+    INSERT INTO booking_messages ("bookingId", "senderType", "senderId", "senderName", body)
+    VALUES ($1,$2,$3,$4,$5)
+    RETURNING id, "senderType", "senderId", "senderName", body, "createdAt"
+  `, [bookingId, senderType, senderId, senderName, body]);
+  return result.rows[0];
+}
+
+app.get("/api/customer/bookings/:id/messages", customerAuth, async (req, res) => {
+  try {
+    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "customerId"=$2 AND ${CHAT_ACTIVE_RIDE_SQL} AND "assignedDriverId" IS NOT NULL`, [req.params.id, req.customerId]);
+    if (!ride.rows.length) return res.status(404).json({ success: false, message: "Chat is available after a driver accepts your ride." });
+    res.json({ success: true, messages: await readRideMessages(req.params.id) });
+  } catch (error) {
+    console.error("Customer ride chat read error:", error);
+    res.status(500).json({ success: false, message: "Unable to load ride messages." });
+  }
+});
+
+app.post("/api/customer/bookings/:id/messages", customerAuth, async (req, res) => {
+  const body = String(req.body.body || "").trim();
+  if (!body || body.length > 1000) return res.status(400).json({ success: false, message: "Write a message up to 1,000 characters." });
+  try {
+    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "customerId"=$2 AND ${CHAT_ACTIVE_RIDE_SQL} AND "assignedDriverId" IS NOT NULL`, [req.params.id, req.customerId]);
+    if (!ride.rows.length) return res.status(404).json({ success: false, message: "Chat is available after a driver accepts your ride." });
+    const customer = await pool.query(`SELECT username FROM customers WHERE id=$1`, [req.customerId]);
+    const message = await saveRideMessage({ bookingId: req.params.id, senderType: "customer", senderId: req.customerId, senderName: customer.rows[0]?.username || "Customer", body });
+    res.status(201).json({ success: true, message });
+  } catch (error) {
+    console.error("Customer ride chat send error:", error);
+    res.status(500).json({ success: false, message: "Unable to send your message." });
+  }
+});
+
+app.get("/api/driver/bookings/:id/messages", driverAuth, async (req, res) => {
+  try {
+    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "assignedDriverId"=$2 AND ${CHAT_ACTIVE_RIDE_SQL}`, [req.params.id, req.driverId]);
+    if (!ride.rows.length) return res.status(404).json({ success: false, message: "This ride chat is no longer available." });
+    res.json({ success: true, messages: await readRideMessages(req.params.id) });
+  } catch (error) {
+    console.error("Driver ride chat read error:", error);
+    res.status(500).json({ success: false, message: "Unable to load ride messages." });
+  }
+});
+
+app.post("/api/driver/bookings/:id/messages", driverAuth, async (req, res) => {
+  const body = String(req.body.body || "").trim();
+  if (!body || body.length > 1000) return res.status(400).json({ success: false, message: "Write a message up to 1,000 characters." });
+  try {
+    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "assignedDriverId"=$2 AND ${CHAT_ACTIVE_RIDE_SQL}`, [req.params.id, req.driverId]);
+    if (!ride.rows.length) return res.status(404).json({ success: false, message: "This ride chat is no longer available." });
+    const driver = await pool.query(`SELECT name FROM drivers WHERE id=$1`, [req.driverId]);
+    const message = await saveRideMessage({ bookingId: req.params.id, senderType: "driver", senderId: req.driverId, senderName: driver.rows[0]?.name || "Driver", body });
+    res.status(201).json({ success: true, message });
+  } catch (error) {
+    console.error("Driver ride chat send error:", error);
+    res.status(500).json({ success: false, message: "Unable to send your message." });
+  }
+});
 app.patch("/api/driver/current-ride/status", driverAuth, async (req, res) => {
   const { status } = req.body;
 
