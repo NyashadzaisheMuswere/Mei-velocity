@@ -179,6 +179,9 @@
       }
     }
 
+let currentRideSnapshot = '';
+let offersSnapshot = '';
+
 async function loadCurrentRide() {
   const activeToken = localStorage.getItem('meiDriverToken');
   if (!activeToken || !currentRide) return;
@@ -190,17 +193,22 @@ async function loadCurrentRide() {
     const data = await response.json();
 
     if (!response.ok || !data.success) {
-      currentRide.innerHTML = '<p>Unable to load current ride.</p>';
+      if (typeof setAppMessage === 'function') setAppMessage('Could not refresh ride details. Retrying shortly.');
       return;
     }
 
     if (!data.ride) {
       driverChatSignature = '';
-      currentRide.innerHTML = '<p>No active ride.</p>';
+      driverChatRideId = '';
+      if (currentRideSnapshot !== 'none') {
+        currentRide.innerHTML = '<p>No active ride.</p>';
+        currentRideSnapshot = 'none';
+      }
       return;
     }
 
     const ride = data.ride;
+    const rideSignature = JSON.stringify([ride.id, ride.status, ride.driverStatus, ride.name, ride.phone, ride.pickup, ride.dropoff, ride.date, ride.time, ride.vehicle, ride.distance, ride.fare, ride.payment]);
     const previousChatInput = document.getElementById('driverChatInput');
     const chatDraft = previousChatInput?.value || '';
     const chatHadFocus = previousChatInput === document.activeElement;
@@ -212,7 +220,7 @@ async function loadCurrentRide() {
       'Picked Up': 'Completed'
     }[ride.driverStatus];
 
-    currentRide.innerHTML = `
+    const rideMarkup = `
       <div class="ride-offer">
         <h3>${ride.status === 'Completed' ? 'Latest Completed Ride' : 'Active Ride'}</h3>
         ${ride.status === 'Completed' ? '<p>The ride has ended. You can still read and reply in this chat.</p>' : ''}
@@ -231,6 +239,10 @@ async function loadCurrentRide() {
         <section class="ride-chat"><h3>Message customer <span id="driverChatNotice" class="chat-notice" hidden>New message</span></h3><button id="enableChatAlerts" class="chat-notify-button" type="button" onclick="enableDriverChatAlerts()">Turn on message alerts</button><div id="driverChatMessages" class="chat-messages" aria-live="polite"></div><form id="driverChatForm" class="chat-form"><input id="driverChatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required><button type="submit">Send</button></form><p id="driverChatStatus" role="status"></p></section>
       </div>
     `;
+    if (rideSignature !== currentRideSnapshot) {
+      currentRide.innerHTML = rideMarkup;
+      currentRideSnapshot = rideSignature;
+    }
     const nextChatInput = document.getElementById('driverChatInput');
     const alertsButton = document.getElementById('enableChatAlerts');
     if (alertsButton && 'Notification' in window && Notification.permission === 'granted') { alertsButton.textContent = 'Alerts are on'; alertsButton.disabled = true; }
@@ -291,11 +303,16 @@ async function loadOffers() {
     if (!data.success || !offersList) return;
 
     if (!data.offers.length) {
-      offersList.innerHTML = '<p>No ride offers right now.</p>';
+      if (offersSnapshot !== 'none') {
+        offersList.innerHTML = '<p>No ride offers right now.</p>';
+        offersSnapshot = 'none';
+      }
       return;
     }
 
-    offersList.innerHTML = data.offers.map(offer => `
+    const offersSignature = JSON.stringify(data.offers.map(offer => [offer.id, offer.status, offer.name, offer.phone, offer.pickup, offer.dropoff, offer.date, offer.time, offer.vehicle, offer.distance, offer.fare, offer.payment]));
+    if (offersSignature === offersSnapshot) return;
+    const offersMarkup = data.offers.map(offer => `
       <div class="ride-offer">
         <h3>New Ride</h3>
         <p><strong>Customer:</strong> ${escapeHtml(offer.name)}</p>
@@ -314,6 +331,8 @@ async function loadOffers() {
         </div>
       </div>
     `).join('');
+    offersList.innerHTML = offersMarkup;
+    offersSnapshot = offersSignature;
   } catch (error) {
     console.error('Unable to load ride offers:', error);
   }
