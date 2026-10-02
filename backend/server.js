@@ -90,11 +90,19 @@ function phoneCodeHash(phone, code) {
 }
 
 function normalizePhoneNumber(value) {
-  let phone = String(value || "").trim().replace(/[\s()-]/g, "");
-  if (phone.startsWith("00")) phone = `+${phone.slice(2)}`;
-  else if (phone.startsWith("0")) phone = `+263${phone.slice(1)}`;
-  else if (/^263\d+$/.test(phone)) phone = `+${phone}`;
-  return phone;
+  const raw = String(value || "").normalize("NFKC")
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
+    .trim();
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return "";
+
+  // Keep explicit international prefixes intact; accept 00 as an alternative
+  // international dialing prefix. Bare local Zimbabwe numbers remain supported.
+  if (raw.startsWith("+")) return `+${digits}`;
+  if (digits.startsWith("00")) return `+${digits.slice(2)}`;
+  if (digits.startsWith("263")) return `+${digits}`;
+  if (digits.startsWith("0")) return `+263${digits.slice(1)}`;
+  return digits;
 }
 
 function verifyDriverToken(token) {
@@ -749,7 +757,7 @@ function isLocalCustomerOtpEnabled(req) {
 }
 
 app.post("/api/customer/request-code", async (req, res) => {
-  const username = String(req.body.username || "").trim();
+  const username = String(req.body.username || req.body.name || "").trim();
   const phone = normalizePhoneNumber(req.body.phone);
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
@@ -757,8 +765,11 @@ app.post("/api/customer/request-code", async (req, res) => {
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
   const localOtp = isLocalCustomerOtpEnabled(req);
   if ((!localOtp && (!sid || !token || (!verifyServiceSid && !from))) || !customerAuthSecret()) return res.status(503).json({ success: false, message: localOtp ? "Customer sign-in is not configured yet." : "Phone verification is not configured yet. Add the Twilio Verify Service SID in the server settings." });
-  if (username.length < 2 || username.length > 40 || !/^\+[1-9]\d{7,14}$/.test(phone)) {
-    return res.status(400).json({ success: false, message: "Enter a username and phone number in international format, such as +263…" });
+  if (username.length < 2 || username.length > 40) {
+    return res.status(400).json({ success: false, message: "Enter a name between 2 and 40 characters." });
+  }
+  if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+    return res.status(400).json({ success: false, message: "Enter a valid phone number with its country code, such as +49… or +263…" });
   }
   try {
     const recent = await pool.query(`SELECT "sentAt" FROM customer_verification_codes WHERE phone=$1`, [phone]);

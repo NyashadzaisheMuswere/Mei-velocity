@@ -234,7 +234,7 @@
   <h2>Sign in or create your account</h2>
   <p>Verify your phone number to book rides and keep your trip history with your MEI Velocity profile.</p>
   <label>Your name<input id="accountUsername" autocomplete="username" required></label>
-  <label>Phone number<input id="accountPhone" type="tel" placeholder="+263…" autocomplete="tel" required></label>
+  <label>Phone number<input id="accountPhone" type="tel" placeholder="+country code and number" autocomplete="tel" required></label>
   <button id="sendCode" type="button" class="account-primary">Send verification code</button>
   <label id="codeField" hidden>Verification code<input id="accountCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
   <button id="verifyCode" type="button" class="account-primary" hidden>Verify and continue</button>
@@ -403,7 +403,7 @@
   <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
   <h2 id="confirmDialogTitle">Sign in or create your account</h2><p id="confirmDialogIntro">Verify your phone number before booking.</p>
   <label>Your name<input id="confirmUsername" autocomplete="name" required></label>
-  <label>Phone number<input id="confirmPhone" type="tel" placeholder="+263…" autocomplete="tel" required></label>
+  <label>Phone number<input id="confirmPhone" type="tel" placeholder="+country code and number" autocomplete="tel" required></label>
   <button id="confirmSendCode" class="primary-button" type="button">Send verification code</button>
   <label id="confirmCodeRow" hidden>Verification code<input id="confirmCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
   <button id="confirmVerify" class="primary-button" type="button" hidden>Verify and continue</button>
