@@ -198,3 +198,102 @@ html[data-workflow="confirm"] #ridePage{display:none!important}
 .workflow-content>.primary-button:disabled,.workflow-dialog>.primary-button:disabled{opacity:.6}
 .workflow-dialog form+.primary-button{margin-top:12px}
 .tracking-actions>.secondary-button{min-height:48px;border:0;border-radius:11px;background:#fff0e3;color:#883e00;font:inherit;font-weight:800;cursor:pointer}
+
+/* Responsive layout safeguards for small phones, tablets, desktops, and short screens. */
+html{min-width:320px;overflow-x:clip;scroll-padding-top:16px}
+body{min-width:320px;overflow-x:clip}
+img,svg,video,canvas{max-width:100%}
+button,input,select,textarea{max-width:100%;font:inherit}
+button,a,select{touch-action:manipulation}
+:focus-visible{outline:3px solid #5d8d00;outline-offset:3px}
+
+.app-topbar{left:clamp(12px,3vw,28px);right:clamp(12px,3vw,28px)}
+.app-shortcuts{left:clamp(8px,2vw,20px);right:clamp(8px,2vw,20px);gap:clamp(4px,1.8vw,18px)}
+.app-shortcuts a{min-width:0;flex:0 1 76px}
+.bottom-sheet.route-mode{width:100%;max-height:min(76dvh,700px);overflow-x:hidden;overscroll-behavior:contain}
+.trip-search,.ride-quotes,.quote-cards,.quote-card,.workflow-content,.workflow-card,.tracking-sheet{min-width:0}
+.trip-field input,.route-row strong,.driver-detail strong,.account-chip strong,.workflow-dialog label{min-width:0;overflow-wrap:anywhere}
+.quote-card{min-width:0}
+.quote-info{min-width:0;overflow-wrap:anywhere}
+.quote-price{flex:none}
+.workflow-dialog[open]{max-height:min(90dvh,760px);overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
+.workflow-dialog input{font-size:16px}
+.tracking-sheet{overflow-wrap:anywhere}
+
+@media (max-width: 380px){
+  .app-brand{width:88px;height:42px}
+  .app-account{width:42px;height:42px}
+  .app-shortcuts{top:68px;gap:2px}
+  .app-shortcuts a{flex-basis:64px;font-size:9px}
+  .shortcut-icon{width:38px;height:38px;border-radius:13px;font-size:18px}
+  .bottom-sheet.route-mode{padding-left:12px;padding-right:12px;border-radius:19px 19px 0 0}
+  .bottom-sheet.route-mode h1{font-size:20px}
+  .trip-field{padding-left:38px;padding-right:44px}
+  .trip-field::before{left:12px}
+  .quote-card{gap:7px;padding:8px}
+  .quote-card .vehicle-symbol{width:34px;height:34px;flex:none}
+  .quote-info strong{font-size:12px}
+  .quote-price{font-size:13px}
+  .tracking-actions{grid-template-columns:1fr}
+  .account-chip{flex-wrap:wrap}
+  .account-chip>strong{flex:1 1 65%}
+  .workflow-card{padding:14px}
+  .workflow-dialog{padding:20px 17px}
+}
+
+@media (min-width: 601px) and (max-width: 1023px){
+  .bottom-sheet.route-mode{max-height:min(72dvh,720px);padding-left:clamp(22px,6vw,64px);padding-right:clamp(22px,6vw,64px)}
+  .trip-field{min-height:60px}
+  .quote-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quote-card{align-items:flex-start}
+  .workflow-content{width:min(calc(100% - 40px),680px)}
+  .tracking-sheet{width:min(calc(100% - 32px),680px)}
+  .section{padding-left:clamp(20px,4vw,42px);padding-right:clamp(20px,4vw,42px)}
+}
+
+@media (min-width: 1024px){
+  .bottom-sheet.route-mode{max-height:min(78dvh,760px)}
+  .workflow-content{width:min(calc(100% - 48px),680px)}
+  .workflow-content h1{font-size:clamp(26px,2.5vw,34px)}
+  .tracking-sheet{width:min(calc(100% - 48px),680px)}
+  .tracking-sheet h1{font-size:clamp(23px,2vw,30px)}
+}
+
+@media (max-height: 620px) and (orientation: landscape){
+  .hero:not(:has(.booking.booking-open)){height:100dvh;min-height:100dvh}
+  .app-shortcuts{top:66px}
+  .app-shortcuts a{flex-direction:row;justify-content:center;gap:5px}
+  .shortcut-icon{width:34px;height:34px;border-radius:11px;font-size:16px}
+  .bottom-sheet.route-mode{max-height:56dvh;padding-top:8px;padding-bottom:max(8px,env(safe-area-inset-bottom));border-radius:17px 17px 0 0}
+  .bottom-sheet.route-mode .sheet-handle{margin-bottom:7px}
+  .bottom-sheet.route-mode h1{font-size:19px}
+  .bottom-sheet.route-mode .sheet-subtitle{margin:3px 0 8px}
+  .bottom-sheet.route-mode .trip-search{gap:6px}
+  .trip-field{min-height:50px;padding-top:5px;padding-bottom:4px}
+  .trip-field::before{top:18px}
+  .map-locate{bottom:calc(56dvh + 12px);width:40px;height:40px}
+  .tracking-map{min-height:260px}
+}
+
+@media (min-width: 760px) and (max-height: 720px){
+  html[data-workflow="ride"] body{height:auto;min-height:100svh;overflow:auto}
+  #ridePage:not([hidden]){height:auto;min-height:100svh;overflow:visible}
+  .tracking-map{height:100svh;min-height:420px;position:sticky;top:0}
+  .tracking-sheet{align-self:start;margin:24px auto;max-height:none;overflow:visible}
+}
+
+@supports (height: 100dvh){
+  .hero{min-height:100dvh;height:100dvh}
+  .hero:has(.booking.booking-open){height:auto;min-height:100dvh}
+  .bottom-sheet.route-mode{max-height:min(76dvh,700px)}
+  .tracking-map{height:54dvh}
+  @media (min-width: 760px){
+    #ridePage:not([hidden]){height:100dvh}
+    .tracking-map{height:100dvh}
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
