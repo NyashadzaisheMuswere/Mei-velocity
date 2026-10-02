@@ -19,7 +19,7 @@
     .hidden{display:none}
     .success{color:#087b2e}
     .error{color:#b00020}
-    .ride-chat{margin-top:18px;padding:14px;border:1px solid #e3e8e0;border-radius:12px;background:#fff}.ride-chat h3{margin:0 0 10px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:240px;min-height:54px;overflow:auto}.chat-message{max-width:88%;padding:9px 11px;border-radius:12px;background:#f1f3ee;overflow-wrap:anywhere;font-size:13px}.chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:3px;color:#697164;font-size:10px}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin-top:10px}.chat-form input{min-width:0;margin:0;padding:10px}.chat-form button{width:auto;margin:0;padding:0 15px;background:#b3d735;color:#17200a;font-weight:700}
+    .ride-chat{margin-top:18px;padding:14px;border:1px solid #e3e8e0;border-radius:12px;background:#fff}.ride-chat h3{margin:0 0 10px}.chat-notice{display:inline-block;margin-left:7px;padding:4px 8px;border-radius:14px;background:#fff0c2;color:#704d00;font-size:11px}.chat-notice[hidden]{display:none}.chat-notify-button{width:auto;margin:0 0 10px;padding:8px 11px;border:1px solid #dce2d7;background:#f4f7ef;color:#30382d;font-size:12px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:240px;min-height:54px;overflow:auto}.chat-message{max-width:88%;padding:9px 11px;border-radius:12px;background:#f1f3ee;overflow-wrap:anywhere;font-size:13px}.chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:3px;color:#697164;font-size:10px}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin-top:10px}.chat-form input{min-width:0;margin:0;padding:10px}.chat-form button{width:auto;margin:0;padding:0 15px;background:#b3d735;color:#17200a;font-weight:700}
   </style>
 </head>
 <body>
@@ -81,16 +81,47 @@
     }
 
     let driverChatSignature = '';
+    let driverChatRideId = '';
+    let driverChatHasLoaded = false;
+    let driverChatLastSeenId = 0;
+    let driverChatUnread = false;
+    let driverChatLatestCustomerMessage = null;
     async function loadDriverChat(rideId) {
       const activeToken = localStorage.getItem('meiDriverToken');
       const list = document.getElementById('driverChatMessages');
       if (!activeToken || !list) return;
       const status = document.getElementById('driverChatStatus');
+      if (driverChatRideId !== rideId) {
+        driverChatRideId = rideId;
+        driverChatSignature = '';
+        driverChatHasLoaded = false;
+        driverChatLastSeenId = 0;
+        driverChatUnread = false;
+        driverChatLatestCustomerMessage = null;
+      }
       try {
         const response = await fetch(`${API}/api/driver/bookings/${encodeURIComponent(rideId)}/messages`, {headers:{Authorization:`Bearer ${activeToken}`}});
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || 'Unable to load messages.');
         const messages = data.messages || [];
+        const newest = messages[messages.length - 1];
+        const newestCustomerMessage = messages.slice().reverse().find(message => message.senderType === 'customer');
+        if (newestCustomerMessage && (!driverChatHasLoaded || Number(newestCustomerMessage.id) > driverChatLastSeenId)) {
+          const isNew = !driverChatHasLoaded || Number(newestCustomerMessage.id) > driverChatLastSeenId;
+          if (isNew) {
+            driverChatUnread = true;
+            driverChatLatestCustomerMessage = newestCustomerMessage;
+            if (typeof setAppMessage === 'function') setAppMessage(`New customer message: ${newestCustomerMessage.body}`, true);
+            if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+              new Notification('MEI Velocity: new ride message', {body: newestCustomerMessage.body});
+            }
+          }
+        }
+        if (newestCustomerMessage && (!driverChatLatestCustomerMessage || Number(newestCustomerMessage.id) >= Number(driverChatLatestCustomerMessage.id))) driverChatLatestCustomerMessage = newestCustomerMessage;
+        if (newest) driverChatLastSeenId = Math.max(driverChatLastSeenId, Number(newest.id) || 0);
+        driverChatHasLoaded = true;
+        const notice = document.getElementById('driverChatNotice');
+        if (notice) { notice.hidden = !driverChatUnread; notice.textContent = 'New message'; }
         const signature = messages.map(message => message.id).join(',');
         if (signature !== driverChatSignature) {
           driverChatSignature = signature;
@@ -106,7 +137,9 @@
           });
           list.scrollTop = list.scrollHeight;
         }
-        status.textContent = 'Messages refresh automatically.';
+        status.textContent = driverChatUnread && driverChatLatestCustomerMessage
+          ? `New message from ${driverChatLatestCustomerMessage.senderName}: ${driverChatLatestCustomerMessage.body}`
+          : 'Messages refresh automatically.';
       } catch (error) { status.textContent = error.message; }
 
       const form = document.getElementById('driverChatForm');
@@ -124,10 +157,26 @@
           input.value = '';
           const currentInput = document.getElementById('driverChatInput');
           if (currentInput) currentInput.value = '';
+          const notice = document.getElementById('driverChatNotice');
+          if (notice) notice.hidden = true;
+          driverChatUnread = false;
           driverChatSignature = ''; await loadDriverChat(rideId);
         } catch (error) { status.textContent = error.message; }
         finally { button.disabled = false; }
       };
+    }
+
+    async function enableDriverChatAlerts() {
+      const status = document.getElementById('driverChatStatus');
+      if (!('Notification' in window)) { status.textContent = 'This browser does not support message alerts.'; return; }
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        status.textContent = 'Message alerts are on. Keep the driver page open to receive them.';
+        const button = document.getElementById('enableChatAlerts');
+        if (button) { button.textContent = 'Alerts are on'; button.disabled = true; }
+      } else {
+        status.textContent = 'Allow notifications for this site in your browser settings to get message alerts.';
+      }
     }
 
 async function loadCurrentRide() {
@@ -178,10 +227,13 @@ async function loadCurrentRide() {
         <p><strong>Payment:</strong> ${escapeHtml(ride.payment)}</p>
         <p><strong>Ride status:</strong> <span class="status">${escapeHtml(ride.driverStatus)}</span></p>
         ${nextAction ? `<button onclick="updateRideStatus('${nextAction}')">${nextAction}</button>` : ''}
-        <section class="ride-chat"><h3>Message customer</h3><div id="driverChatMessages" class="chat-messages" aria-live="polite"></div><form id="driverChatForm" class="chat-form"><input id="driverChatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required><button type="submit">Send</button></form><p id="driverChatStatus" role="status"></p></section>
+        <section class="ride-chat"><h3>Message customer <span id="driverChatNotice" class="chat-notice" hidden>New message</span></h3><button id="enableChatAlerts" class="chat-notify-button" type="button" onclick="enableDriverChatAlerts()">Turn on message alerts</button><div id="driverChatMessages" class="chat-messages" aria-live="polite"></div><form id="driverChatForm" class="chat-form"><input id="driverChatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required><button type="submit">Send</button></form><p id="driverChatStatus" role="status"></p></section>
       </div>
     `;
     const nextChatInput = document.getElementById('driverChatInput');
+    const alertsButton = document.getElementById('enableChatAlerts');
+    if (alertsButton && 'Notification' in window && Notification.permission === 'granted') { alertsButton.textContent = 'Alerts are on'; alertsButton.disabled = true; }
+    if (alertsButton && !('Notification' in window)) alertsButton.hidden = true;
     if (nextChatInput && chatDraft) {
       nextChatInput.value = chatDraft;
       if (chatHadFocus) {

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f6f0">
+  <title>Message your driver · MEI Velocity</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{min-height:100vh;background:#f4f6f0;color:#202521;font-family:Arial,sans-serif}
+    .chat-page{width:min(100% - 28px,680px);min-height:100svh;margin:auto;display:flex;flex-direction:column;padding:18px 0 max(18px,env(safe-area-inset-bottom))}
+    .chat-top{display:flex;align-items:center;gap:12px;padding:12px 0}
+    .chat-back{color:#283027;text-decoration:none;font-weight:700}
+    .chat-card{display:flex;flex:1;flex-direction:column;min-height:0;margin:10px 0;padding:20px;border:1px solid #e1e7da;border-radius:18px;background:#fff;box-shadow:0 8px 30px #17201610}
+    .chat-card h1{margin:0;font-size:23px}.chat-intro{margin:6px 0 16px;color:#65705f;font-size:14px}
+    #conversation{display:flex;flex:1;flex-direction:column;gap:10px;min-height:220px;max-height:60vh;overflow:auto;padding:10px 2px}
+    .chat-message{max-width:84%;padding:10px 13px;border-radius:14px;background:#f1f3ee;overflow-wrap:anywhere;font-size:14px}
+    .chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:4px;color:#697164;font-size:11px}
+    .chat-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;margin-top:14px}.chat-compose[hidden]{display:none}
+    .chat-compose input{min-width:0;min-height:48px;padding:10px 13px;border:1px solid #dce2d7;border-radius:10px;font:inherit}
+    .chat-compose button{min-height:48px;padding:0 20px;border:0;border-radius:10px;background:#b3d735;color:#1d2510;font:inherit;font-weight:800;cursor:pointer}
+    .chat-compose button:disabled{opacity:.55;cursor:wait}#chatStatus{min-height:20px;margin:10px 0 0;color:#65705f;font-size:13px}
+    @media(max-width:460px){.chat-card{padding:16px}.chat-compose{grid-template-columns:1fr}.chat-compose button{width:100%}}
+  </style>
+</head>
+<body>
+  <main class="chat-page">
+    <header class="chat-top"><a id="backToRide" class="chat-back" href="index.html">← Back to your ride</a></header>
+    <section class="chat-card" aria-label="Conversation with your driver">
+      <h1>Message your driver</h1>
+      <p class="chat-intro">Send a message about your active ride. New replies appear automatically.</p>
+      <div id="conversation" class="chat-messages" aria-live="polite" aria-relevant="additions text"></div>
+      <form id="chatForm" class="chat-compose">
+        <input id="chatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required>
+        <button type="submit">Send</button>
+      </form>
+      <p id="chatStatus" role="status">Connecting to your ride…</p>
+    </section>
+  </main>
+  <script defer src="chat.js"></script>
+</body>
+</html>
