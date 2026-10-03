@@ -83,7 +83,7 @@ body{background:#080d14}
 .account-dialog{width:min(420px,calc(100vw - 28px));border:1px solid #384651;border-radius:22px;background:#111820;color:#fff;padding:27px;box-shadow:0 20px 80px #000a}.account-dialog::backdrop{background:#05090dbb;backdrop-filter:blur(5px)}.account-dialog h2{margin:7px 0;font-size:23px}.account-dialog>p{color:#aab5bd;font-size:13px;line-height:1.5}.account-mark{font-weight:900;color:#ff9a4d;font-size:11px;letter-spacing:.14em}.account-dialog label{display:block;margin:14px 0;font-size:12px;color:#c2cbd2}.account-dialog label input{display:block;width:100%;margin-top:6px;box-sizing:border-box;padding:12px;border:1px solid #394650;border-radius:9px;background:#19232c;color:#fff;font:inherit;font-size:14px}.dialog-close{position:absolute;right:15px;top:12px}.dialog-close button{border:0;background:none;color:#dce2e7;font-size:26px}.account-primary{width:100%;min-height:46px;border:0;border-radius:10px;background:#ff7900;color:#fff;font-weight:800}.account-message{min-height:17px;font-size:12px!important;color:#ffd398!important}.account-message:empty{display:none}
 
 /* MEI Velocity ride app: clean, map-first booking inspired by familiar ride apps. */
-:root{--mei-green:#b3d735;--mei-green-dark:#86a91d;--mei-ink:#202521;--mei-muted:#68716a;--mei-line:#e3e8e2;--mei-surface:#f6f8f5}
+:root{--mei-green:#ff7900;--mei-green-dark:#d96100;--mei-ink:#202521;--mei-muted:#68716a;--mei-line:#e3e8e2;--mei-surface:#f6f8f5}
 .hero:has(#homeMap){background:#e9eee8;color:var(--mei-ink)}
 .hero:has(#homeMap) .hero-bg{background:#eef1eb;background-image:linear-gradient(90deg,transparent 49.7%,rgba(129,146,128,.16) 49.9%,rgba(129,146,128,.16) 50.2%,transparent 50.4%),linear-gradient(0deg,transparent 49.7%,rgba(129,146,128,.16) 49.9%,rgba(129,146,128,.16) 50.2%,transparent 50.4%)}
 .hero:has(#homeMap) .hero-shade{background:transparent}
@@ -107,17 +107,17 @@ body{background:#080d14}
 .trip-field>span{font-size:10px;color:var(--mei-muted);margin-bottom:2px}
 .trip-field input{min-height:25px;color:#202521;font-size:14px}
 .trip-field input::placeholder{color:#858d84}
-.trip-field button{right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:#eaf2d3;color:#57720f;font-size:19px}
+.trip-field button{right:10px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;background:#fff0e4;color:#b94f00;font-size:19px}
 .trip-timing{gap:0;padding:3px;border-radius:11px;background:#f0f3ed}
 .timing-choice{min-height:39px;border:0;border-radius:9px;background:transparent;color:#596157;font-size:12px;font-weight:700}
 .timing-choice.active{background:#fff;border:1px solid #e3e8df;color:#263024;box-shadow:0 1px 4px rgba(24,40,20,.08)}
 .schedule-fields input{border:1px solid var(--mei-line);border-radius:10px;background:#fff;color:#202521;color-scheme:light}
 .find-rides{min-height:49px;border-radius:12px;background:var(--mei-green);color:#202719;font-weight:800;font-size:14px;box-shadow:0 3px 8px rgba(125,158,25,.15)}
-.find-rides:hover{background:#a9cd2d}
+.find-rides:hover{background:#e96f00}
 .location-disclosure,.trip-message{color:#697269}
-.trip-message:not(:empty){color:#57720f}
+.trip-message:not(:empty){color:#b94f00}
 .bottom-sheet.route-mode .promo-row{margin-top:7px;padding:11px 2px 3px;border-top:1px solid #edf0eb;color:#41483f;font-size:12px}
-.bottom-sheet.route-mode .promo-icon{background:#edf4d7;color:#668414}
+.bottom-sheet.route-mode .promo-icon{background:#fff0e4;color:#c65a00}
 .bottom-sheet.route-mode .promo-row b{color:#7c857a}
 .promo-entry{background:#f6f8f5;border-color:var(--mei-line)}
 .promo-entry input{background:#fff;border-color:var(--mei-line);color:#202521}
@@ -132,14 +132,14 @@ body{background:#080d14}
 .account-dialog{color:var(--mei-ink);background:#fff;border-color:var(--mei-line)}
 .account-dialog>p,.account-dialog label{color:#697269}
 .account-dialog label input{background:#f7f9f6;border-color:var(--mei-line);color:var(--mei-ink)}
-.account-message{color:#718f1c!important}
+.account-message{color:#b94f00!important}
 @media(max-width:600px){.app-topbar{left:15px;right:15px}.app-shortcuts{top:74px;left:10px;right:10px}.shortcut-icon{width:40px;height:40px;border-radius:14px}.app-shortcuts a{min-width:60px;font-size:9px}.bottom-sheet.route-mode{max-height:min(72svh,640px);padding-left:16px;padding-right:16px}.bottom-sheet.route-mode h1{font-size:21px}.trip-field{min-height:58px}.map-locate{right:15px}}
 .booking.booking-open .ride-tracker{color:#263024;background:#f6f8f5;border-color:#e3e8e2;box-shadow:none}
 .booking.booking-open .ride-tracker-head small,.booking.booking-open .driver-card small,.booking.booking-open .ride-tracker-updated{color:#6d776a}
 .booking.booking-open .ride-step span{border-color:#aab4a5}
-.booking.booking-open .ride-step.active span{background:#b3d735;border-color:#9fbe2d;color:#202719}
+.booking.booking-open .ride-step.active span{background:#ff7900;border-color:#e66d00;color:#202719}
 .booking.booking-open .ride-line{background:#d7ded2}
-.booking.booking-open .driver-card{background:#edf2e7}
+.booking.booking-open .driver-card{background:#fff2e8}
 .customer-driver-map{margin-top:14px;padding:10px;border:1px solid #e3e8e2;border-radius:12px;background:#fff}
 .customer-driver-map #driverMap{height:210px;border-radius:9px;overflow:hidden}
 .customer-driver-map p{margin:8px 2px 0;color:#68716a;font-size:12px}
@@ -179,8 +179,8 @@ body{background:#080d14}
 /* Dedicated ride review and driver tracking views. */
 html[data-workflow="confirm"] #home,html[data-workflow="confirm"] .section,html[data-workflow="confirm"] .benefits,html[data-workflow="confirm"] .cta,html[data-workflow="confirm"] footer,html[data-workflow="confirm"] #accountDialog,html[data-workflow="ride"] #home,html[data-workflow="ride"] .section,html[data-workflow="ride"] .benefits,html[data-workflow="ride"] .cta,html[data-workflow="ride"] footer,html[data-workflow="ride"] #accountDialog{display:none!important}
 html[data-workflow="confirm"] body{background:#f5f7f3;color:#202521}html[data-workflow="ride"] body{background:#f3f6f0;color:#202521}
-#confirmPage[hidden],#ridePage[hidden]{display:none!important}#confirmPage:not([hidden]){display:block}.workflow-header{height:62px;display:flex;align-items:center;gap:14px;padding:8px max(16px,calc((100% - 680px)/2));background:#fff;border-bottom:1px solid #e3e8e0}.back-link{color:#202521;text-decoration:none;font-weight:700}.workflow-logo{width:88px;height:42px;object-fit:contain;margin-left:auto}.workflow-content{width:min(100% - 28px,600px);margin:24px auto 48px}.workflow-content h1{font-size:26px;line-height:1.2;margin:0 0 5px}.workflow-lead{margin:0 0 18px;color:#6d766b}.workflow-card{padding:17px;margin:13px 0;background:#fff;border:1px solid #e3e8e0;border-radius:16px;box-shadow:0 5px 18px #2433220a}.route-row{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center;padding:10px 0}.route-row+.route-row{border-top:1px solid #eef0ed}.route-dot{width:13px;height:13px;border:3px solid #85a71e;border-radius:50%;justify-self:center}.route-dot.dest{border:0;border-radius:4px;background:#85a71e}.route-row small,.driver-detail small{display:block;color:#6d766b;font-size:11px}.route-row strong{display:block;font-size:14px;font-weight:600}.ride-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ride-meta span{padding:7px 10px;border-radius:18px;background:#f0f4ea;font-size:12px;font-weight:700}.price-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.price-row strong{font-size:24px}.workflow-content label{display:block;margin-top:12px;font-size:12px;font-weight:700}.price-input{width:100%;min-height:50px;margin-top:7px;padding:12px;border:1px solid #d6ded1;border-radius:10px;background:#fff;font:inherit;font-size:18px}.flow-help{margin:7px 0 0;color:#6d766b;font-size:12px}.promo-badge{padding:6px 9px;border-radius:12px;background:#f0f4e8;color:#536c16;font-size:11px;font-weight:700}.flow-payment{padding:12px;border:1px solid #e3e8e0;border-radius:10px;background:#fafbf9}.flow-account{display:flex;align-items:center;gap:10px}.flow-account strong{font-size:13px}.flow-account button{margin-left:auto;border:0;background:transparent;text-decoration:underline;color:#58644d}.flow-button{width:100%;min-height:50px;border:0;border-radius:12px;background:#b3d735;color:#202719;font:inherit;font-weight:800;cursor:pointer}.flow-button:disabled{opacity:.6}.flow-message{min-height:20px;color:#64704d;font-size:13px}.workflow-dialog{width:min(420px,calc(100vw - 26px));border:1px solid #e3e8e0;border-radius:20px;padding:24px;background:#fff;color:#202521;box-shadow:0 20px 80px #0005}.workflow-dialog::backdrop{background:#18201899;backdrop-filter:blur(3px)}.workflow-dialog h2{margin:0;font-size:21px}.workflow-dialog p{color:#6d766b;font-size:13px}.workflow-dialog label{display:block;margin:12px 0;font-size:12px;font-weight:700}.workflow-dialog input{display:block;width:100%;min-height:44px;margin-top:5px;padding:10px;border:1px solid #e3e8e0;border-radius:9px;font:inherit}.workflow-dialog .flow-button{margin-top:7px}.dialog-close{position:absolute;right:14px;top:8px;border:0;background:none;font-size:25px;color:#6a7466}.workflow-dialog [hidden]{display:none!important}
-#ridePage:not([hidden]){display:block;min-height:100svh}.tracking-map{position:relative;height:54svh;min-height:310px;background:#dce5d6}.tracking-map #rideMap{width:100%;height:100%}.map-status-pill{position:absolute;z-index:500;top:14px;left:50%;transform:translateX(-50%);max-width:calc(100% - 26px);padding:9px 14px;border-radius:22px;background:#fff;box-shadow:0 5px 20px #18241826;font-size:12px;font-weight:800;white-space:nowrap}.tracking-sheet{position:relative;width:min(100%,700px);margin:-25px auto 0;padding:22px 17px max(25px,env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#fff;box-shadow:0 -7px 25px #14201412}.tracking-sheet h1{margin:0 0 4px;font-size:23px}.tracking-subtitle{margin:0;color:#6d766b;font-size:13px}.tracking-progress{display:flex;gap:6px;margin:17px 0}.tracking-progress span{height:5px;flex:1;border-radius:5px;background:#e6eae2}.tracking-progress span.active{background:#85a71e}.driver-panel{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:11px;padding:13px;border:1px solid #e3e8e0;border-radius:14px;background:#fafbf9}.driver-panel[hidden],#ratingArea[hidden]{display:none!important}.driver-avatar{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#eff4e5;font-size:23px}.driver-detail strong{display:block;font-size:15px}.plate-chip{padding:6px 9px;border:1px solid #dfe3db;border-radius:7px;background:white;font-weight:800;font-size:12px}.tracking-route{display:grid;gap:9px;margin:14px 0;padding:13px;border-radius:13px;background:#f5f7f3}.tracking-route>div{display:grid;grid-template-columns:14px 1fr;gap:9px;align-items:center;font-size:12px}.tracking-route small{display:block;color:#6d766b}.tracking-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tracking-actions .flow-button{background:#edf1e9;color:#30382d}.tracking-actions a{display:grid;place-items:center;min-height:48px;border-radius:11px;background:#edf1e9;color:#202521;font-weight:800;text-decoration:none}.rating-area{margin:12px 0;padding:13px;border-radius:13px;background:#f5f7f3}.rating-area select{min-height:42px;padding:8px;border:1px solid #e3e8e0;border-radius:8px;background:#fff}.rating-area button{min-height:42px;margin-left:7px;padding:0 12px;border:0;border-radius:9px;background:#b3d735;font-weight:800}.leaflet-control-attribution{font-size:9px!important}.driver-marker{display:grid;place-items:center;width:38px;height:38px;border:3px solid #fff;border-radius:50%;background:#b3d735;box-shadow:0 3px 13px #0005;font-size:20px}.tracking-home{display:inline-block;padding:10px 13px;border-radius:20px;background:#fff;color:#202521;text-decoration:none;font-size:13px;font-weight:700}
+#confirmPage[hidden],#ridePage[hidden]{display:none!important}#confirmPage:not([hidden]){display:block}.workflow-header{height:62px;display:flex;align-items:center;gap:14px;padding:8px max(16px,calc((100% - 680px)/2));background:#fff;border-bottom:1px solid #e3e8e0}.back-link{color:#202521;text-decoration:none;font-weight:700}.workflow-logo{width:88px;height:42px;object-fit:contain;margin-left:auto}.workflow-content{width:min(100% - 28px,600px);margin:24px auto 48px}.workflow-content h1{font-size:26px;line-height:1.2;margin:0 0 5px}.workflow-lead{margin:0 0 18px;color:#6d766b}.workflow-card{padding:17px;margin:13px 0;background:#fff;border:1px solid #e3e8e0;border-radius:16px;box-shadow:0 5px 18px #2433220a}.route-row{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:center;padding:10px 0}.route-row+.route-row{border-top:1px solid #eef0ed}.route-dot{width:13px;height:13px;border:3px solid #ff7900;border-radius:50%;justify-self:center}.route-dot.dest{border:0;border-radius:4px;background:#ff7900}.route-row small,.driver-detail small{display:block;color:#6d766b;font-size:11px}.route-row strong{display:block;font-size:14px;font-weight:600}.ride-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.ride-meta span{padding:7px 10px;border-radius:18px;background:#fff3ea;font-size:12px;font-weight:700}.price-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.price-row strong{font-size:24px}.workflow-content label{display:block;margin-top:12px;font-size:12px;font-weight:700}.price-input{width:100%;min-height:50px;margin-top:7px;padding:12px;border:1px solid #d6ded1;border-radius:10px;background:#fff;font:inherit;font-size:18px}.flow-help{margin:7px 0 0;color:#6d766b;font-size:12px}.promo-badge{padding:6px 9px;border-radius:12px;background:#fff2e8;color:#a84a00;font-size:11px;font-weight:700}.flow-payment{padding:12px;border:1px solid #e3e8e0;border-radius:10px;background:#fafbf9}.flow-account{display:flex;align-items:center;gap:10px}.flow-account strong{font-size:13px}.flow-account button{margin-left:auto;border:0;background:transparent;text-decoration:underline;color:#58644d}.flow-button{width:100%;min-height:50px;border:0;border-radius:12px;background:#ff7900;color:#202719;font:inherit;font-weight:800;cursor:pointer}.flow-button:disabled{opacity:.6}.flow-message{min-height:20px;color:#64704d;font-size:13px}.workflow-dialog{width:min(420px,calc(100vw - 26px));border:1px solid #e3e8e0;border-radius:20px;padding:24px;background:#fff;color:#202521;box-shadow:0 20px 80px #0005}.workflow-dialog::backdrop{background:#18201899;backdrop-filter:blur(3px)}.workflow-dialog h2{margin:0;font-size:21px}.workflow-dialog p{color:#6d766b;font-size:13px}.workflow-dialog label{display:block;margin:12px 0;font-size:12px;font-weight:700}.workflow-dialog input{display:block;width:100%;min-height:44px;margin-top:5px;padding:10px;border:1px solid #e3e8e0;border-radius:9px;font:inherit}.workflow-dialog .flow-button{margin-top:7px}.dialog-close{position:absolute;right:14px;top:8px;border:0;background:none;font-size:25px;color:#6a7466}.workflow-dialog [hidden]{display:none!important}
+#ridePage:not([hidden]){display:block;min-height:100svh}.tracking-map{position:relative;height:54svh;min-height:310px;background:#dce5d6}.tracking-map #rideMap{width:100%;height:100%}.map-status-pill{position:absolute;z-index:500;top:14px;left:50%;transform:translateX(-50%);max-width:calc(100% - 26px);padding:9px 14px;border-radius:22px;background:#fff;box-shadow:0 5px 20px #18241826;font-size:12px;font-weight:800;white-space:nowrap}.tracking-sheet{position:relative;width:min(100%,700px);margin:-25px auto 0;padding:22px 17px max(25px,env(safe-area-inset-bottom));border-radius:24px 24px 0 0;background:#fff;box-shadow:0 -7px 25px #14201412}.tracking-sheet h1{margin:0 0 4px;font-size:23px}.tracking-subtitle{margin:0;color:#6d766b;font-size:13px}.tracking-progress{display:flex;gap:6px;margin:17px 0}.tracking-progress span{height:5px;flex:1;border-radius:5px;background:#e6eae2}.tracking-progress span.active{background:#ff7900}.driver-panel{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:11px;padding:13px;border:1px solid #e3e8e0;border-radius:14px;background:#fafbf9}.driver-panel[hidden],#ratingArea[hidden]{display:none!important}.driver-avatar{width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#fff0e4;font-size:23px}.driver-detail strong{display:block;font-size:15px}.plate-chip{padding:6px 9px;border:1px solid #dfe3db;border-radius:7px;background:white;font-weight:800;font-size:12px}.tracking-route{display:grid;gap:9px;margin:14px 0;padding:13px;border-radius:13px;background:#f5f7f3}.tracking-route>div{display:grid;grid-template-columns:14px 1fr;gap:9px;align-items:center;font-size:12px}.tracking-route small{display:block;color:#6d766b}.tracking-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tracking-actions .flow-button{background:#edf1e9;color:#30382d}.tracking-actions a{display:grid;place-items:center;min-height:48px;border-radius:11px;background:#edf1e9;color:#202521;font-weight:800;text-decoration:none}.rating-area{margin:12px 0;padding:13px;border-radius:13px;background:#f5f7f3}.rating-area select{min-height:42px;padding:8px;border:1px solid #e3e8e0;border-radius:8px;background:#fff}.rating-area button{min-height:42px;margin-left:7px;padding:0 12px;border:0;border-radius:9px;background:#ff7900;font-weight:800}.leaflet-control-attribution{font-size:9px!important}.driver-marker{display:grid;place-items:center;width:38px;height:38px;border:3px solid #fff;border-radius:50%;background:#ff7900;box-shadow:0 3px 13px #0005;font-size:20px}.tracking-home{display:inline-block;padding:10px 13px;border-radius:20px;background:#fff;color:#202521;text-decoration:none;font-size:13px;font-weight:700}
 @media(min-width:760px){html[data-workflow="ride"] body{height:100svh;overflow:hidden}#ridePage:not([hidden]){display:grid;grid-template-columns:minmax(0,1.4fr) minmax(390px,.9fr);height:100svh}.tracking-map{height:100svh;min-height:100svh}.tracking-sheet{align-self:center;width:min(100% - 36px,600px);margin:20px auto;border-radius:22px;padding:26px}.tracking-header{position:absolute;z-index:600;top:12px;left:14px}.workflow-content{margin-top:34px}.workflow-card{padding:20px}}
 
 html[data-workflow="confirm"] #confirmPage[hidden]{display:block!important}
@@ -189,18 +189,18 @@ html[data-workflow="confirm"] #confirmPage[hidden]{display:block!important}
 html[data-workflow="confirm"] #ridePage{display:none!important}
 .workflow-content>.lead{margin:0 0 18px;color:#6d766b;font-size:14px;line-height:1.45}
 .workflow-content .help{margin:7px 0 0;color:#6d766b;font-size:12px;line-height:1.4}
-.route-dot.destination{border:0;border-radius:4px;background:#85a71e}
+.route-dot.destination{border:0;border-radius:4px;background:#ff7900}
 .payment-option{display:flex;align-items:center;gap:9px;margin:10px 0 0;padding:11px 12px;border:1px solid #e3e8e0;border-radius:10px;background:#fafbf9;font-size:14px}
 .account-chip{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid #e3e8e0;border-radius:13px;background:#fff}
 .account-chip>strong{flex:1;font-size:13px}
-.account-chip>button{padding:8px 12px;border:0;border-radius:9px;background:#eef3e6;color:#35431e;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
-.workflow-content>.primary-button,.workflow-dialog>.primary-button{width:100%;min-height:50px;margin-top:13px;padding:12px 16px;border:0;border-radius:12px;background:#b3d735;color:#202719;font:inherit;font-weight:800;cursor:pointer}
+.account-chip>button{padding:8px 12px;border:0;border-radius:9px;background:#fff0e4;color:#7a3900;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.workflow-content>.primary-button,.workflow-dialog>.primary-button{width:100%;min-height:50px;margin-top:13px;padding:12px 16px;border:0;border-radius:12px;background:#ff7900;color:#202719;font:inherit;font-weight:800;cursor:pointer}
 .workflow-content>.primary-button:disabled,.workflow-dialog>.primary-button:disabled{opacity:.6}
 .workflow-dialog form+.primary-button{margin-top:12px}
 .tracking-actions>.secondary-button{min-height:48px;border:0;border-radius:11px;background:#fff0e3;color:#883e00;font:inherit;font-weight:800;cursor:pointer}
 .tracking-actions a[hidden]{display:none!important}
-.driver-message-notice{margin:10px 0;padding:11px 13px;border:1px solid #d8e6ad;border-radius:10px;background:#f1f7dd;color:#34420d;font-size:13px;overflow-wrap:anywhere}.driver-message-notice[hidden]{display:none!important}
-.ride-chat{margin:14px 0;padding:14px;border:1px solid #e3e8e0;border-radius:14px;background:#fff}.ride-chat[hidden]{display:none!important}.ride-chat h2{margin:0 0 10px;font-size:17px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:260px;min-height:56px;overflow:auto;padding:4px 2px}.chat-message{max-width:88%;padding:9px 11px;border-radius:12px;background:#f1f3ee;overflow-wrap:anywhere;font-size:13px}.chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:3px;color:#697164;font-size:10px}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px}.chat-form input{min-width:0;min-height:44px;padding:9px 11px;border:1px solid #dce2d7;border-radius:9px;font:inherit}.chat-form button{min-height:44px;padding:0 16px;border:0;border-radius:9px;background:#b3d735;font:inherit;font-weight:800;cursor:pointer}
+.driver-message-notice{margin:10px 0;padding:11px 13px;border:1px solid #ffd0aa;border-radius:10px;background:#fff4ea;color:#7a3900;font-size:13px;overflow-wrap:anywhere}.driver-message-notice[hidden]{display:none!important}
+.ride-chat{margin:14px 0;padding:14px;border:1px solid #e3e8e0;border-radius:14px;background:#fff}.ride-chat[hidden]{display:none!important}.ride-chat h2{margin:0 0 10px;font-size:17px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:260px;min-height:56px;overflow:auto;padding:4px 2px}.chat-message{max-width:88%;padding:9px 11px;border-radius:12px;background:#f1f3ee;overflow-wrap:anywhere;font-size:13px}.chat-message.mine{align-self:flex-end;background:#ffe7d2}.chat-message small{display:block;margin-bottom:3px;color:#697164;font-size:10px}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px}.chat-form input{min-width:0;min-height:44px;padding:9px 11px;border:1px solid #dce2d7;border-radius:9px;font:inherit}.chat-form button{min-height:44px;padding:0 16px;border:0;border-radius:9px;background:#ff7900;font:inherit;font-weight:800;cursor:pointer}
 
 /* Responsive layout safeguards for small phones, tablets, desktops, and short screens. */
 html{min-width:320px;overflow-x:clip;scroll-padding-top:16px}
@@ -208,7 +208,7 @@ body{min-width:320px;overflow-x:clip}
 img,svg,video,canvas{max-width:100%}
 button,input,select,textarea{max-width:100%;font:inherit}
 button,a,select{touch-action:manipulation}
-:focus-visible{outline:3px solid #5d8d00;outline-offset:3px}
+:focus-visible{outline:3px solid #ff7900;outline-offset:3px}
 
 .app-topbar{left:clamp(12px,3vw,28px);right:clamp(12px,3vw,28px)}
 .app-shortcuts{left:clamp(8px,2vw,20px);right:clamp(8px,2vw,20px);gap:clamp(4px,1.8vw,18px)}
@@ -300,3 +300,1779 @@ button,a,select{touch-action:manipulation}
   html{scroll-behavior:auto}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}
 }
+
+
+/* ==========================================================================
+   MEI VELOCITY — LANDING PAGE VISUAL REFRESH
+   Visual/CSS-only change. Existing HTML IDs, JavaScript functions,
+   API calls, booking logic, maps, scheduling and authentication are untouched.
+   ========================================================================== */
+
+/* Keep the existing variable names so no selectors need to be rewritten,
+   but make the customer landing experience use the MEI orange brand. */
+.hero:has(#homeMap){
+  --mei-green:#ff7900;
+  --mei-green-dark:#d96100;
+  --mei-ink:#171b18;
+  --mei-muted:#6d746e;
+  --mei-line:#e4e7e2;
+  --mei-surface:#f7f8f6;
+  --mei-orange-soft:#fff0e4;
+  --mei-orange-soft-strong:#ffe2ca;
+  background:#edf0eb;
+  color:var(--mei-ink);
+}
+
+.hero:has(#homeMap) .location-dot{
+  background:var(--mei-green);
+  box-shadow:0 0 0 4px rgba(255,121,0,.16);
+}
+
+.hero:has(#homeMap) .trip-field::before{
+  border-color:var(--mei-green);
+}
+
+.hero:has(#homeMap) .destination-field::before{
+  background:var(--mei-green);
+}
+
+.hero:has(#homeMap) .trip-field button{
+  background:var(--mei-orange-soft);
+  color:#b94f00;
+}
+
+.hero:has(#homeMap) .find-rides{
+  background:var(--mei-green);
+  color:#fff;
+  box-shadow:0 8px 20px rgba(255,121,0,.20);
+}
+
+.hero:has(#homeMap) .find-rides:hover{
+  background:#e96f00;
+}
+
+.hero:has(#homeMap) .find-rides::after{
+  content:"→";
+  margin-left:10px;
+  font-size:18px;
+}
+
+.hero:has(#homeMap) .trip-message:not(:empty),
+.hero:has(#homeMap) .quote-heading button{
+  color:#bb5200;
+}
+
+.hero:has(#homeMap) .bottom-sheet.route-mode .promo-icon{
+  background:var(--mei-orange-soft);
+  color:#d96100;
+}
+
+.hero:has(#homeMap) .promo-entry button{
+  background:var(--mei-green);
+  color:#fff;
+}
+
+.hero:has(#homeMap) .quote-card.selected,
+.hero:has(#homeMap) .quote-card:hover{
+  border-color:var(--mei-green);
+  background:#fff8f2;
+}
+
+.hero:has(#homeMap) .saved-locations>button:hover{
+  border-color:#ffc28f;
+  background:#fff7f0;
+}
+
+.hero:has(#homeMap) :focus-visible{
+  outline-color:#ff7900;
+}
+
+/* Desktop layout: full map with a floating booking card. */
+@media (min-width:901px){
+
+  .hero:has(#homeMap){
+    height:100vh;
+    min-height:760px;
+    padding:0;
+    overflow:hidden;
+  }
+
+  .hero:has(#homeMap) .hero-content{
+    height:100%;
+    width:100%;
+    max-width:none;
+    margin:0;
+  }
+
+  /* Leave the first 72px for the white navigation bar. */
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    top:72px;
+  }
+
+  /* Full-width white navigation bar. */
+  .hero:has(#homeMap) .app-topbar{
+    position:absolute;
+    z-index:1000;
+    top:0;
+    left:0;
+    right:0;
+    height:72px;
+    padding:9px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,.97);
+    border-bottom:1px solid #e7e9e5;
+    box-shadow:0 2px 12px rgba(19,27,20,.06);
+    backdrop-filter:blur(12px);
+  }
+
+  .hero:has(#homeMap) .app-brand{
+    width:auto;
+    height:52px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    overflow:visible;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+    text-decoration:none;
+  }
+
+  .hero:has(#homeMap) .app-brand img{
+    width:106px;
+    height:48px;
+    max-width:none;
+    max-height:none;
+    object-fit:contain;
+    border-radius:9px;
+  }
+
+  .hero:has(#homeMap) .app-brand::after{
+    content:"MEI VELOCITY";
+    color:#181c19;
+    font-size:19px;
+    font-weight:800;
+    letter-spacing:.01em;
+    white-space:nowrap;
+  }
+
+  .hero:has(#homeMap) .app-account{
+    width:46px;
+    height:46px;
+    margin-left:auto;
+    color:#1b201c;
+    background:#fff;
+    border:1px solid #dde2dc;
+    box-shadow:0 3px 12px rgba(20,28,20,.08);
+  }
+
+  /* Existing shortcuts remain the same links/actions — only their position changes. */
+  .hero:has(#homeMap) .app-shortcuts{
+    position:absolute;
+    z-index:1001;
+    top:7px;
+    left:50%;
+    right:auto;
+    width:auto;
+    height:58px;
+    transform:translateX(-50%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:clamp(22px,3.2vw,48px);
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    flex:none;
+    min-width:68px;
+    color:#4e554f;
+    text-shadow:none;
+    font-size:10px;
+    font-weight:600;
+    gap:3px;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:31px;
+    height:31px;
+    border:0;
+    border-radius:50%;
+    color:#161b17;
+    background:transparent;
+    box-shadow:none;
+    backdrop-filter:none;
+    font-size:17px;
+  }
+
+  /* The map is the visual hero. Leaflet functionality is unchanged. */
+  .hero:has(#homeMap) .home-map{
+    inset:72px 0 0 0;
+    background:#e6ebe4;
+  }
+
+  .hero:has(#homeMap) .hero-bg{
+    inset:72px 0 0 0;
+  }
+
+  .hero:has(#homeMap) .map-label{
+    display:none;
+  }
+
+  .hero:has(#homeMap) .map-locate{
+    top:96px;
+    right:24px;
+    bottom:auto;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    color:#202621;
+    background:#fff;
+    border:1px solid #e0e4df;
+    box-shadow:0 5px 18px rgba(23,32,24,.15);
+  }
+
+  .hero:has(#homeMap) .map-location{
+    top:auto;
+    left:auto;
+    right:24px;
+    bottom:24px;
+    transform:none;
+    padding:9px 13px;
+    color:#343b35;
+    background:rgba(255,255,255,.95);
+    border:1px solid #e0e4df;
+    box-shadow:0 5px 18px rgba(23,32,24,.12);
+  }
+
+  /* Floating white booking card. */
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    position:absolute;
+    z-index:900;
+    top:116px;
+    left:24px;
+    right:auto;
+    bottom:auto;
+    width:min(500px,calc(100vw - 48px));
+    max-height:calc(100vh - 140px);
+    padding:15px 28px 24px;
+    overflow:auto;
+    overscroll-behavior:contain;
+    border:1px solid rgba(29,39,30,.08);
+    border-radius:28px;
+    background:rgba(255,255,255,.98);
+    color:var(--mei-ink);
+    box-shadow:0 20px 55px rgba(28,38,29,.16);
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode::-webkit-scrollbar{
+    width:6px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode::-webkit-scrollbar-thumb{
+    border-radius:10px;
+    background:#d8ddd6;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-handle{
+    width:110px;
+    height:5px;
+    margin:0 auto 23px;
+    border-radius:10px;
+    background:#d9ddd8;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode h1{
+    margin:0;
+    color:#181c19;
+    font-size:34px;
+    line-height:1.08;
+    letter-spacing:-.045em;
+    font-weight:800;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-subtitle{
+    margin:7px 0 22px;
+    color:#767d76;
+    font-size:15px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .trip-search{
+    gap:12px;
+  }
+
+  /* Pickup / destination fields styled as one visual route. */
+  .hero:has(#homeMap) .trip-field{
+    min-height:76px;
+    padding:12px 54px 10px 52px;
+    border:1px solid #e1e5df;
+    border-radius:16px;
+    background:#f8faf7;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.7);
+  }
+
+  .hero:has(#homeMap) .trip-field::before{
+    left:18px;
+    top:28px;
+    width:16px;
+    height:16px;
+    border-width:4px;
+  }
+
+  .hero:has(#homeMap) .pickup-field::after{
+    content:"";
+    position:absolute;
+    left:27px;
+    top:49px;
+    height:47px;
+    border-left:2px dotted #aeb6ad;
+    pointer-events:none;
+  }
+
+  .hero:has(#homeMap) .destination-field::before{
+    width:16px;
+    height:16px;
+    border:0;
+    border-radius:4px;
+  }
+
+  .hero:has(#homeMap) .trip-field>span{
+    margin-bottom:4px;
+    color:#737a73;
+    font-size:12px;
+  }
+
+  .hero:has(#homeMap) .trip-field input{
+    min-height:30px;
+    color:#252a26;
+    font-size:16px;
+  }
+
+  .hero:has(#homeMap) .trip-field input::placeholder{
+    color:#8c938c;
+  }
+
+  .hero:has(#homeMap) .trip-field button{
+    right:13px;
+    width:40px;
+    height:40px;
+    font-size:21px;
+  }
+
+  /* Ride now / Schedule segmented control. */
+  .hero:has(#homeMap) .trip-timing{
+    min-height:56px;
+    padding:4px;
+    border-radius:14px;
+    background:#f1f3f0;
+  }
+
+  .hero:has(#homeMap) .timing-choice{
+    min-height:48px;
+    border-radius:11px;
+    color:#343a35;
+    font-size:14px;
+    font-weight:750;
+  }
+
+  .hero:has(#homeMap) .timing-choice.active{
+    color:#fff;
+    background:#191d1a;
+    border-color:#191d1a;
+    box-shadow:0 3px 10px rgba(16,22,17,.14);
+  }
+
+  .hero:has(#homeMap) .schedule-fields{
+    gap:10px;
+  }
+
+  .hero:has(#homeMap) .schedule-fields input{
+    min-height:54px;
+    padding:0 14px;
+    border-radius:13px;
+    font-size:15px;
+  }
+
+  .hero:has(#homeMap) .find-rides{
+    min-height:60px;
+    border-radius:14px;
+    font-size:16px;
+    letter-spacing:.01em;
+  }
+
+  .hero:has(#homeMap) .location-disclosure{
+    margin-top:-2px;
+    color:#858c85;
+    font-size:9px;
+    line-height:1.35;
+  }
+
+  .hero:has(#homeMap) .trip-message:not(:empty){
+    padding:8px 10px;
+    border-radius:9px;
+    background:#fff5ec;
+    font-size:11px;
+  }
+
+  .hero:has(#homeMap) .saved-locations{
+    padding-top:11px;
+  }
+
+  .hero:has(#homeMap) .saved-locations>button{
+    border-color:#e4e7e2;
+    background:#f8faf7;
+    color:#454c46;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .promo-row{
+    min-height:52px;
+    margin-top:12px;
+    padding:12px 5px 5px;
+    color:#3d443e;
+    font-size:13px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .promo-icon{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+  }
+
+  .hero:has(#homeMap) .quote-card{
+    padding:13px;
+    border-radius:14px;
+  }
+
+  .hero:has(#homeMap) .quote-card .vehicle-symbol{
+    background:#fff1e6;
+  }
+
+  /* Do not allow the old expanded booking block to overlap this desktop home state. */
+  .hero:has(#homeMap):not(:has(.booking.booking-open)) .booking{
+    display:none;
+  }
+}
+
+/* Tablet: keep the existing bottom-sheet workflow, but use the orange brand. */
+@media (min-width:601px) and (max-width:900px){
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    background:#fff;
+  }
+
+  .hero:has(#homeMap) .timing-choice.active{
+    background:#1d211e;
+    border-color:#1d211e;
+    color:#fff;
+  }
+}
+
+/* Mobile remains the same functional bottom-sheet experience, only themed orange. */
+@media (max-width:600px){
+  .hero:has(#homeMap) .timing-choice.active{
+    background:#1d211e;
+    border-color:#1d211e;
+    color:#fff;
+  }
+
+  .hero:has(#homeMap) .find-rides{
+    color:#fff;
+  }
+
+  .hero:has(#homeMap) .trip-field button{
+    background:var(--mei-orange-soft);
+    color:#b94f00;
+  }
+}
+
+
+/* ==========================================================================
+   MEI VELOCITY — LANDING PAGE REFINEMENT 2
+   CSS-only: smaller desktop booking card + profile/person account icon.
+   No HTML IDs, JavaScript, API calls, map logic, booking logic or auth changed.
+   ========================================================================== */
+
+/* Proper profile/person symbol while preserving the existing account button. */
+.app-account{
+  font-size:0;
+}
+.app-account::before{
+  content:"";
+  display:block;
+  width:22px;
+  height:22px;
+  background:currentColor;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14Z'/%3E%3C/svg%3E");
+  -webkit-mask-repeat:no-repeat;
+  -webkit-mask-position:center;
+  -webkit-mask-size:contain;
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14Z'/%3E%3C/svg%3E");
+  mask-repeat:no-repeat;
+  mask-position:center;
+  mask-size:contain;
+}
+
+/* Make the desktop booking panel more compact without changing its fields/actions. */
+@media (min-width:901px){
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    top:122px;
+    left:24px;
+    width:min(430px,calc(100vw - 48px));
+    max-height:calc(100vh - 150px);
+    padding:13px 23px 20px;
+    border-radius:24px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-handle{
+    width:92px;
+    margin-bottom:17px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode h1{
+    font-size:29px;
+    line-height:1.08;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-subtitle{
+    margin:6px 0 17px;
+    font-size:13px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .trip-search{
+    gap:10px;
+  }
+
+  .hero:has(#homeMap) .trip-field{
+    min-height:66px;
+    padding:9px 49px 8px 48px;
+    border-radius:14px;
+  }
+
+  .hero:has(#homeMap) .trip-field::before{
+    left:17px;
+    top:24px;
+    width:14px;
+    height:14px;
+  }
+
+  .hero:has(#homeMap) .pickup-field::after{
+    left:24px;
+    top:43px;
+    height:42px;
+  }
+
+  .hero:has(#homeMap) .destination-field::before{
+    width:14px;
+    height:14px;
+  }
+
+  .hero:has(#homeMap) .trip-field>span{
+    font-size:11px;
+  }
+
+  .hero:has(#homeMap) .trip-field input{
+    min-height:27px;
+    font-size:15px;
+  }
+
+  .hero:has(#homeMap) .trip-field button{
+    right:11px;
+    width:36px;
+    height:36px;
+    font-size:19px;
+  }
+
+  .hero:has(#homeMap) .trip-timing{
+    min-height:50px;
+  }
+
+  .hero:has(#homeMap) .timing-choice{
+    min-height:42px;
+    font-size:13px;
+  }
+
+  .hero:has(#homeMap) .schedule-fields input{
+    min-height:48px;
+    font-size:14px;
+  }
+
+  .hero:has(#homeMap) .find-rides{
+    min-height:54px;
+    font-size:15px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .promo-row{
+    min-height:47px;
+    margin-top:9px;
+    font-size:12px;
+  }
+}
+
+
+/* ==========================================================================
+   MEI VELOCITY — HEADER / BRAND REFINEMENT 3
+   CSS-only. No HTML, JavaScript, booking, map, account or API logic changed.
+   ========================================================================== */
+
+@media (min-width:901px){
+
+  /* Slightly more polished top navigation bar. */
+  .hero:has(#homeMap) .app-topbar{
+    height:82px;
+    padding:10px 34px 10px 40px;
+    background:rgba(255,255,255,.985);
+    border-bottom:1px solid #eceeea;
+    box-shadow:0 3px 18px rgba(24,31,25,.07);
+  }
+
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    top:82px;
+  }
+
+  .hero:has(#homeMap) .home-map{
+    inset:82px 0 0 0;
+  }
+
+  .hero:has(#homeMap) .hero-bg{
+    inset:82px 0 0 0;
+  }
+
+  /* Brand lock-up: existing logo image + VELOCITY + tagline.
+     This does not replace the asset or change the HTML. */
+  .hero:has(#homeMap) .app-brand{
+    position:relative;
+    width:365px;
+    height:62px;
+    padding:0 0 0 0;
+    display:flex;
+    align-items:center;
+    overflow:visible;
+  }
+
+  .hero:has(#homeMap) .app-brand img{
+    width:116px;
+    height:58px;
+    object-fit:contain;
+    object-position:center;
+    border-radius:0;
+  }
+
+  .hero:has(#homeMap) .app-brand::after{
+    content:"VELOCITY";
+    position:absolute;
+    left:116px;
+    top:9px;
+    color:#ff7900;
+    font-size:27px;
+    line-height:1;
+    font-weight:900;
+    font-style:italic;
+    letter-spacing:-.02em;
+    white-space:nowrap;
+  }
+
+  .hero:has(#homeMap) .app-brand::before{
+    content:"DRIVEN BY VALUES.\A DELIVERED WITH PRIDE.";
+    position:absolute;
+    left:120px;
+    top:37px;
+    color:#252a26;
+    font-size:8px;
+    line-height:1.2;
+    font-weight:800;
+    letter-spacing:.22em;
+    white-space:pre;
+  }
+
+  /* Center shortcuts remain the same existing links/actions. */
+  .hero:has(#homeMap) .app-shortcuts{
+    top:9px;
+    height:64px;
+    gap:clamp(34px,4vw,72px);
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    position:relative;
+    min-width:76px;
+    color:#252a26;
+    font-size:11px;
+    font-weight:700;
+    transition:color .18s ease,transform .18s ease;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a:hover{
+    color:#ff7900;
+    transform:translateY(-1px);
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:34px;
+    height:31px;
+    color:#141815;
+    font-size:19px;
+    transition:color .18s ease;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a:hover .shortcut-icon{
+    color:#ff7900;
+  }
+
+  /* Thin divider before the account area, matching the reference header. */
+  .hero:has(#homeMap) .app-account{
+    position:relative;
+    width:48px;
+    height:48px;
+    margin-right:5px;
+    overflow:visible;
+    border:0;
+    background:transparent;
+    box-shadow:none;
+    color:#171b18;
+  }
+
+  .hero:has(#homeMap) .app-account::after{
+    content:"";
+    position:absolute;
+    top:3px;
+    right:3px;
+    width:10px;
+    height:10px;
+    border:2px solid #fff;
+    border-radius:50%;
+    background:#ff7900;
+    box-shadow:0 1px 3px rgba(0,0,0,.12);
+  }
+
+  .hero:has(#homeMap) .app-topbar::before{
+    content:"";
+    position:absolute;
+    right:98px;
+    top:20px;
+    width:1px;
+    height:42px;
+    background:#e1e4df;
+  }
+
+  /* Booking card moves down with the slightly taller header. */
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    top:128px;
+  }
+
+  .hero:has(#homeMap) .map-locate{
+    top:105px;
+  }
+}
+
+/* Tablet/mobile: keep the compact existing logo treatment so the header
+   does not become overcrowded on narrow screens. */
+@media (max-width:900px){
+  .hero:has(#homeMap) .app-brand::before{
+    content:none;
+  }
+
+  .hero:has(#homeMap) .app-brand::after{
+    content:none;
+  }
+
+  .hero:has(#homeMap) .app-account{
+    position:relative;
+    overflow:visible;
+  }
+
+  .hero:has(#homeMap) .app-account::after{
+    content:"";
+    position:absolute;
+    top:1px;
+    right:1px;
+    width:9px;
+    height:9px;
+    border:2px solid #fff;
+    border-radius:50%;
+    background:#ff7900;
+  }
+}
+
+
+/* ==========================================================================
+   MEI VELOCITY — HEADER MATCH REFINEMENT 4
+   CSS-only visual correction to more closely match the approved mockup.
+   HTML structure, IDs, JavaScript, booking flow, maps, APIs and auth untouched.
+   ========================================================================== */
+
+@media (min-width:901px){
+
+  /* HEADER PROPORTIONS */
+  .hero:has(#homeMap) .app-topbar{
+    height:94px;
+    padding:11px 42px 11px 52px;
+  }
+
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    top:94px;
+  }
+
+  .hero:has(#homeMap) .home-map{
+    inset:94px 0 0 0;
+  }
+
+  .hero:has(#homeMap) .hero-bg{
+    inset:94px 0 0 0;
+  }
+
+  /* -----------------------------------------------------------------------
+     BRAND LOCK-UP
+     Crop the old square asset so the header reads visually as:
+     [mei mark] VELOCITY
+                tagline
+     ----------------------------------------------------------------------- */
+  .hero:has(#homeMap) .app-brand{
+    width:390px;
+    height:70px;
+    display:block;
+    position:relative;
+    overflow:visible;
+    padding:0;
+  }
+
+  .hero:has(#homeMap) .app-brand img{
+    position:absolute;
+    left:0;
+    top:8px;
+    width:105px;
+    height:43px;
+    max-width:none;
+    max-height:none;
+    object-fit:cover;
+    object-position:center 5%;
+    border-radius:0;
+    clip-path:inset(0 0 17% 0);
+    transform:scale(1.06);
+    transform-origin:left top;
+  }
+
+  .hero:has(#homeMap) .app-brand::after{
+    content:"VELOCITY";
+    position:absolute;
+    left:110px;
+    top:13px;
+    color:#ff7900;
+    font-size:27px;
+    line-height:1;
+    font-weight:900;
+    font-style:italic;
+    letter-spacing:-.025em;
+    white-space:nowrap;
+  }
+
+  .hero:has(#homeMap) .app-brand::before{
+    content:"DRIVEN BY VALUES.\A DELIVERED WITH PRIDE.";
+    position:absolute;
+    left:112px;
+    top:42px;
+    color:#171b18;
+    font-size:7.4px;
+    line-height:1.28;
+    font-weight:900;
+    letter-spacing:.22em;
+    white-space:pre;
+  }
+
+  /* -----------------------------------------------------------------------
+     CENTER NAVIGATION
+     Existing links and data-action attributes stay exactly the same.
+     Only the icon artwork is replaced visually with CSS masks.
+     ----------------------------------------------------------------------- */
+  .hero:has(#homeMap) .app-shortcuts{
+    top:9px;
+    height:76px;
+    gap:clamp(40px,4.8vw,82px);
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    min-width:78px;
+    gap:5px;
+    color:#202521;
+    font-size:11px;
+    font-weight:700;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:34px;
+    height:34px;
+    display:grid;
+    place-items:center;
+    color:#111;
+    background:transparent;
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+    font-size:0;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon::before{
+    content:"";
+    display:block;
+    width:25px;
+    height:25px;
+    background:currentColor;
+    -webkit-mask-repeat:no-repeat;
+    -webkit-mask-position:center;
+    -webkit-mask-size:contain;
+    mask-repeat:no-repeat;
+    mask-position:center;
+    mask-size:contain;
+  }
+
+  /* Schedule — clock */
+  .hero:has(#homeMap) [data-action="schedule"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8Zm1-9V6h-2v7h6v-2Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8.009 8.009 0 0 1-8 8Zm1-9V6h-2v7h6v-2Z'/%3E%3C/svg%3E");
+  }
+
+  /* Deliveries — cube / package */
+  .hero:has(#homeMap) [data-action="deliveries"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12 1 9 5v12l-9 5-9-5V6Zm0 2.3L6.1 6.6 12 9.9l5.9-3.3ZM5 8.3v8.5l6 3.3v-8.5Zm8 11.8 6-3.3V8.3l-6 3.3Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12 1 9 5v12l-9 5-9-5V6Zm0 2.3L6.1 6.6 12 9.9l5.9-3.3ZM5 8.3v8.5l6 3.3v-8.5Zm8 11.8 6-3.3V8.3l-6 3.3Z'/%3E%3C/svg%3E");
+  }
+
+  /* Shop — bag */
+  .hero:has(#homeMap) [data-action="shop"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 7V6a5 5 0 0 1 10 0v1h3l1 15H3L4 7Zm2 0h6V6a3 3 0 0 0-6 0Zm-3.1 2-.73 11h13.66L18.1 9H17v2h-2V9H9v2H7V9Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 7V6a5 5 0 0 1 10 0v1h3l1 15H3L4 7Zm2 0h6V6a3 3 0 0 0-6 0Zm-3.1 2-.73 11h13.66L18.1 9H17v2h-2V9H9v2H7V9Z'/%3E%3C/svg%3E");
+  }
+
+  /* Pros — simple asterisk/star */
+  .hero:has(#homeMap) [data-action="pros"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 2h2v7.17l5.07-5.07 1.42 1.42L14.42 10.6H22v2h-7.58l5.07 5.07-1.42 1.42L13 14.02V22h-2v-7.98l-5.07 5.07-1.42-1.42 5.07-5.07H2v-2h7.58L4.51 5.52 5.93 4.1 11 9.17Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 2h2v7.17l5.07-5.07 1.42 1.42L14.42 10.6H22v2h-7.58l5.07 5.07-1.42 1.42L13 14.02V22h-2v-7.98l-5.07 5.07-1.42-1.42 5.07-5.07H2v-2h7.58L4.51 5.52 5.93 4.1 11 9.17Z'/%3E%3C/svg%3E");
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a:hover{
+    color:#ff7900;
+  }
+
+  /* -----------------------------------------------------------------------
+     ACCOUNT ICON
+     Keep the exact same #accountButton click functionality.
+     ----------------------------------------------------------------------- */
+  .hero:has(#homeMap) .app-account{
+    width:52px;
+    height:52px;
+    margin-right:4px;
+    display:grid;
+    place-items:center;
+    border:0;
+    background:transparent;
+    color:#101411;
+  }
+
+  .hero:has(#homeMap) .app-account::before{
+    width:38px;
+    height:38px;
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3a21 21 0 1 0 21 21A21.024 21.024 0 0 0 24 3Zm0 3a18 18 0 1 1-18 18A18.02 18.02 0 0 1 24 6Zm0 5a7 7 0 1 0 7 7 7.008 7.008 0 0 0-7-7Zm0 3a4 4 0 1 1-4 4 4 4 0 0 1 4-4Zm0 13c-6.45 0-12 3.36-12 8.3V37h3v-1.7c0-2.82 3.95-5.3 9-5.3s9 2.48 9 5.3V37h3v-1.7C36 30.36 30.45 27 24 27Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M24 3a21 21 0 1 0 21 21A21.024 21.024 0 0 0 24 3Zm0 3a18 18 0 1 1-18 18A18.02 18.02 0 0 1 24 6Zm0 5a7 7 0 1 0 7 7 7.008 7.008 0 0 0-7-7Zm0 3a4 4 0 1 1-4 4 4 4 0 0 1 4-4Zm0 13c-6.45 0-12 3.36-12 8.3V37h3v-1.7c0-2.82 3.95-5.3 9-5.3s9 2.48 9 5.3V37h3v-1.7C36 30.36 30.45 27 24 27Z'/%3E%3C/svg%3E");
+  }
+
+  .hero:has(#homeMap) .app-account::after{
+    top:5px;
+    right:3px;
+    width:11px;
+    height:11px;
+    border:3px solid #fff;
+    background:#ff7900;
+  }
+
+  .hero:has(#homeMap) .app-topbar::before{
+    right:110px;
+    top:23px;
+    height:47px;
+  }
+
+  /* -----------------------------------------------------------------------
+     BOOKING CARD PROPORTION
+     Still compact, but closer to the approved design rather than undersized.
+     ----------------------------------------------------------------------- */
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    top:148px;
+    left:42px;
+    width:min(465px,calc(100vw - 84px));
+    max-height:calc(100vh - 180px);
+    padding:14px 26px 22px;
+    border-radius:25px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode h1{
+    font-size:30px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-subtitle{
+    font-size:13.5px;
+  }
+
+  .hero:has(#homeMap) .map-locate{
+    top:119px;
+    right:28px;
+  }
+}
+
+/* Keep current compact mobile/tablet behavior. */
+@media (max-width:900px){
+  .hero:has(#homeMap) .shortcut-icon{
+    font-size:0;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon::before{
+    content:"";
+    display:block;
+    width:20px;
+    height:20px;
+    background:currentColor;
+  }
+}
+
+
+/* ==========================================================================
+   MEI VELOCITY — REAL HAMBURGER / MORE LINKS
+   HTML + CSS navigation only. No JavaScript or booking-system behavior changed.
+   ========================================================================== */
+
+.app-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-left:auto;
+}
+
+.app-menu{
+  position:relative;
+  flex:none;
+}
+
+.app-menu>summary{
+  list-style:none;
+  width:48px;
+  height:48px;
+  border:0;
+  border-radius:50%;
+  display:grid;
+  align-content:center;
+  justify-items:center;
+  gap:5px;
+  cursor:pointer;
+  background:transparent;
+  color:#151915;
+  -webkit-tap-highlight-color:transparent;
+}
+
+.app-menu>summary::-webkit-details-marker{
+  display:none;
+}
+
+.app-menu>summary span{
+  display:block;
+  width:24px;
+  height:2.5px;
+  border-radius:4px;
+  background:currentColor;
+  transition:transform .18s ease,opacity .18s ease;
+}
+
+.app-menu[open]>summary span:nth-child(1){
+  transform:translateY(7.5px) rotate(45deg);
+}
+
+.app-menu[open]>summary span:nth-child(2){
+  opacity:0;
+}
+
+.app-menu[open]>summary span:nth-child(3){
+  transform:translateY(-7.5px) rotate(-45deg);
+}
+
+.app-menu-panel{
+  position:absolute;
+  top:58px;
+  right:0;
+  z-index:1500;
+  width:220px;
+  padding:8px;
+  display:grid!important;
+  gap:3px!important;
+  flex:none!important;
+  justify-content:stretch!important;
+  border:1px solid #e5e8e3;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 16px 45px rgba(20,28,21,.16);
+}
+
+.app-menu-panel a{
+  display:flex;
+  align-items:center;
+  min-height:43px;
+  padding:9px 12px;
+  border-radius:10px;
+  color:#202521!important;
+  text-decoration:none;
+  font-size:13px!important;
+  font-weight:700!important;
+  text-shadow:none!important;
+  white-space:nowrap;
+}
+
+.app-menu-panel a:hover,
+.app-menu-panel a:focus-visible{
+  color:#d96100!important;
+  background:#fff1e6;
+}
+
+@media (min-width:901px){
+  .hero:has(#homeMap) .app-topbar{
+    justify-content:flex-start;
+  }
+
+  .hero:has(#homeMap) .app-actions{
+    position:relative;
+    margin-left:auto;
+    padding-left:22px;
+    gap:6px;
+  }
+
+  /* Divider now belongs immediately before the account/menu controls. */
+  .hero:has(#homeMap) .app-topbar::before{
+    right:134px;
+    top:23px;
+    height:47px;
+  }
+
+  .hero:has(#homeMap) .app-menu>summary{
+    width:50px;
+    height:50px;
+  }
+
+  .hero:has(#homeMap) .app-menu>summary span{
+    width:26px;
+    height:2.5px;
+  }
+
+  .hero:has(#homeMap) .app-menu-panel{
+    top:58px;
+    right:-4px;
+  }
+}
+
+@media (max-width:900px){
+  .app-actions{
+    gap:2px;
+  }
+
+  .app-menu>summary{
+    width:42px;
+    height:42px;
+  }
+
+  .app-menu>summary span{
+    width:22px;
+  }
+
+  .app-menu-panel{
+    top:49px;
+    right:0;
+    width:min(220px,calc(100vw - 28px));
+  }
+}
+
+
+/* ==========================================================================
+   MEI VELOCITY — INFORMATION PAGES
+   Shared visual layer for Services, Vehicles, Fares, About and Contact.
+   ========================================================================== */
+
+.info-page{
+  min-height:100vh;
+  background:#f6f7f4;
+  color:#171b18;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+.info-header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  min-height:82px;
+  display:flex;
+  align-items:center;
+  gap:28px;
+  padding:10px clamp(18px,4vw,52px);
+  background:rgba(255,255,255,.98);
+  border-bottom:1px solid #e6e9e4;
+  box-shadow:0 2px 14px rgba(20,28,21,.06);
+}
+
+.info-brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  color:#171b18;
+  text-decoration:none;
+  min-width:245px;
+}
+
+.info-brand img{
+  width:92px;
+  height:54px;
+  object-fit:contain;
+}
+
+.info-brand-text{
+  display:grid;
+  line-height:1;
+}
+
+.info-brand-text strong{
+  color:#ff7900;
+  font-size:24px;
+  font-weight:900;
+  font-style:italic;
+}
+
+.info-brand-text small{
+  margin-top:5px;
+  color:#202521;
+  font-size:7px;
+  line-height:1.3;
+  font-weight:800;
+  letter-spacing:.16em;
+}
+
+.info-nav{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(14px,2.4vw,34px);
+  flex:1;
+}
+
+.info-nav a{
+  color:#353b36;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:700;
+}
+
+.info-nav a:hover,
+.info-nav a[aria-current="page"]{
+  color:#ff7900;
+}
+
+.book-link{
+  flex:none;
+  padding:12px 17px;
+  border-radius:10px;
+  background:#ff7900;
+  color:#fff;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:800;
+}
+
+.info-shell{
+  width:min(1180px,calc(100% - 36px));
+  margin:0 auto;
+  padding:52px 0 64px;
+}
+
+.info-hero{
+  display:grid;
+  grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr);
+  gap:28px;
+  align-items:stretch;
+  margin-bottom:34px;
+}
+
+.info-hero-copy,
+.info-hero-visual{
+  min-height:290px;
+  border-radius:26px;
+  overflow:hidden;
+}
+
+.info-hero-copy{
+  padding:42px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  background:#0b1118;
+  color:#fff;
+}
+
+.info-kicker{
+  margin:0 0 9px;
+  color:#ff7900;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.info-hero h1{
+  margin:0;
+  max-width:720px;
+  font-size:clamp(36px,5vw,62px);
+  line-height:.98;
+  letter-spacing:-.045em;
+}
+
+.info-hero p{
+  max-width:680px;
+  margin:16px 0 0;
+  color:#c8d0d7;
+  font-size:16px;
+  line-height:1.65;
+}
+
+.info-hero-visual{
+  position:relative;
+  background:#dfe5dc;
+}
+
+.info-hero-visual img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.page-section{
+  margin-top:28px;
+}
+
+.page-section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.page-section-head h2{
+  margin:0;
+  font-size:30px;
+  letter-spacing:-.025em;
+}
+
+.page-section-head p{
+  margin:0;
+  max-width:520px;
+  color:#6b736c;
+  line-height:1.55;
+}
+
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:18px;
+}
+
+.info-card{
+  overflow:hidden;
+  border:1px solid #e0e5de;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 6px 20px rgba(27,35,28,.05);
+}
+
+.info-card img{
+  width:100%;
+  height:190px;
+  object-fit:cover;
+}
+
+.info-card-body{
+  padding:20px;
+}
+
+.info-card h3{
+  margin:0 0 7px;
+  font-size:18px;
+}
+
+.info-card p{
+  margin:0;
+  color:#68716a;
+  line-height:1.55;
+}
+
+.info-card .card-link{
+  display:inline-flex;
+  margin-top:15px;
+  color:#df6800;
+  font-weight:800;
+  text-decoration:none;
+}
+
+.vehicle-page-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:20px;
+}
+
+.vehicle-page-card{
+  padding:16px;
+  border:1px solid #dfe4dd;
+  border-radius:20px;
+  background:#fff;
+}
+
+.vehicle-page-card img{
+  width:100%;
+  height:210px;
+  border-radius:14px;
+  object-fit:cover;
+  background:#eef1ec;
+}
+
+.vehicle-page-card h2{
+  margin:16px 0 7px;
+  font-size:20px;
+}
+
+.vehicle-page-card p{
+  margin:0;
+  color:#697169;
+  line-height:1.55;
+}
+
+.vehicle-meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:14px;
+}
+
+.vehicle-meta span{
+  padding:7px 9px;
+  border-radius:20px;
+  background:#f1f3ef;
+  color:#4e564f;
+  font-size:11px;
+  font-weight:700;
+}
+
+.fare-layout,
+.about-layout,
+.contact-layout{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:22px;
+}
+
+.page-panel{
+  padding:28px;
+  border:1px solid #dfe4dd;
+  border-radius:22px;
+  background:#fff;
+}
+
+.page-panel h2{
+  margin:0 0 18px;
+  font-size:27px;
+}
+
+.page-panel p,
+.page-panel li{
+  color:#667067;
+  line-height:1.65;
+}
+
+.price-line{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:16px;
+  padding:18px 0;
+  border-bottom:1px solid #e7eae5;
+}
+
+.price-line:last-of-type{
+  border-bottom:0;
+}
+
+.price-line strong:last-child{
+  color:#ff7900;
+  font-size:25px;
+}
+
+.area-list,
+.value-list,
+.contact-list{
+  display:grid;
+  gap:10px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+.area-list li,
+.value-list li,
+.contact-list li{
+  padding:12px 14px;
+  border-radius:12px;
+  background:#f6f8f4;
+}
+
+.about-value{
+  display:grid;
+  grid-template-columns:42px 1fr;
+  gap:12px;
+  align-items:start;
+}
+
+.about-value-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#fff0e4;
+  color:#df6800;
+  font-weight:900;
+}
+
+.contact-call{
+  display:block;
+  margin-top:18px;
+  padding:15px 18px;
+  border-radius:12px;
+  background:#ff7900;
+  color:#fff;
+  text-decoration:none;
+  text-align:center;
+  font-weight:900;
+}
+
+.contact-secondary{
+  display:block;
+  margin-top:10px;
+  padding:14px 18px;
+  border:1px solid #dce2da;
+  border-radius:12px;
+  background:#fff;
+  color:#263027;
+  text-decoration:none;
+  text-align:center;
+  font-weight:800;
+}
+
+.info-footer{
+  padding:24px 18px 34px;
+  color:#737b73;
+  text-align:center;
+  font-size:12px;
+}
+
+@media(max-width:850px){
+  .info-header{
+    flex-wrap:wrap;
+    gap:10px;
+  }
+
+  .info-brand{
+    min-width:0;
+    flex:1;
+  }
+
+  .info-brand-text small{
+    display:none;
+  }
+
+  .info-nav{
+    order:3;
+    width:100%;
+    justify-content:flex-start;
+    overflow:auto;
+    padding:3px 0 7px;
+  }
+
+  .info-nav a{
+    flex:none;
+  }
+
+  .info-hero,
+  .fare-layout,
+  .about-layout,
+  .contact-layout{
+    grid-template-columns:1fr;
+  }
+
+  .info-hero-copy{
+    min-height:250px;
+    padding:30px;
+  }
+
+  .info-hero-visual{
+    min-height:240px;
+  }
+
+  .info-grid,
+  .vehicle-page-grid{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+@media(max-width:560px){
+  .info-header{
+    padding:9px 14px;
+  }
+
+  .info-brand img{
+    width:70px;
+    height:44px;
+  }
+
+  .info-brand-text strong{
+    font-size:19px;
+  }
+
+  .book-link{
+    padding:10px 12px;
+    font-size:12px;
+  }
+
+  .info-shell{
+    width:min(100% - 24px,1180px);
+    padding-top:28px;
+  }
+
+  .info-hero-copy{
+    min-height:220px;
+    padding:24px;
+  }
+
+  .info-grid,
+  .vehicle-page-grid{
+    grid-template-columns:1fr;
+  }
+
+  .page-panel{
+    padding:21px;
+  }
+}
+
+/* === MEI ORANGE AUTH + WORKFLOW REFRESH 2026-10-03 === */
+:root{
+  --mei-green:#ff7900;
+  --mei-green-dark:#d96100;
+  --mei-orange:#ff7900;
+  --mei-orange-dark:#d96100;
+  --mei-orange-soft:#fff0e4;
+  --mei-orange-soft-2:#fff7f1;
+}
+
+/* Remove the remaining legacy green appearance from customer-facing workflow UI. */
+:focus-visible{outline-color:var(--mei-orange)!important}
+.workflow-content>.primary-button,
+.workflow-dialog>.primary-button,
+.flow-button,
+.rating-area button,
+.ride-rating button,
+.chat-form button,
+.ride-tracker-actions #bookAnotherRideButton{
+  background:var(--mei-orange)!important;
+  border-color:var(--mei-orange)!important;
+  color:#fff!important;
+}
+.workflow-content>.primary-button:hover,
+.workflow-dialog>.primary-button:hover,
+.flow-button:hover,
+.rating-area button:hover,
+.chat-form button:hover{
+  background:var(--mei-orange-dark)!important;
+}
+.route-dot{border-color:var(--mei-orange)!important}
+.route-dot.destination,.route-dot.dest{background:var(--mei-orange)!important;border-color:var(--mei-orange)!important}
+.tracking-progress span.active{background:var(--mei-orange)!important}
+.driver-marker{background:var(--mei-orange)!important}
+.driver-avatar{background:var(--mei-orange-soft)!important}
+.account-chip>button{background:var(--mei-orange-soft)!important;color:#9a4300!important}
+.promo-badge{background:var(--mei-orange-soft)!important;color:#a84a00!important}
+.ride-meta span{background:#fff4eb!important}
+.driver-message-notice{border-color:#ffd0aa!important;background:#fff4ea!important;color:#7a3900!important}
+.chat-message.mine{background:#ffe7d2!important}
+.booking.booking-open .ride-step.active span{background:var(--mei-orange)!important;border-color:#e66d00!important;color:#fff!important}
+
+/* Account / sign-in modal */
+.auth-dialog{
+  width:min(455px,calc(100vw - 28px));
+  max-height:min(92dvh,820px);
+  overflow:auto;
+  border:1px solid #e7e8e6!important;
+  border-radius:22px!important;
+  background:#fff!important;
+  color:#171b18!important;
+  padding:26px 27px 24px!important;
+  box-shadow:0 24px 90px rgba(0,0,0,.32)!important;
+}
+.auth-dialog::backdrop{background:rgba(8,12,10,.66)!important;backdrop-filter:blur(5px)}
+.auth-dialog .dialog-close{z-index:4;right:15px;top:10px}
+.auth-dialog .dialog-close button,.auth-dialog button.dialog-close{color:#3e4640!important}
+.auth-brand{display:flex;justify-content:center;margin:0 auto 16px}
+.auth-brand img{width:132px;height:62px;object-fit:contain;border-radius:10px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:0 0 20px;padding:3px;border:1px solid #e2e5e1;border-radius:10px;background:#f4f5f4}
+.auth-tabs button{min-height:40px;border:0;border-radius:8px;background:transparent;color:#56605a;font-weight:800;cursor:pointer}
+.auth-tabs button.active{background:var(--mei-orange);color:#fff;box-shadow:0 2px 8px rgba(255,121,0,.22)}
+.auth-panel[hidden],.account-profile[hidden]{display:none!important}
+.auth-panel h2,.account-profile h2{margin:0 0 5px!important;text-align:center;font-size:23px!important;color:#171b18!important}
+.auth-panel>p,.account-profile>p{margin:0 0 18px!important;text-align:center;color:#737b75!important;font-size:13px!important;line-height:1.45!important}
+.auth-panel label{display:block;margin:12px 0!important;color:#3f4742!important;font-size:12px!important;font-weight:700}
+.auth-panel label>input,.password-field input{
+  width:100%;min-height:48px;margin-top:6px;padding:11px 13px;border:1px solid #dfe3df!important;border-radius:9px!important;background:#fafbfa!important;color:#1d221f!important;font-size:15px!important;outline:none
+}
+.auth-panel input:focus,.password-field:focus-within{border-color:#ff9a4d!important;box-shadow:0 0 0 3px rgba(255,121,0,.10)}
+.password-field{position:relative;display:block;margin-top:6px}
+.password-field input{margin-top:0!important;padding-right:48px!important}
+.password-field>button{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;border:0;background:transparent;color:#657069;cursor:pointer;font-size:16px}
+.account-primary,.auth-dialog .primary-button{width:100%;min-height:48px;margin-top:9px;border:0;border-radius:9px;background:var(--mei-orange)!important;color:#fff!important;font-weight:900;cursor:pointer}
+.account-primary:hover,.auth-dialog .primary-button:hover{background:var(--mei-orange-dark)!important}
+.auth-secondary{width:100%;min-height:44px;border:1px solid var(--mei-orange);border-radius:9px;background:#fff;color:#c05200;font-weight:800;cursor:pointer}
+.auth-text-button{display:block;margin:2px 0 7px auto;border:0;background:transparent;color:#c05200;font-size:12px;font-weight:800;text-decoration:underline;cursor:pointer}
+.auth-centered{margin:13px auto 0}
+.auth-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:#8a918c;font-size:12px}
+.auth-divider::before,.auth-divider::after{content:"";height:1px;flex:1;background:#e0e4e0}
+.auth-phone-icon{width:58px;height:58px;display:grid;place-items:center;margin:0 auto 15px;border-radius:17px;background:var(--mei-orange);color:#fff;font-size:20px;font-weight:900;letter-spacing:2px;box-shadow:0 8px 22px rgba(255,121,0,.22)}
+.account-message{min-height:18px;margin:12px 0 0!important;text-align:center;color:#b94f00!important;font-size:12px!important;line-height:1.4}
+.account-profile{text-align:center}
+.profile-avatar{width:64px;height:64px;display:grid;place-items:center;margin:0 auto 12px;border-radius:50%;background:var(--mei-orange-soft);font-size:28px}
+.account-profile .notification-pref{margin:18px 0!important;padding:12px;border-radius:10px;background:#fff5ec;color:#3d433f!important;text-align:left}
+.account-signout{width:100%;min-height:45px;border:1px solid #e2e5e1;border-radius:9px;background:#f7f8f7;color:#333b35;font-weight:800;cursor:pointer}
+
+/* Confirm/request ride page orange theme */
+html[data-workflow="confirm"] body,html[data-workflow="ride"] body{background:#f7f7f6;color:#1e2320}
+.workflow-header{border-bottom-color:#ebecea}
+.workflow-card{border-color:#e5e7e4;box-shadow:0 7px 22px rgba(26,31,27,.05)}
+.workflow-card:has(.price-row){border-top:3px solid var(--mei-orange)}
+.price-input:focus{border-color:var(--mei-orange);box-shadow:0 0 0 3px rgba(255,121,0,.10);outline:none}
+.account-chip{border-color:#f0dfd0;background:#fffaf6}
+.tracking-progress span{background:#eceeeb}
+.tracking-route,.rating-area{background:#faf8f6}
+.tracking-actions a{background:#fff0e4;color:#9b4300}
+.tracking-actions a:hover{background:#ffe3cc}
+.map-status-pill{border:1px solid #ffe0c7}
+
+/* Keep main landing/button accents orange even when older rules appear earlier in the file. */
+.find-rides,.promo-entry button,.account-primary,.timing-choice.active + .timing-choice.active{accent-color:var(--mei-orange)}
+.hero:has(#homeMap) .find-rides{background:var(--mei-orange)!important;color:#fff!important}
+.hero:has(#homeMap) .trip-field::before{border-color:var(--mei-orange)!important}
+.hero:has(#homeMap) .destination-field::before{background:var(--mei-orange)!important}
+
+@media(max-width:520px){
+  .auth-dialog{padding:22px 17px 20px!important;border-radius:18px!important}
+  .auth-brand img{width:116px;height:54px}
+  .auth-panel h2{font-size:21px!important}
+}
+/* Allow the password-recovery account modal to open above the ride-confirmation workflow. */
+html[data-workflow="confirm"] #accountDialog[open]{display:block!important}

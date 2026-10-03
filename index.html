@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MEI Velocity | Harare Taxi & Transport</title>
 <script>const workflowView=new URLSearchParams(location.search).get("view");if(workflowView==="confirm"||workflowView==="ride")document.documentElement.dataset.workflow=workflowView;</script>
-<link rel="stylesheet" href="styles.css?v=rideflow3">
+<link rel="stylesheet" href="styles.css?v=orange-auth-20261003">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
@@ -35,13 +35,30 @@
   <div class="hero-content">
     <header class="app-topbar">
       <a class="app-brand" href="#home" aria-label="MEI Velocity home"><img src="assets/mei_logo.jpg" alt="MEI Velocity"></a>
-      <button class="app-account" id="accountButton" type="button" aria-label="Ride history and account">◉</button>
+
+      <div class="app-actions">
+        <button class="app-account" id="accountButton" type="button" aria-label="Ride history and account">◉</button>
+
+        <details class="app-menu">
+          <summary aria-label="Open more MEI Velocity links">
+            <span></span><span></span><span></span>
+          </summary>
+
+          <nav class="app-menu-panel" aria-label="More MEI Velocity pages">
+            <a href="services.html">Services</a>
+            <a href="vehicles.html">Vehicles</a>
+            <a href="fares.html">Fares &amp; Areas</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact &amp; Help</a>
+          </nav>
+        </details>
+      </div>
     </header>
     <nav class="app-shortcuts" aria-label="Explore MEI Velocity">
       <a href="#book" data-action="schedule"><span class="shortcut-icon">▣</span><span>Schedule</span></a>
-      <a href="#services" data-action="deliveries"><span class="shortcut-icon">▰</span><span>Deliveries</span></a>
-      <a href="#services" data-action="shop"><span class="shortcut-icon">▧</span><span>Shop</span></a>
-      <a href="#contact" data-action="pros"><span class="shortcut-icon">✳</span><span>Pros</span></a>
+      <a href="services.html#package-delivery" data-action="deliveries"><span class="shortcut-icon">▰</span><span>Deliveries</span></a>
+      <a href="services.html#shopping-errands" data-action="shop"><span class="shortcut-icon">▧</span><span>Shop</span></a>
+      <a href="services.html#corporate-private" data-action="pros"><span class="shortcut-icon">✳</span><span>Pros</span></a>
     </nav>
     <div class="map-label map-label-one">HARARE</div><div class="map-label map-label-two">AVONDALE</div>
     <div class="map-label map-label-three">BORROWDALE</div>
@@ -228,159 +245,134 @@
   </div>
 </section>
 
-<dialog id="accountDialog" class="account-dialog">
+<dialog id="accountDialog" class="account-dialog auth-dialog">
   <form method="dialog" class="dialog-close"><button aria-label="Close">×</button></form>
-  <div class="account-mark">MEI VELOCITY</div>
-  <h2>Sign in or create your account</h2>
-  <p>Verify your phone number to book rides and keep your trip history with your MEI Velocity profile.</p>
-  <label>Your name<input id="accountUsername" autocomplete="username" required></label>
-  <label>Phone number<input id="accountPhone" type="tel" placeholder="+country code and number" autocomplete="tel" required></label>
-  <button id="sendCode" type="button" class="account-primary">Send verification code</button>
-  <label id="codeField" hidden>Verification code<input id="accountCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
-  <button id="verifyCode" type="button" class="account-primary" hidden>Verify and continue</button>
-  <label class="notification-pref" id="notificationPreference" hidden><input id="rideNotifications" type="checkbox"> Notify me when my ride status changes</label>
-  <button id="signOutButton" type="button" class="account-signout" hidden>Sign out</button>
-  <p id="accountMessage" class="account-message" role="status"></p>
+
+  <div class="auth-brand">
+    <img src="assets/mei_logo.jpg" alt="MEI Velocity">
+  </div>
+
+  <div id="accountGuestView">
+    <div class="auth-tabs" role="tablist" aria-label="Account options">
+      <button id="accountSignInTab" class="active" type="button" role="tab">Sign In</button>
+      <button id="accountCreateTab" type="button" role="tab">Create Account</button>
+    </div>
+
+    <section id="accountSignInPanel" class="auth-panel">
+      <h2>Welcome Back</h2>
+      <p>Sign in with your phone number and password.</p>
+
+      <label>Phone number
+        <input id="loginPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel">
+      </label>
+
+      <label>Password
+        <span class="password-field">
+          <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+          <button type="button" data-password-toggle="loginPassword" aria-label="Show or hide password">👁</button>
+        </span>
+      </label>
+
+      <button id="forgotPasswordButton" class="auth-text-button" type="button">Forgot password?</button>
+      <button id="passwordLoginButton" class="account-primary" type="button">Sign In</button>
+
+      <div class="auth-divider"><span>or</span></div>
+      <button id="openSmsLogin" class="auth-secondary" type="button">▣ &nbsp; Continue with SMS Code Instead</button>
+    </section>
+
+    <section id="accountCreatePanel" class="auth-panel" hidden>
+      <h2>Create Your Account</h2>
+      <p>Join MEI Velocity for safe, reliable and comfortable travel.</p>
+
+      <label>Full name
+        <input id="accountUsername" autocomplete="name" placeholder="Your full name">
+      </label>
+      <label>Phone number
+        <input id="accountPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel">
+      </label>
+      <label>Password
+        <span class="password-field">
+          <input id="accountPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password">
+          <button type="button" data-password-toggle="accountPassword" aria-label="Show or hide password">👁</button>
+        </span>
+      </label>
+      <label>Confirm password
+        <span class="password-field">
+          <input id="accountPasswordConfirm" type="password" placeholder="Confirm password" autocomplete="new-password">
+          <button type="button" data-password-toggle="accountPasswordConfirm" aria-label="Show or hide password">👁</button>
+        </span>
+      </label>
+
+      <button id="createAccountButton" class="account-primary" type="button">Create Account</button>
+      <button id="createUseSms" class="auth-text-button auth-centered" type="button">Use SMS verification instead</button>
+    </section>
+
+    <section id="accountSmsPanel" class="auth-panel" hidden>
+      <div class="auth-phone-icon">•••</div>
+      <h2>Verify Your Phone Number</h2>
+      <p>We’ll send a 6-digit verification code to your phone.</p>
+
+      <label>Your name
+        <input id="smsUsername" autocomplete="name" placeholder="Your full name">
+      </label>
+      <label>Phone number
+        <input id="smsPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel">
+      </label>
+
+      <button id="sendCode" type="button" class="account-primary">Send Verification Code</button>
+      <label id="codeField" hidden>Verification code
+        <input id="accountCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code">
+      </label>
+      <button id="verifyCode" type="button" class="account-primary" hidden>Verify Code</button>
+      <button id="backToPasswordSignIn" class="auth-text-button auth-centered" type="button">Back to Sign In</button>
+    </section>
+
+    <section id="accountForgotPanel" class="auth-panel" hidden>
+      <h2>Forgot Password</h2>
+      <p>Enter your phone number and we’ll send you a verification code.</p>
+
+      <label>Phone number
+        <input id="forgotPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel">
+      </label>
+      <button id="requestPasswordReset" class="account-primary" type="button">Send Code</button>
+
+      <div id="resetPasswordFields" hidden>
+        <label>Verification code
+          <input id="resetCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6-digit code">
+        </label>
+        <label>New password
+          <span class="password-field">
+            <input id="newPassword" type="password" placeholder="New password" autocomplete="new-password">
+            <button type="button" data-password-toggle="newPassword" aria-label="Show or hide password">👁</button>
+          </span>
+        </label>
+        <label>Confirm new password
+          <span class="password-field">
+            <input id="newPasswordConfirm" type="password" placeholder="Confirm new password" autocomplete="new-password">
+            <button type="button" data-password-toggle="newPasswordConfirm" aria-label="Show or hide password">👁</button>
+          </span>
+        </label>
+        <button id="resetPasswordButton" class="account-primary" type="button">Reset Password</button>
+      </div>
+
+      <button id="forgotBackToSignIn" class="auth-text-button auth-centered" type="button">Back to Sign In</button>
+    </section>
+
+    <p id="accountMessage" class="account-message" role="status"></p>
+  </div>
+
+  <section id="accountProfileView" class="account-profile" hidden>
+    <div class="profile-avatar">👤</div>
+    <h2 id="profileUsername">Your account</h2>
+    <p id="profilePhone"></p>
+    <p>Your bookings and ride history are connected to this verified phone number.</p>
+    <label class="notification-pref" id="notificationPreference">
+      <input id="rideNotifications" type="checkbox"> Notify me when my ride status changes
+    </label>
+    <button id="signOutButton" type="button" class="account-signout">Sign out</button>
+    <p id="profileMessage" class="account-message" role="status"></p>
+  </section>
 </dialog>
-
-<section class="section ride-history" id="rideHistory">
-  <div class="heading"><h2>YOUR <span>RIDE HISTORY</span></h2><p>Bookings saved on this device or synced to your account.</p></div>
-  <div id="rideHistoryList" class="history-list"><p>No saved rides yet.</p></div>
-</section>
-
-<section class="section services" id="services">
-  <div class="heading">
-    <h2>OUR <span>SERVICES</span></h2>
-    <p>Reliable transport solutions for every need.</p>
-  </div>
-
-  <div class="service-grid">
-
-    <article>
-      <div class="upload-card">
-        <img src="assets/services/school-run.png" alt="School Run">
-      </div>
-      <h3>SCHOOL RUN</h3>
-      <p>Safe and reliable rides for children.</p>
-    </article>
-
-    <article>
-      <div class="upload-card">
-        <img src="assets/services/package-delivery.png" alt="Package Delivery">
-      </div>
-      <h3>PACKAGE DELIVERY</h3>
-      <p>Fast and secure delivery across Harare.</p>
-    </article>
-
-    <article>
-      <div class="upload-card">
-        <img src="assets/services/corporate-private.png" alt="Corporate and Private Transport">
-      </div>
-      <h3>CORPORATE & PRIVATE</h3>
-      <p>Comfortable transport for business and personal needs.</p>
-    </article>
-
-    <article>
-      <div class="upload-card">
-        <img src="assets/services/shopping-errands.png" alt="Shopping and Errand Runs">
-      </div>
-      <h3>SHOPPING & ERRAND RUNS</h3>
-      <p>Convenient rides for daily errands.</p>
-    </article>
-
-    <article>
-      <div class="upload-card">
-        <img src="assets/services/airport-transfers.png" alt="Airport Transfers">
-      </div>
-      <h3>AIRPORT TRANSFERS</h3>
-      <p>Reliable airport transport on request.</p>
-    </article>
-
-  </div>
-</section>
-
-<section class="section vehicles" id="vehicles">
-
-  <div class="heading">
-    <h2>OUR <span>VEHICLES</span></h2>
-    <p>Comfort, safety and reliability for every journey.</p>
-  </div>
-
-  <div class="vehicle-grid">
-
-    <article>
-      <div class="vehicle-img">
-        <img src="assets/vehicles/toyota-spade.jpg" alt="Toyota Spade">
-      </div>
-
-      <div>
-        <h3>TOYOTA SPADE</h3>
-        <p>
-          Comfortable, spacious and reliable. Perfect for school runs,
-          family trips and everyday travel.
-        </p>
-      </div>
-    </article>
-
-    <article>
-      <div class="vehicle-img">
-        <img src="assets/vehicles/nissan-note.jpg" alt="Nissan Note">
-      </div>
-
-      <div>
-        <h3>NISSAN NOTE</h3>
-        <p>
-          Fuel efficient and dependable for everyday rides.
-        </p>
-      </div>
-    </article>
-
-    <article>
-      <div class="vehicle-img">
-        <img src="assets/vehicles/truck.jpg" alt="Truck for Hire">
-      </div>
-
-      <div>
-        <h3>TRUCK FOR HIRE</h3>
-        <p>
-          Perfect for moving, deliveries and more.
-        </p>
-        <strong>$1.50/km</strong>
-      </div>
-    </article>
-
-  </div>
-
-</section>
-
-<section class="benefits">
-  <div>🛡️<b>CLEAN & WELL<br>MAINTAINED</b></div><div>👥<b>PROFESSIONAL<br>DRIVERS</b></div><div>◷<b>PUNCTUAL &<br>SAFE SERVICE</b></div><div>💲<b>TRANSPARENT<br>FARES</b></div><div>☎<b>CUSTOMER<br>SUPPORT</b></div>
-</section>
-
-<section class="section two-col" id="fares">
-  <div class="panel"><h2>OUR <span>FARES</span></h2><div class="fare-row"><b>STANDARD RIDES</b><strong>$0.75/km</strong></div><div class="fare-row"><b>TRUCK FOR HIRE</b><strong>$1.50/km</strong></div><p>Standard ride fares are calculated from the driving distance between pickup and drop-off.</p></div>
- <div class="panel">
-  <h2>OUR <span>SERVICE AREAS</span></h2>
-
-  <p>📍 Harare — Main Route</p>
-  <p>📍 Robert Gabriel Mugabe International Airport</p>
-  <p>📍 Semi Levy Village Borrowdale</p>
-  <p>📍 UZ Campus</p>
-  <p>📍 Surrounding areas</p>
-
-  <h3>40 KM RADIUS</h3>
-
-  <p>Special requests considered outside the main service area.</p>
-</div>
-</section>
-
-<section class="section two-col" id="about">
-  <div class="panel"><h2>WHY CHOOSE <span>MEI VELOCITY?</span></h2><ul><li>Clean and well maintained vehicles</li><li>Professional and trusted drivers</li><li>Punctual and safe service</li><li>Reasonable, transparent fares</li><li>Customer focused support</li></ul></div>
-  <div class="panel"><h2>DRIVEN BY <span>VALUES.</span></h2><p>Delivered with pride. We don't just move people — we move lives forward.</p></div>
-</section>
-
-<section class="cta" id="contact"><div><small>BOOK YOUR RIDE TODAY!</small><strong>+263 78 114 4071</strong></div><a href="#book">BOOK A RIDE NOW →</a></section>
-<footer><img src="assets/mei_logo.jpg" alt="MEI Velocity"><span>Harare, Zimbabwe</span><span>Driven by values. Delivered with pride.</span><span>© 2026 MEI Velocity. All Rights Reserved.</span></footer>
 
 <main id="confirmPage" class="workflow-wrap" hidden>
   <header class="workflow-header"><a class="back-link" href="index.html">← Back to rides</a><img class="workflow-logo" src="assets/mei_logo.jpg" alt="MEI Velocity"></header>
@@ -399,15 +391,65 @@
   </div>
 </main>
 
-<dialog id="confirmAccountDialog" class="workflow-dialog">
+<dialog id="confirmAccountDialog" class="workflow-dialog auth-dialog confirm-auth-dialog">
   <form method="dialog"><button class="dialog-close" aria-label="Close">×</button></form>
-  <h2 id="confirmDialogTitle">Sign in or create your account</h2><p id="confirmDialogIntro">Verify your phone number before booking.</p>
-  <label>Your name<input id="confirmUsername" autocomplete="name" required></label>
-  <label>Phone number<input id="confirmPhone" type="tel" placeholder="+country code and number" autocomplete="tel" required></label>
-  <button id="confirmSendCode" class="primary-button" type="button">Send verification code</button>
-  <label id="confirmCodeRow" hidden>Verification code<input id="confirmCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
-  <button id="confirmVerify" class="primary-button" type="button" hidden>Verify and continue</button>
-  <p id="confirmAuthMessage" class="message" role="status"></p>
+
+  <div class="auth-brand"><img src="assets/mei_logo.jpg" alt="MEI Velocity"></div>
+
+  <div class="auth-tabs" role="tablist" aria-label="Account options">
+    <button id="confirmSignInTab" class="active" type="button">Sign In</button>
+    <button id="confirmCreateTab" type="button">Create Account</button>
+  </div>
+
+  <section id="confirmSignInPanel" class="auth-panel">
+    <h2>Welcome Back</h2>
+    <p>Sign in to request your ride.</p>
+    <label>Phone number<input id="confirmLoginPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel"></label>
+    <label>Password
+      <span class="password-field">
+        <input id="confirmLoginPassword" type="password" placeholder="Password" autocomplete="current-password">
+        <button type="button" data-password-toggle="confirmLoginPassword" aria-label="Show or hide password">👁</button>
+      </span>
+    </label>
+    <button id="confirmForgotPassword" class="auth-text-button" type="button">Forgot password?</button>
+    <button id="confirmPasswordLogin" class="primary-button" type="button">Sign In</button>
+    <div class="auth-divider"><span>or</span></div>
+    <button id="confirmOpenSms" class="auth-secondary" type="button">▣ &nbsp; Continue with SMS Code Instead</button>
+  </section>
+
+  <section id="confirmCreatePanel" class="auth-panel" hidden>
+    <h2>Create Your Account</h2>
+    <p>Create an account using your phone number.</p>
+    <label>Full name<input id="confirmUsername" autocomplete="name" placeholder="Your full name"></label>
+    <label>Phone number<input id="confirmPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel"></label>
+    <label>Password
+      <span class="password-field">
+        <input id="confirmPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password">
+        <button type="button" data-password-toggle="confirmPassword" aria-label="Show or hide password">👁</button>
+      </span>
+    </label>
+    <label>Confirm password
+      <span class="password-field">
+        <input id="confirmPasswordAgain" type="password" placeholder="Confirm password" autocomplete="new-password">
+        <button type="button" data-password-toggle="confirmPasswordAgain" aria-label="Show or hide password">👁</button>
+      </span>
+    </label>
+    <button id="confirmCreateAccount" class="primary-button" type="button">Create Account</button>
+  </section>
+
+  <section id="confirmSmsPanel" class="auth-panel" hidden>
+    <div class="auth-phone-icon">•••</div>
+    <h2>Verify Your Phone Number</h2>
+    <p>Use a 6-digit SMS verification code to continue.</p>
+    <label>Your name<input id="confirmSmsUsername" autocomplete="name" placeholder="Your full name"></label>
+    <label>Phone number<input id="confirmSmsPhone" type="tel" placeholder="+263 77 123 4567" autocomplete="tel"></label>
+    <button id="confirmSendCode" class="primary-button" type="button">Send Verification Code</button>
+    <label id="confirmCodeRow" hidden>Verification code<input id="confirmCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"></label>
+    <button id="confirmVerify" class="primary-button" type="button" hidden>Verify Code</button>
+    <button id="confirmBackToSignIn" class="auth-text-button auth-centered" type="button">Back to Sign In</button>
+  </section>
+
+  <p id="confirmAuthMessage" class="message account-message" role="status"></p>
 </dialog>
 
 <main id="ridePage" class="tracking-page" hidden>
@@ -428,7 +470,7 @@
 
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script defer src="map-config.js"></script>
-<script defer src="app.js?v=local-otp-20261002"></script>
+<script defer src="app.js?v=orange-auth-20261003"></script>
 
 </body>
 </html>
