@@ -4533,11 +4533,13 @@ if (
         null;
     }
 
-    if (
-      !draft?.pickup ||
-      !draft?.dropoff ||
-      !draft?.vehicle
-    ) {
+    const hasValidDraft = Boolean(
+      draft?.pickup &&
+      draft?.dropoff &&
+      draft?.vehicle
+    );
+
+    if (!hasValidDraft) {
       text(
         "confirmMessage",
         "Your ride details are missing. Please choose a route again."
@@ -4547,10 +4549,9 @@ if (
         "confirmRequest"
       ).disabled =
         true;
-
-      return;
     }
 
+    if (hasValidDraft) {
     text(
       "confirmPickup",
       draft.pickup
@@ -4596,6 +4597,7 @@ if (
       "confirmPromo"
     ).hidden =
       !draft.promoCode;
+    }
 
     const dialog =
       document.getElementById(
@@ -5214,6 +5216,14 @@ if (
       .addEventListener(
         "click",
         () => {
+          if (!hasValidDraft) {
+            text(
+              "confirmMessage",
+              "Your ride details are missing. Please choose a route again."
+            );
+            return;
+          }
+
           if (
             !customerSession?.token
           ) {
@@ -5236,6 +5246,10 @@ if (
 
 
     async function submitRide() {
+      if (!hasValidDraft) {
+        return;
+      }
+
       const button =
         document.getElementById(
           "confirmRequest"
