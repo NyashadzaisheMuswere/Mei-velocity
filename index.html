@@ -25,6 +25,11 @@
 .driver-card strong{display:block;margin-top:4px}
 .ride-tracker-message{margin:14px 0 4px}
 .ride-tracker-updated{opacity:.55}
+.rider-live-marker,.driver-live-marker{background:transparent!important;border:0!important}
+.rider-location-pin{position:relative;width:34px;height:34px;border-radius:50%;background:rgba(220,38,38,.18);display:grid;place-items:center}
+.rider-location-pin::after{content:"";width:16px;height:16px;border-radius:50%;background:#dc2626;border:4px solid #fff;box-shadow:0 2px 9px rgba(0,0,0,.38)}
+.rider-location-pin::before{content:"";position:absolute;inset:2px;border:2px solid rgba(220,38,38,.35);border-radius:50%}
+.driver-car-pin{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid #ff7900;box-shadow:0 4px 12px rgba(0,0,0,.3);font-size:24px;line-height:1}
 @media(max-width:650px){.ride-tracker{padding:15px}.ride-step{min-width:68px}.driver-card{grid-template-columns:1fr}}
 </style>
 
@@ -454,7 +459,7 @@
 
 <main id="ridePage" class="tracking-page" hidden>
   <header class="tracking-header"><a class="tracking-home" href="index.html">← Home</a></header>
-  <div class="tracking-map"><div id="rideMap" aria-label="Live ride map"></div><div id="rideStatusPill" class="map-status-pill">Looking for your driver…</div></div>
+  <div class="tracking-map"><div id="rideMap" aria-label="Live rider and driver location map"></div><div id="rideStatusPill" class="map-status-pill">Looking for your driver…</div></div>
   <section class="tracking-sheet">
     <h1 id="rideTitle">Finding your driver</h1><p id="rideMessage" class="tracking-subtitle">Your request has been sent to MEI Velocity drivers.</p>
     <div id="rideProgress" class="tracking-progress" aria-label="Ride progress"><span></span><span></span><span></span><span></span><span></span></div>
@@ -470,7 +475,7 @@
 
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script defer src="map-config.js"></script>
-<script defer src="app.js?v=orange-auth-20261003"></script>
+<script defer src="app.js?v=live-location-20261005"></script>
 
 </body>
 </html>
