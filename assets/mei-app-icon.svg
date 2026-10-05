@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#111820"/>
+  <path d="M42 164C91 79 170 35 268 35c83 0 149 32 199 89-49-31-105-47-166-47-100 0-189 35-259 87z" fill="#ff7900"/>
+  <circle cx="256" cy="250" r="171" fill="#f7f8f3"/>
+  <circle cx="256" cy="250" r="151" fill="#111820"/>
+  <text x="256" y="276" text-anchor="middle" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="102" font-weight="800" font-style="italic" letter-spacing="-3">M.E.I</text>
+  <path d="M111 305h290" stroke="#ff7900" stroke-width="12" stroke-linecap="round"/>
+  <text x="256" y="359" text-anchor="middle" fill="#ffc247" font-family="Arial,Helvetica,sans-serif" font-size="32" font-weight="800" letter-spacing="4">VELOCITY</text>
+  <text x="256" y="399" text-anchor="middle" fill="#e9edf0" font-family="Arial,Helvetica,sans-serif" font-size="17" font-weight="700" letter-spacing="2">DRIVEN BY VALUES</text>
+</svg>
