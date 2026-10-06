@@ -1646,6 +1646,14 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
   }
 });
 
+// Keep missing API endpoints machine-readable instead of returning Express's HTML 404 page.
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API route not found. Check that the website and backend are on matching versions."
+  });
+});
+
 initializeDatabase()
   .then(() => app.listen(PORT, "0.0.0.0", () => console.log(`MEI Velocity backend running on port ${PORT}`)))
   .catch((error) => { console.error("Database initialization failed:", error); process.exit(1); });
