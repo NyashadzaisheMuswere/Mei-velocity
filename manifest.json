@@ -1,0 +1,19 @@
+{
+  "name": "MEI Velocity",
+  "short_name": "MEI Velocity",
+  "description": "Book and track MEI Velocity rides.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7f3",
+  "theme_color": "#ff7900",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/mei_logo.jpg",
+      "sizes": "any",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ]
+}

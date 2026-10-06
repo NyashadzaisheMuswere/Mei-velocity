@@ -4458,8 +4458,205 @@ document
 
 
 /* =========================================================
-   NOTIFICATIONS
+   PUSH NOTIFICATIONS
 ========================================================= */
+
+function urlBase64ToUint8Array(base64String) {
+  const padding =
+    "=".repeat(
+      (4 - base64String.length % 4) % 4
+    );
+
+  const base64 =
+    (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+  const rawData =
+    window.atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map(
+      character =>
+        character.charCodeAt(0)
+    )
+  );
+}
+
+
+async function enableMeiPushNotifications() {
+  if (
+    !customerSession?.token
+  ) {
+    throw new Error(
+      "Sign in first to enable ride notifications."
+    );
+  }
+
+  if (
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  ) {
+    throw new Error(
+      "Push notifications are not supported on this device."
+    );
+  }
+
+  const permission =
+    Notification.permission === "default"
+      ? await Notification.requestPermission()
+      : Notification.permission;
+
+  if (
+    permission !== "granted"
+  ) {
+    throw new Error(
+      "Allow notifications in your browser settings first."
+    );
+  }
+
+  const registration =
+    await navigator.serviceWorker.ready;
+
+  const keyResponse =
+    await fetch(
+      `${API_BASE}/api/customer/push-public-key`
+    );
+
+  const keyData =
+    await keyResponse.json();
+
+  if (
+    !keyResponse.ok ||
+    !keyData.publicKey
+  ) {
+    throw new Error(
+      keyData.message ||
+      "Push notifications are not configured yet."
+    );
+  }
+
+  let subscription =
+    await registration.pushManager.getSubscription();
+
+  if (
+    !subscription
+  ) {
+    subscription =
+      await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+
+        applicationServerKey:
+          urlBase64ToUint8Array(
+            keyData.publicKey
+          )
+      });
+  }
+
+  const response =
+    await fetch(
+      `${API_BASE}/api/customer/push-subscriptions`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${customerSession.token}`
+        },
+
+        body:
+          JSON.stringify({
+            subscription:
+              subscription.toJSON()
+          })
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (
+    !response.ok
+  ) {
+    throw new Error(
+      data.message ||
+      "Could not enable push notifications."
+    );
+  }
+
+  localStorage.setItem(
+    "meiVelocityRideNotifications",
+    "true"
+  );
+
+  return subscription;
+}
+
+
+async function disableMeiPushNotifications() {
+  if (
+    !("serviceWorker" in navigator)
+  ) {
+    return;
+  }
+
+  const registration =
+    await navigator.serviceWorker.ready;
+
+  const subscription =
+    await registration.pushManager
+      .getSubscription();
+
+  if (
+    subscription &&
+    customerSession?.token
+  ) {
+    try {
+      await fetch(
+        `${API_BASE}/api/customer/push-subscriptions`,
+        {
+          method: "DELETE",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${customerSession.token}`
+          },
+
+          body:
+            JSON.stringify({
+              endpoint:
+                subscription.endpoint
+            })
+        }
+      );
+
+    } catch (error) {
+      console.warn(
+        "Could not remove push subscription from server.",
+        error
+      );
+    }
+  }
+
+  if (
+    subscription
+  ) {
+    await subscription.unsubscribe();
+  }
+
+  localStorage.setItem(
+    "meiVelocityRideNotifications",
+    "false"
+  );
+}
+
 
 document
   .getElementById(
@@ -4468,14 +4665,64 @@ document
   .addEventListener(
     "change",
     async event => {
+      const toggle =
+        event.currentTarget;
+
       const profileMessage =
         document.getElementById(
           "profileMessage"
         );
 
-      if (
-        !event.currentTarget.checked
-      ) {
+      toggle.disabled =
+        true;
+
+      try {
+
+        if (
+          toggle.checked
+        ) {
+          if (
+            profileMessage
+          ) {
+            profileMessage.textContent =
+              "Enabling ride notifications…";
+          }
+
+          await enableMeiPushNotifications();
+
+          toggle.checked =
+            true;
+
+          if (
+            profileMessage
+          ) {
+            profileMessage.textContent =
+              "Ride notifications are on.";
+          }
+
+        } else {
+          await disableMeiPushNotifications();
+
+          toggle.checked =
+            false;
+
+          if (
+            profileMessage
+          ) {
+            profileMessage.textContent =
+              "Ride notifications are off.";
+          }
+        }
+
+      } catch (error) {
+        console.error(
+          "Push notification setup error:",
+          error
+        );
+
+        toggle.checked =
+          false;
+
         localStorage.setItem(
           "meiVelocityRideNotifications",
           "false"
@@ -4485,56 +4732,12 @@ document
           profileMessage
         ) {
           profileMessage.textContent =
-            "Ride notifications are off.";
+            error.message;
         }
 
-        return;
-      }
-
-      if (
-        !(
-          "Notification" in
-          window
-        )
-      ) {
-        event.currentTarget.checked =
+      } finally {
+        toggle.disabled =
           false;
-
-        if (
-          profileMessage
-        ) {
-          profileMessage.textContent =
-            "This browser does not support ride notifications.";
-        }
-
-        return;
-      }
-
-      const permission =
-        Notification.permission ===
-        "default"
-          ? await Notification.requestPermission()
-          : Notification.permission;
-
-      const enabled =
-        permission ===
-        "granted";
-
-      event.currentTarget.checked =
-        enabled;
-
-      localStorage.setItem(
-        "meiVelocityRideNotifications",
-        String(enabled)
-      );
-
-      if (
-        profileMessage
-      ) {
-        profileMessage.textContent =
-          enabled
-            ? "Ride status notifications are on."
-            : "Allow notifications in your browser settings to receive ride updates.";
       }
     }
   );
@@ -6800,3 +7003,49 @@ if (
     );
 
 })();
+
+/* =========================================================
+   SERVICE WORKER / PUSH NOTIFICATIONS
+========================================================= */
+
+async function registerMeiServiceWorker() {
+  if (
+    !("serviceWorker" in navigator)
+  ) {
+    console.warn(
+      "Service workers are not supported on this device."
+    );
+
+    return null;
+  }
+
+  try {
+    const registration =
+      await navigator.serviceWorker.register(
+        "./service-worker.js"
+      );
+
+    console.log(
+      "MEI Velocity service worker ready:",
+      registration.scope
+    );
+
+    return registration;
+
+  } catch (error) {
+    console.error(
+      "Service worker registration failed:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+window.addEventListener(
+  "load",
+  () => {
+    registerMeiServiceWorker();
+  }
+);

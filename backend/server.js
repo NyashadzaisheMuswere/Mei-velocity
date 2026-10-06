@@ -2,7 +2,25 @@
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
+const webpush = require("web-push");
 const { Pool } = require("pg");
+
+const VAPID_PUBLIC_KEY =
+  process.env.VAPID_PUBLIC_KEY;
+
+const VAPID_PRIVATE_KEY =
+  process.env.VAPID_PRIVATE_KEY;
+
+if (
+  VAPID_PUBLIC_KEY &&
+  VAPID_PRIVATE_KEY
+) {
+  webpush.setVapidDetails(
+    "mailto:support@meivelocity.com",
+    VAPID_PUBLIC_KEY,
+    VAPID_PRIVATE_KEY
+  );
+}
 
 const LOCAL_CUSTOMER_AUTH_SECRET = crypto.randomBytes(32).toString("hex");
 
