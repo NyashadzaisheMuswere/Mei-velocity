@@ -107,45 +107,6 @@ function phoneCodeHash(phone, code) {
   return crypto.createHmac("sha256", customerAuthSecret()).update(`${phone}:${code}`).digest("hex");
 }
 
-const CUSTOMER_PASSWORD_SCRYPT = { N: 16384, r: 8, p: 1, keylen: 64 };
-
-function deriveCustomerPassword(password, salt, keylen = CUSTOMER_PASSWORD_SCRYPT.keylen) {
-  return new Promise((resolve, reject) => {
-    crypto.scrypt(password, salt, keylen, {
-      N: CUSTOMER_PASSWORD_SCRYPT.N,
-      r: CUSTOMER_PASSWORD_SCRYPT.r,
-      p: CUSTOMER_PASSWORD_SCRYPT.p,
-      maxmem: 64 * 1024 * 1024
-    }, (error, key) => error ? reject(error) : resolve(key));
-  });
-}
-
-async function hashCustomerPassword(password) {
-  const salt = crypto.randomBytes(16);
-  const hash = await deriveCustomerPassword(password, salt);
-  return `scrypt$${CUSTOMER_PASSWORD_SCRYPT.N}$${CUSTOMER_PASSWORD_SCRYPT.r}$${CUSTOMER_PASSWORD_SCRYPT.p}$${salt.toString("base64url")}$${hash.toString("base64url")}`;
-}
-
-async function verifyCustomerPassword(password, encoded) {
-  try {
-    const [scheme, n, r, p, saltText, hashText] = String(encoded || "").split("$");
-    if (scheme !== "scrypt" || Number(n) !== CUSTOMER_PASSWORD_SCRYPT.N || Number(r) !== CUSTOMER_PASSWORD_SCRYPT.r || Number(p) !== CUSTOMER_PASSWORD_SCRYPT.p || !saltText || !hashText) return false;
-    const expected = Buffer.from(hashText, "base64url");
-    const actual = await deriveCustomerPassword(password, Buffer.from(saltText, "base64url"), expected.length);
-    return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
-  } catch {
-    return false;
-  }
-}
-
-function validCustomerPassword(value) {
-  return typeof value === "string" && [...value].length >= 8 && [...value].length <= 128 && Buffer.byteLength(value, "utf8") <= 512;
-}
-
-function validCustomerPhone(phone) {
-  return /^\+[1-9]\d{6,14}$/.test(phone);
-}
-
 function normalizePhoneNumber(value) {
   const raw = String(value || "").normalize("NFKC")
     .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
@@ -232,30 +193,7 @@ async function initializeDatabase() {
       username TEXT NOT NULL,
       phone TEXT NOT NULL UNIQUE,
       "verifiedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-      "passwordHash" TEXT,
       "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    )
-  `);
-  await pool.query(`
-    ALTER TABLE customers
-    ADD COLUMN IF NOT EXISTS "passwordHash" TEXT
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS customer_pending_registrations (
-      phone TEXT PRIMARY KEY,
-      username TEXT NOT NULL,
-      "passwordHash" TEXT NOT NULL,
-      "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-      "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    )
-  `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS customer_password_reset_codes (
-      phone TEXT PRIMARY KEY,
-      "codeHash" TEXT NOT NULL,
-      "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
-      "sentAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-      attempts INTEGER NOT NULL DEFAULT 0
     )
   `);
   await pool.query(`
@@ -936,74 +874,6 @@ function isLocalCustomerOtpEnabled(req) {
     && (host === "localhost" || host === "127.0.0.1");
 }
 
-app.post("/api/customer/register", async (req, res) => {
-  const username = String(req.body.username || req.body.name || "").trim();
-  const phone = normalizePhoneNumber(req.body.phone);
-  const password = req.body.password;
-  if (username.length < 2 || username.length > 40) {
-    return res.status(400).json({ success: false, message: "Enter a name between 2 and 40 characters." });
-  }
-  if (!validCustomerPhone(phone)) {
-    return res.status(400).json({ success: false, message: "Enter a valid phone number with its country code." });
-  }
-  if (!validCustomerPassword(password)) {
-    return res.status(400).json({ success: false, message: "Use a password with 8 to 128 characters." });
-  }
-  if (!customerAuthSecret()) {
-    return res.status(503).json({ success: false, message: "Customer sign-in is not configured on the server." });
-  }
-  try {
-    const existing = await pool.query("SELECT \"passwordHash\" FROM customers WHERE phone=$1", [phone]);
-    if (existing.rows[0]?.passwordHash) {
-      return res.status(409).json({ success: false, message: "An account already uses this number. Sign in or choose SMS verification." });
-    }
-    const passwordHash = await hashCustomerPassword(password);
-    await pool.query(
-      "INSERT INTO customer_pending_registrations (phone, username, \"passwordHash\", \"expiresAt\", \"createdAt\") " +
-      "VALUES ($1,$2,$3,NOW() + INTERVAL '15 minutes',NOW()) " +
-      "ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, \"passwordHash\"=EXCLUDED.\"passwordHash\", " +
-      "\"expiresAt\"=EXCLUDED.\"expiresAt\", \"createdAt\"=NOW()",
-      [phone, username, passwordHash]
-    );
-    res.json({ success: true, message: "Verify your phone by SMS to finish creating your password account." });
-  } catch (error) {
-    console.error("Customer registration failed:", error.message);
-    res.status(500).json({ success: false, message: "Unable to create this account right now." });
-  }
-});
-
-app.post("/api/customer/login", async (req, res) => {
-  const phone = normalizePhoneNumber(req.body.phone);
-  const password = req.body.password;
-  if (!validCustomerPhone(phone) || typeof password !== "string" || !password) {
-    return res.status(400).json({ success: false, message: "Enter your phone number and password." });
-  }
-  if (!customerAuthSecret()) {
-    return res.status(503).json({ success: false, message: "Customer sign-in is not configured on the server." });
-  }
-  try {
-    const result = await pool.query(
-      "SELECT id, username, phone, \"passwordHash\", \"verifiedAt\" FROM customers WHERE phone=$1",
-      [phone]
-    );
-    const customer = result.rows[0];
-    if (!customer || !customer.passwordHash) {
-      return res.status(401).json({ success: false, message: "Phone number or password is incorrect. Accounts created with SMS can continue using SMS sign-in." });
-    }
-    if (!customer.verifiedAt) {
-      return res.status(403).json({ success: false, message: "Verify your phone by SMS before signing in." });
-    }
-    if (!(await verifyCustomerPassword(password, customer.passwordHash))) {
-      return res.status(401).json({ success: false, message: "Phone number or password is incorrect." });
-    }
-    const safeCustomer = { id: customer.id, username: customer.username, phone: customer.phone };
-    res.json({ success: true, customer: safeCustomer, token: makeCustomerToken(customer.id) });
-  } catch (error) {
-    console.error("Customer password sign-in failed:", error.message);
-    res.status(500).json({ success: false, message: "Unable to sign in right now." });
-  }
-});
-
 app.post("/api/customer/request-code", async (req, res) => {
   const username = String(req.body.username || req.body.name || "").trim();
   const phone = normalizePhoneNumber(req.body.phone);
@@ -1111,161 +981,17 @@ app.post("/api/customer/verify-code", async (req, res) => {
         return res.status(400).json({ success: false, message: "The verification code is not correct." });
       }
     }
-    const pendingRegistration = await pool.query(
-      "SELECT \"passwordHash\" FROM customer_pending_registrations WHERE phone=$1 AND \"expiresAt\">NOW()",
-      [phone]
-    );
-    const pendingPasswordHash = pendingRegistration.rows[0]?.passwordHash || null;
     const customerId = `CUS-${crypto.randomUUID()}`;
     const customer = await pool.query(`
-      INSERT INTO customers (id, username, phone, "passwordHash") VALUES ($1,$2,$3,$4)
-      ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "verifiedAt"=NOW(),
-        "passwordHash"=COALESCE(EXCLUDED."passwordHash", customers."passwordHash")
+      INSERT INTO customers (id, username, phone) VALUES ($1,$2,$3)
+      ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "verifiedAt"=NOW()
       RETURNING id, username, phone
-    `, [customerId, challenge.username, phone, pendingPasswordHash]);
-    await pool.query("DELETE FROM customer_pending_registrations WHERE phone=$1", [phone]);
+    `, [customerId, challenge.username, phone]);
     await pool.query(`DELETE FROM customer_verification_codes WHERE phone=$1`, [phone]);
     res.json({ success: true, customer: customer.rows[0], token: makeCustomerToken(customer.rows[0].id) });
   } catch (error) {
     console.error("Customer verification failed:", error.message);
     res.status(500).json({ success: false, message: "Unable to verify this phone number right now." });
-  }
-});
-
-app.post("/api/customer/password/request-reset", async (req, res) => {
-  const phone = normalizePhoneNumber(req.body.phone);
-  if (!validCustomerPhone(phone)) {
-    return res.status(400).json({ success: false, message: "Enter a valid phone number with its country code." });
-  }
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_FROM_NUMBER;
-  const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
-  const localOtp = isLocalCustomerOtpEnabled(req);
-  if ((!localOtp && (!sid || !token || (!verifyServiceSid && !from))) || !customerAuthSecret()) {
-    return res.status(503).json({ success: false, message: "Phone verification is not configured yet." });
-  }
-  try {
-    const customerResult = await pool.query(
-      "SELECT id FROM customers WHERE phone=$1 AND \"verifiedAt\" IS NOT NULL",
-      [phone]
-    );
-    if (!customerResult.rows.length) {
-      return res.json({ success: true, message: "If that number belongs to an account, a reset code will be sent." });
-    }
-    const recent = await pool.query(
-      "SELECT \"sentAt\" FROM customer_password_reset_codes WHERE phone=$1",
-      [phone]
-    );
-    if (recent.rows.length && Date.now() - new Date(recent.rows[0].sentAt).getTime() < 60000) {
-      return res.status(429).json({ success: false, message: "Please wait one minute before requesting another code." });
-    }
-
-    const localCode = localOtp ? String(crypto.randomInt(100000, 1000000)) : null;
-    let fallbackCode = null;
-    if (localOtp) {
-      console.log("[LOCAL OTP] Password reset code for " + phone + ": " + localCode);
-    } else {
-      const authorization = Buffer.from(sid + ":" + token).toString("base64");
-      let sent;
-      if (verifyServiceSid) {
-        sent = await fetch("https://verify.twilio.com/v2/Services/" + encodeURIComponent(verifyServiceSid) + "/Verifications", {
-          method: "POST",
-          headers: { Authorization: "Basic " + authorization, "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ To: phone, Channel: "sms" })
-        });
-      } else {
-        fallbackCode = String(crypto.randomInt(100000, 1000000));
-        sent = await fetch("https://api.twilio.com/2010-04-01/Accounts/" + encodeURIComponent(sid) + "/Messages.json", {
-          method: "POST",
-          headers: { Authorization: "Basic " + authorization, "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({ To: phone, From: from, Body: "Your MEI Velocity password reset code is " + fallbackCode + ". It expires in 10 minutes." })
-        });
-      }
-      if (!sent.ok) {
-        const detail = await sent.json().catch(() => ({}));
-        console.error("Twilio password reset request rejected:", detail.code, detail.message);
-        return res.status(502).json({ success: false, message: "Could not send a reset code. Check the Twilio settings and verified recipient number." });
-      }
-    }
-
-    const codeHash = localOtp
-      ? phoneCodeHash(phone, localCode)
-      : verifyServiceSid
-        ? phoneCodeHash(phone, "reset:" + crypto.randomUUID())
-        : phoneCodeHash(phone, fallbackCode);
-    await pool.query(
-      "INSERT INTO customer_password_reset_codes (phone, \"codeHash\", \"expiresAt\", \"sentAt\", attempts) " +
-      "VALUES ($1,$2,NOW() + INTERVAL '10 minutes',NOW(),0) " +
-      "ON CONFLICT (phone) DO UPDATE SET \"codeHash\"=EXCLUDED.\"codeHash\", \"expiresAt\"=EXCLUDED.\"expiresAt\", \"sentAt\"=NOW(), attempts=0",
-      [phone, codeHash]
-    );
-    res.json({ success: true, message: "If that number belongs to an account, a reset code will be sent." });
-  } catch (error) {
-    console.error("Customer password reset request failed:", error.message);
-    res.status(500).json({ success: false, message: "Unable to request a password reset right now." });
-  }
-});
-
-app.post("/api/customer/password/reset", async (req, res) => {
-  const phone = normalizePhoneNumber(req.body.phone);
-  const code = String(req.body.code || "").trim();
-  const password = req.body.password;
-  if (!validCustomerPhone(phone) || !/^\d{4,10}$/.test(code)) {
-    return res.status(400).json({ success: false, message: "Enter your phone number and the reset code." });
-  }
-  if (!validCustomerPassword(password)) {
-    return res.status(400).json({ success: false, message: "Use a password with 8 to 128 characters." });
-  }
-  if (!customerAuthSecret()) {
-    return res.status(503).json({ success: false, message: "Customer sign-in is not configured on the server." });
-  }
-  try {
-    const result = await pool.query(
-      "SELECT * FROM customer_password_reset_codes WHERE phone=$1",
-      [phone]
-    );
-    const challenge = result.rows[0];
-    if (!challenge || new Date(challenge.expiresAt).getTime() <= Date.now() || challenge.attempts >= 5) {
-      return res.status(400).json({ success: false, message: "That reset code has expired. Request a new one." });
-    }
-    await pool.query(
-      "UPDATE customer_password_reset_codes SET attempts=attempts+1 WHERE phone=$1",
-      [phone]
-    );
-    const localOtp = isLocalCustomerOtpEnabled(req);
-    let approved = false;
-    if (localOtp || !process.env.TWILIO_VERIFY_SERVICE_SID) {
-      const expected = Buffer.from(challenge.codeHash, "hex");
-      const actual = Buffer.from(phoneCodeHash(phone, code), "hex");
-      approved = expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
-    } else {
-      const authorization = Buffer.from(process.env.TWILIO_ACCOUNT_SID + ":" + process.env.TWILIO_AUTH_TOKEN).toString("base64");
-      const checked = await fetch("https://verify.twilio.com/v2/Services/" + encodeURIComponent(process.env.TWILIO_VERIFY_SERVICE_SID) + "/VerificationCheck", {
-        method: "POST",
-        headers: { Authorization: "Basic " + authorization, "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ To: phone, Code: code })
-      });
-      const verification = await checked.json().catch(() => ({}));
-      approved = checked.ok && verification.status === "approved";
-      if (!checked.ok) console.error("Twilio password reset check rejected:", verification.code, verification.message);
-    }
-    if (!approved) {
-      return res.status(400).json({ success: false, message: "That reset code is not correct. Request a new one if it has expired." });
-    }
-    const passwordHash = await hashCustomerPassword(password);
-    const updated = await pool.query(
-      "UPDATE customers SET \"passwordHash\"=$1 WHERE phone=$2 AND \"verifiedAt\" IS NOT NULL RETURNING id",
-      [passwordHash, phone]
-    );
-    await pool.query("DELETE FROM customer_password_reset_codes WHERE phone=$1", [phone]);
-    if (!updated.rows.length) {
-      return res.status(400).json({ success: false, message: "That reset code is no longer valid." });
-    }
-    res.json({ success: true, message: "Password updated. You can sign in now." });
-  } catch (error) {
-    console.error("Customer password reset failed:", error.message);
-    res.status(500).json({ success: false, message: "Unable to reset the password right now." });
   }
 });
 
@@ -1662,28 +1388,6 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
     console.error("Driver status error:", error);
     res.status(500).json({ success: false, message: "Unable to update driver status." });
   }
-});
-
-// CUSTOMER PUSH NOTIFICATIONS
-// The public VAPID key is safe to expose to browsers; the private key must
-// remain in the backend environment and must never be returned to clients.
-app.get("/api/customer/push-public-key", (req, res) => {
-  const publicKey = String(process.env.VAPID_PUBLIC_KEY || "").trim();
-  if (!publicKey) {
-    return res.status(503).json({
-      success: false,
-      message: "Push notifications are not configured on the server."
-    });
-  }
-  res.json({ success: true, publicKey });
-});
-
-// Keep missing API endpoints machine-readable instead of returning Express's HTML 404 page.
-app.use("/api", (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "API route not found. Check that the website and backend are on matching versions."
-  });
 });
 
 initializeDatabase()

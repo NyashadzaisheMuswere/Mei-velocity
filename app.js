@@ -19,14 +19,14 @@ async function readApiResponse(
   const contentType = response.headers.get("content-type") || "";
 
   if (!contentType.includes("application/json")) {
-    const requestUrl = new URL(response.url, window.location.href);
+    const body = await response.text();
 
     if (
       response.status === 404 &&
-      requestUrl.pathname.startsWith("/api/customer/")
+      /Cannot (GET|POST|PATCH|DELETE) \/api\/customer\//i.test(body)
     ) {
       throw new Error(
-        "The customer account service is missing from the deployed MEI Velocity backend. Deploy the latest backend and try again."
+        "Customer accounts are not available on the MEI Velocity server yet. The backend needs to be updated and redeployed before you can verify your account."
       );
     }
 
@@ -35,15 +35,7 @@ async function readApiResponse(
     );
   }
 
-  let data;
-
-  try {
-    data = await response.json();
-  } catch {
-    throw new Error(
-      "MEI Velocity returned an unreadable response. Please try again later."
-    );
-  }
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || fallback);
@@ -3323,10 +3315,6 @@ function renderRideHistory(
 
 
 async function loadAccountRideHistory() {
-  if (!customerSession?.token) {
-    return;
-  }
-
   try {
     const response =
       await fetch(
@@ -3339,79 +3327,68 @@ async function loadAccountRideHistory() {
         }
       );
 
-    const data = await readApiResponse(
-      response,
-      "Unable to load account ride history."
-    );
+    const data =
+      await response.json();
 
-    if (!Array.isArray(data.bookings)) {
-      throw new Error("The server returned an invalid ride-history response.");
-    }
+    if (response.ok) {
+      let local = [];
 
-    let local = [];
+      try {
+        local =
+          JSON.parse(
+            localStorage.getItem(
+              "meiVelocityRideHistory"
+            ) || "[]"
+          );
 
-    try {
-      local =
-        JSON.parse(
-          localStorage.getItem(
-            "meiVelocityRideHistory"
-          ) || "[]"
+      } catch {}
+
+      const rides =
+        new Map(
+          local.map(
+            ride => [
+              ride.id,
+              ride
+            ]
+          )
         );
 
-    } catch {}
-
-    const rides =
-      new Map(
-        local.map(
-          ride => [
+      data.bookings.forEach(
+        ride =>
+          rides.set(
             ride.id,
-            ride
-          ]
-        )
+            {
+              ...rides.get(
+                ride.id
+              ),
+              ...ride
+            }
+          )
       );
 
-    data.bookings.forEach(
-      ride =>
-        rides.set(
-          ride.id,
-          {
-            ...rides.get(
-              ride.id
-            ),
-            ...ride
-          }
-        )
-    );
-
-    renderRideHistory(
-      [
-        ...rides.values()
-      ].sort(
-        (a, b) =>
-          String(
-            b.createdAt ||
-              b.date
-          ).localeCompare(
+      renderRideHistory(
+        [
+          ...rides.values()
+        ].sort(
+          (a, b) =>
             String(
-              a.createdAt ||
-                a.date
+              b.createdAt ||
+                b.date
+            ).localeCompare(
+              String(
+                a.createdAt ||
+                  a.date
+              )
             )
-          )
-      )
-    );
+        )
+      );
+    }
 
   } catch (error) {
     console.warn(
       "Account ride history is unavailable.",
       error
     );
-
-    const profileMessage =
-      document.getElementById("profileMessage");
-
-    if (profileMessage) {
-      profileMessage.textContent = apiErrorMessage(error);
-    }
   }
 }
 
@@ -4883,13 +4860,11 @@ if (
         null;
     }
 
-    const hasValidDraft = Boolean(
-      draft?.pickup &&
-      draft?.dropoff &&
-      draft?.vehicle
-    );
-
-    if (!hasValidDraft) {
+    if (
+      !draft?.pickup ||
+      !draft?.dropoff ||
+      !draft?.vehicle
+    ) {
       text(
         "confirmMessage",
         "Your ride details are missing. Please choose a route again."
@@ -4899,9 +4874,10 @@ if (
         "confirmRequest"
       ).disabled =
         true;
+
+      return;
     }
 
-    if (hasValidDraft) {
     text(
       "confirmPickup",
       draft.pickup
@@ -4947,7 +4923,6 @@ if (
       "confirmPromo"
     ).hidden =
       !draft.promoCode;
-    }
 
     const dialog =
       document.getElementById(
@@ -5566,14 +5541,6 @@ if (
       .addEventListener(
         "click",
         () => {
-          if (!hasValidDraft) {
-            text(
-              "confirmMessage",
-              "Your ride details are missing. Please choose a route again."
-            );
-            return;
-          }
-
           if (
             !customerSession?.token
           ) {
@@ -5596,10 +5563,6 @@ if (
 
 
     async function submitRide() {
-      if (!hasValidDraft) {
-        return;
-      }
-
       const button =
         document.getElementById(
           "confirmRequest"
@@ -7043,6 +7006,7 @@ if (
 
 /* =========================================================
    SERVICE WORKER / PUSH NOTIFICATIONS
+========================================================= */
 
 async function registerMeiServiceWorker() {
   if (
