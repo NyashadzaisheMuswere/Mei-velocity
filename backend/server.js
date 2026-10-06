@@ -1646,6 +1646,20 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
   }
 });
 
+// CUSTOMER PUSH NOTIFICATIONS
+// The public VAPID key is safe to expose to browsers; the private key must
+// remain in the backend environment and must never be returned to clients.
+app.get("/api/customer/push-public-key", (req, res) => {
+  const publicKey = String(process.env.VAPID_PUBLIC_KEY || "").trim();
+  if (!publicKey) {
+    return res.status(503).json({
+      success: false,
+      message: "Push notifications are not configured on the server."
+    });
+  }
+  res.json({ success: true, publicKey });
+});
+
 // Keep missing API endpoints machine-readable instead of returning Express's HTML 404 page.
 app.use("/api", (req, res) => {
   res.status(404).json({
