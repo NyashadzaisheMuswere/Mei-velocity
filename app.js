@@ -62,6 +62,9 @@ let homeDestinationMarker = null;
 let homeRouteLine = null;
 
 let currentPickupCoords = null;
+let currentPickupAddress = "";
+let currentPickupAccuracy = null;
+let usingCurrentPickup = false;
 
 let homeWhen = "now";
 let appliedPromotion = null;
@@ -83,6 +86,58 @@ function addMeiBasemap(map) {
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
   }).addTo(map);
+}
+
+function riderLocationIcon() {
+  return L.divIcon({
+    className: "rider-live-marker",
+    html: '<span class="rider-location-pin" aria-hidden="true"></span>',
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
+  });
+}
+
+function driverCarIcon() {
+  return L.divIcon({
+    className: "driver-live-marker",
+    html: '<span class="driver-car-pin" aria-hidden="true">🚘</span>',
+    iconSize: [42, 42],
+    iconAnchor: [21, 21]
+  });
+}
+
+async function reverseGeocode(lat, lon) {
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Could not identify this address.");
+  }
+
+  const place = await response.json();
+
+  return place.display_name ||
+    `${Number(lat).toFixed(6)}, ${Number(lon).toFixed(6)}`;
+}
+
+function showHomeRiderLocation(lat, lon) {
+  if (!homeMap) return;
+
+  const point = [lat, lon];
+
+  if (!homePickupMarker) {
+    homePickupMarker = L.marker(point, {
+      icon: riderLocationIcon(),
+      zIndexOffset: 1000
+    })
+      .addTo(homeMap)
+      .bindPopup("Your current location");
+  } else {
+    homePickupMarker.setLatLng(point);
+  }
+
+  homeMap.setView(point, 17);
 }
 
 
@@ -184,7 +239,7 @@ async function calculateFare() {
 
   try {
     const p =
-      pickup === "Current location" && currentPickupCoords
+      usingCurrentPickup && currentPickupCoords
         ? currentPickupCoords
         : await geocode(pickup);
 
@@ -214,7 +269,9 @@ async function calculateFare() {
 
     window.rideFare = {
       km,
-      fare
+      fare,
+      pickupCoords: { lat: p.lat, lon: p.lon },
+      dropoffCoords: { lat: q.lat, lon: q.lon }
     };
 
     if (
@@ -309,84 +366,98 @@ function initHomeMap() {
    CURRENT LOCATION
 ========================================================= */
 
-function selectCurrentLocation() {
+function selectCurrentLocation({ automatic = false } = {}) {
   const message =
     document.getElementById("tripMessage");
 
   if (!navigator.geolocation) {
     message.textContent =
-      "Your browser does not support location services.";
-
+      "Your browser does not support location services. Enter your pickup location instead.";
     return;
   }
 
   message.textContent =
-    "Getting your location…";
+    automatic
+      ? "Detecting your current location…"
+      : "Getting your precise location…";
 
   navigator.geolocation.getCurrentPosition(
-    position => {
+    async position => {
       currentPickupCoords = {
         lat: position.coords.latitude,
         lon: position.coords.longitude
       };
 
-      document.getElementById(
-        "homePickup"
-      ).value = "Current location";
+      currentPickupAccuracy =
+        Number.isFinite(position.coords.accuracy)
+          ? Math.round(position.coords.accuracy)
+          : null;
 
-      const location =
-        document.getElementById(
-          "mapLocation"
-        );
+      usingCurrentPickup = true;
 
-      location.lastElementChild.textContent =
-        "Current location selected";
+      showHomeRiderLocation(
+        currentPickupCoords.lat,
+        currentPickupCoords.lon
+      );
 
-      if (homeMap) {
-        const point = [
+      let address = "Current location";
+
+      try {
+        address = await reverseGeocode(
           currentPickupCoords.lat,
           currentPickupCoords.lon
-        ];
-
-        if (homePickupMarker) {
-          homePickupMarker.remove();
-        }
-
-        homePickupMarker =
-          L.circleMarker(
-            point,
-            {
-              radius: 9,
-              color: "#fff",
-              weight: 3,
-              fillColor: "#3189ff",
-              fillOpacity: 1
-            }
-          )
-            .addTo(homeMap)
-            .bindPopup("Your pickup");
-
-        homeMap.setView(
-          point,
-          16
         );
+      } catch (error) {
+        console.warn("Reverse geocoding unavailable:", error);
+      }
+
+      currentPickupAddress = address;
+
+      const homePickup =
+        document.getElementById("homePickup");
+
+      const bookingPickup =
+        document.getElementById("pickup");
+
+      if (homePickup) {
+        homePickup.value = address;
+      }
+
+      if (bookingPickup) {
+        bookingPickup.value = address;
+      }
+
+      const location =
+        document.getElementById("mapLocation");
+
+      if (location?.lastElementChild) {
+        location.lastElementChild.textContent =
+          currentPickupAccuracy
+            ? `Your location · ±${currentPickupAccuracy} m`
+            : "Your current location";
       }
 
       message.textContent =
-        "Pickup set to your current location.";
+        currentPickupAccuracy
+          ? `Current location selected (about ±${currentPickupAccuracy} m accuracy). You can still type a different pickup.`
+          : "Current location selected. You can still type a different pickup.";
     },
 
     error => {
+      usingCurrentPickup = false;
+      currentPickupCoords = null;
+      currentPickupAddress = "";
+
       message.textContent =
         error.code === 1
-          ? "Allow location access in your browser, or enter a pickup address."
-          : "Could not get your location. Enter a pickup address instead.";
+          ? "Location access was not allowed. Enter your pickup location manually instead."
+          : "We could not detect your current location. Enter your pickup location manually instead.";
     },
 
     {
       enableHighAccuracy: true,
-      timeout: 12000,
-      maximumAge: 15000
+      timeout: 15000,
+      maximumAge: 0
     }
   );
 }
@@ -848,7 +919,13 @@ function chooseRide(
     fare:
       suggestedFare,
 
-    baseFare
+    baseFare,
+
+    pickupCoords:
+      window.rideFare.pickupCoords,
+
+    dropoffCoords:
+      window.rideFare.dropoffCoords
   };
 
   document.getElementById(
@@ -889,6 +966,21 @@ function chooseRide(
         )
         .value.trim(),
 
+    pickupLat:
+      window.rideFare?.pickupCoords?.lat ?? null,
+
+    pickupLng:
+      window.rideFare?.pickupCoords?.lon ?? null,
+
+    dropoffLat:
+      window.rideFare?.dropoffCoords?.lat ?? null,
+
+    dropoffLng:
+      window.rideFare?.dropoffCoords?.lon ?? null,
+
+    pickupSource:
+      usingCurrentPickup ? "current" : "manual",
+
     date:
       document.getElementById(
         "date"
@@ -926,7 +1018,6 @@ function chooseRide(
     "index.html?view=confirm"
   );
 }
-
 
 document
   .getElementById(
@@ -1070,11 +1161,13 @@ document
     "input",
     function () {
       if (
-        this.value !==
-        "Current location"
+        !usingCurrentPickup ||
+        this.value.trim() !== currentPickupAddress
       ) {
-        currentPickupCoords =
-          null;
+        usingCurrentPickup = false;
+        currentPickupCoords = null;
+        currentPickupAddress = "";
+        currentPickupAccuracy = null;
       }
 
       lookupTripSuggestions(
@@ -1254,6 +1347,22 @@ if (
   ).has("view")
 ) {
   initHomeMap();
+
+  setTimeout(() => {
+    const pickupInput =
+      document.getElementById(
+        "homePickup"
+      );
+
+    if (
+      pickupInput &&
+      !pickupInput.value.trim()
+    ) {
+      selectCurrentLocation({
+        automatic: true
+      });
+    }
+  }, 450);
 }
 
 
@@ -1564,7 +1673,6 @@ function updateDriverMap(
     }
   }, 100);
 }
-
 
 /* =========================================================
    RENDER CUSTOMER RIDE
@@ -2224,6 +2332,22 @@ document.getElementById(
       JSON.stringify({
         pickup,
         dropoff,
+
+        pickupLat:
+          window.rideFare?.pickupCoords?.lat ?? null,
+
+        pickupLng:
+          window.rideFare?.pickupCoords?.lon ?? null,
+
+        dropoffLat:
+          window.rideFare?.dropoffCoords?.lat ?? null,
+
+        dropoffLng:
+          window.rideFare?.dropoffCoords?.lon ?? null,
+
+        pickupSource:
+          usingCurrentPickup ? "current" : "manual",
+
         date,
         time,
         vehicle,
@@ -2492,8 +2616,10 @@ document
         "homeDropoff"
       ).value = "";
 
-      currentPickupCoords =
-        null;
+      currentPickupCoords = null;
+      currentPickupAddress = "";
+      currentPickupAccuracy = null;
+      usingCurrentPickup = false;
 
       document.querySelector(
         "#mapLocation span:last-child"
@@ -2651,8 +2777,7 @@ document
     }
   );
 
-
-/* =========================================================
+  /* =========================================================
    ROUTE SEARCH
 ========================================================= */
 
@@ -3289,7 +3414,6 @@ async function loadAccountRideHistory() {
     }
   }
 }
-
 
 /* =========================================================
    ACCOUNT AUTH
@@ -4131,7 +4255,7 @@ document
   );
 
 
-/* =========================================================
+  /* =========================================================
    FORGOT PASSWORD
 ========================================================= */
 
@@ -4357,8 +4481,205 @@ document
 
 
 /* =========================================================
-   NOTIFICATIONS
+   PUSH NOTIFICATIONS
 ========================================================= */
+
+function urlBase64ToUint8Array(base64String) {
+  const padding =
+    "=".repeat(
+      (4 - base64String.length % 4) % 4
+    );
+
+  const base64 =
+    (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+  const rawData =
+    window.atob(base64);
+
+  return Uint8Array.from(
+    [...rawData].map(
+      character =>
+        character.charCodeAt(0)
+    )
+  );
+}
+
+
+async function enableMeiPushNotifications() {
+  if (
+    !customerSession?.token
+  ) {
+    throw new Error(
+      "Sign in first to enable ride notifications."
+    );
+  }
+
+  if (
+    !("serviceWorker" in navigator) ||
+    !("PushManager" in window) ||
+    !("Notification" in window)
+  ) {
+    throw new Error(
+      "Push notifications are not supported on this device."
+    );
+  }
+
+  const permission =
+    Notification.permission === "default"
+      ? await Notification.requestPermission()
+      : Notification.permission;
+
+  if (
+    permission !== "granted"
+  ) {
+    throw new Error(
+      "Allow notifications in your browser settings first."
+    );
+  }
+
+  const registration =
+    await navigator.serviceWorker.ready;
+
+  const keyResponse =
+    await fetch(
+      `${API_BASE}/api/customer/push-public-key`
+    );
+
+  const keyData =
+    await keyResponse.json();
+
+  if (
+    !keyResponse.ok ||
+    !keyData.publicKey
+  ) {
+    throw new Error(
+      keyData.message ||
+      "Push notifications are not configured yet."
+    );
+  }
+
+  let subscription =
+    await registration.pushManager.getSubscription();
+
+  if (
+    !subscription
+  ) {
+    subscription =
+      await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+
+        applicationServerKey:
+          urlBase64ToUint8Array(
+            keyData.publicKey
+          )
+      });
+  }
+
+  const response =
+    await fetch(
+      `${API_BASE}/api/customer/push-subscriptions`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${customerSession.token}`
+        },
+
+        body:
+          JSON.stringify({
+            subscription:
+              subscription.toJSON()
+          })
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (
+    !response.ok
+  ) {
+    throw new Error(
+      data.message ||
+      "Could not enable push notifications."
+    );
+  }
+
+  localStorage.setItem(
+    "meiVelocityRideNotifications",
+    "true"
+  );
+
+  return subscription;
+}
+
+
+async function disableMeiPushNotifications() {
+  if (
+    !("serviceWorker" in navigator)
+  ) {
+    return;
+  }
+
+  const registration =
+    await navigator.serviceWorker.ready;
+
+  const subscription =
+    await registration.pushManager
+      .getSubscription();
+
+  if (
+    subscription &&
+    customerSession?.token
+  ) {
+    try {
+      await fetch(
+        `${API_BASE}/api/customer/push-subscriptions`,
+        {
+          method: "DELETE",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${customerSession.token}`
+          },
+
+          body:
+            JSON.stringify({
+              endpoint:
+                subscription.endpoint
+            })
+        }
+      );
+
+    } catch (error) {
+      console.warn(
+        "Could not remove push subscription from server.",
+        error
+      );
+    }
+  }
+
+  if (
+    subscription
+  ) {
+    await subscription.unsubscribe();
+  }
+
+  localStorage.setItem(
+    "meiVelocityRideNotifications",
+    "false"
+  );
+}
+
 
 document
   .getElementById(
@@ -4367,14 +4688,64 @@ document
   .addEventListener(
     "change",
     async event => {
+      const toggle =
+        event.currentTarget;
+
       const profileMessage =
         document.getElementById(
           "profileMessage"
         );
 
-      if (
-        !event.currentTarget.checked
-      ) {
+      toggle.disabled =
+        true;
+
+      try {
+
+        if (
+          toggle.checked
+        ) {
+          if (
+            profileMessage
+          ) {
+            profileMessage.textContent =
+              "Enabling ride notifications…";
+          }
+
+          await enableMeiPushNotifications();
+
+          toggle.checked =
+            true;
+
+          if (
+            profileMessage
+          ) {
+            profileMessage.textContent =
+              "Ride notifications are on.";
+          }
+
+        } else {
+          await disableMeiPushNotifications();
+
+          toggle.checked =
+            false;
+
+          if (
+            profileMessage
+          ) {
+            profileMessage.textContent =
+              "Ride notifications are off.";
+          }
+        }
+
+      } catch (error) {
+        console.error(
+          "Push notification setup error:",
+          error
+        );
+
+        toggle.checked =
+          false;
+
         localStorage.setItem(
           "meiVelocityRideNotifications",
           "false"
@@ -4384,56 +4755,12 @@ document
           profileMessage
         ) {
           profileMessage.textContent =
-            "Ride notifications are off.";
+            error.message;
         }
 
-        return;
-      }
-
-      if (
-        !(
-          "Notification" in
-          window
-        )
-      ) {
-        event.currentTarget.checked =
+      } finally {
+        toggle.disabled =
           false;
-
-        if (
-          profileMessage
-        ) {
-          profileMessage.textContent =
-            "This browser does not support ride notifications.";
-        }
-
-        return;
-      }
-
-      const permission =
-        Notification.permission ===
-        "default"
-          ? await Notification.requestPermission()
-          : Notification.permission;
-
-      const enabled =
-        permission ===
-        "granted";
-
-      event.currentTarget.checked =
-        enabled;
-
-      localStorage.setItem(
-        "meiVelocityRideNotifications",
-        String(enabled)
-      );
-
-      if (
-        profileMessage
-      ) {
-        profileMessage.textContent =
-          enabled
-            ? "Ride status notifications are on."
-            : "Allow notifications in your browser settings to receive ride updates.";
       }
     }
   );
@@ -5387,14 +5714,35 @@ if (
           booking.phone ||
           customerSession.customer.phone;
 
+        const localBooking = {
+          id: booking.id,
+          phone,
+          pickup: booking.pickup || draft.pickup,
+          dropoff: booking.dropoff || draft.dropoff,
+          pickupLat: booking.pickupLat != null && Number.isFinite(Number(booking.pickupLat))
+            ? Number(booking.pickupLat)
+            : draft.pickupLat,
+          pickupLng: booking.pickupLng != null && Number.isFinite(Number(booking.pickupLng))
+            ? Number(booking.pickupLng)
+            : draft.pickupLng,
+          dropoffLat: booking.dropoffLat != null && Number.isFinite(Number(booking.dropoffLat))
+            ? Number(booking.dropoffLat)
+            : draft.dropoffLat,
+          dropoffLng: booking.dropoffLng != null && Number.isFinite(Number(booking.dropoffLng))
+            ? Number(booking.dropoffLng)
+            : draft.dropoffLng,
+          pickupSource: booking.pickupSource || draft.pickupSource || "manual",
+          date: booking.date || draft.date,
+          time: booking.time || draft.time,
+          vehicle: booking.vehicle || draft.vehicle,
+          fare: booking.fare ?? fare,
+          distance: booking.distance ?? draft.distance,
+          status: booking.status || "Pending"
+        };
+
         localStorage.setItem(
           "meiVelocityCustomerBooking",
-          JSON.stringify({
-            id:
-              booking.id,
-
-            phone
-          })
+          JSON.stringify(localBooking)
         );
 
         localStorage.removeItem(
@@ -5433,7 +5781,22 @@ if (
             booking.fare,
 
           distance:
-            booking.distance,
+            booking.distance ?? draft.distance,
+
+          pickupLat:
+            localBooking.pickupLat,
+
+          pickupLng:
+            localBooking.pickupLng,
+
+          dropoffLat:
+            localBooking.dropoffLat,
+
+          dropoffLng:
+            localBooking.dropoffLng,
+
+          pickupSource:
+            localBooking.pickupSource,
 
           status:
             booking.status ||
@@ -5501,6 +5864,12 @@ if (
   let pickupMarker =
     null;
 
+  let riderMarker =
+    null;
+
+  let riderWatchId =
+    null;
+
   let dropMarker =
     null;
 
@@ -5541,8 +5910,11 @@ if (
 
   if (
     queryId &&
-    activeRide?.id !==
-      queryId
+    (
+      activeRide?.id !== queryId ||
+      !activeRide?.pickup ||
+      !activeRide?.dropoff
+    )
   ) {
     let history = [];
 
@@ -5703,72 +6075,60 @@ if (
 
   async function loadRoute() {
     try {
-      if (
-        activeRide.pickup ===
-        "Current location"
-      ) {
-        return;
-      }
+      const hasSavedPickup =
+        activeRide.pickupLat != null &&
+        activeRide.pickupLng != null &&
+        activeRide.pickupLat !== "" &&
+        activeRide.pickupLng !== "";
+
+      const hasSavedDropoff =
+        activeRide.dropoffLat != null &&
+        activeRide.dropoffLng != null &&
+        activeRide.dropoffLat !== "" &&
+        activeRide.dropoffLng !== "";
+
+      const savedPickupLat = Number(activeRide.pickupLat);
+      const savedPickupLng = Number(activeRide.pickupLng);
+      const savedDropoffLat = Number(activeRide.dropoffLat);
+      const savedDropoffLng = Number(activeRide.dropoffLng);
 
       const a =
-        await geocode(
-          activeRide.pickup
-        );
+        hasSavedPickup &&
+        Number.isFinite(savedPickupLat) &&
+        Number.isFinite(savedPickupLng)
+          ? [savedPickupLat, savedPickupLng]
+          : await geocode(activeRide.pickup);
 
       const b =
-        await geocode(
-          activeRide.dropoff
-        );
+        hasSavedDropoff &&
+        Number.isFinite(savedDropoffLat) &&
+        Number.isFinite(savedDropoffLng)
+          ? [savedDropoffLat, savedDropoffLng]
+          : await geocode(activeRide.dropoff);
 
-      pickupMarker =
-        L.circleMarker(
-          a,
-          {
-            radius:
-              9,
-
-            color:
-              "#fff",
-
-            weight:
-              3,
-
-            fillColor:
-              "#4e91ff",
-
-            fillOpacity:
-              1
-          }
-        )
+      riderMarker =
+        L.marker(a, {
+          icon: riderLocationIcon(),
+          zIndexOffset: 1000
+        })
           .addTo(map)
-          .bindPopup(
-            "Pickup"
-          );
+          .bindPopup("You / pickup");
+
+      pickupMarker = riderMarker;
 
       dropMarker =
         L.circleMarker(
           b,
           {
-            radius:
-              9,
-
-            color:
-              "#fff",
-
-            weight:
-              3,
-
-            fillColor:
-              "#ff7900",
-
-            fillOpacity:
-              1
+            radius: 9,
+            color: "#fff",
+            weight: 3,
+            fillColor: "#ff7900",
+            fillOpacity: 1
           }
         )
           .addTo(map)
-          .bindPopup(
-            "Destination"
-          );
+          .bindPopup("Destination");
 
       const r =
         await fetch(
@@ -5778,64 +6138,84 @@ if (
       const d =
         await r.json();
 
-      if (
-        d.code ===
-        "Ok"
-      ) {
+      if (d.code === "Ok") {
         const points =
           d.routes[0].geometry.coordinates.map(
-            ([lon, lat]) => [
-              lat,
-              lon
-            ]
+            ([lon, lat]) => [lat, lon]
           );
 
         routeLine =
-          L.polyline(
-            points,
-            {
-              color:
-                "#ff7900",
-
-              weight:
-                5,
-
-              opacity:
-                0.9
-            }
-          ).addTo(map);
+          L.polyline(points, {
+            color: "#ff7900",
+            weight: 5,
+            opacity: 0.9
+          }).addTo(map);
 
         map.fitBounds(
           routeLine.getBounds(),
           {
-            padding: [
-              40,
-              40
-            ]
+            padding: [40, 40],
+            maxZoom: 16
           }
         );
-
       } else {
-        map.fitBounds(
-          [
-            a,
-            b
-          ],
-          {
-            padding: [
-              40,
-              40
-            ]
-          }
-        );
+        map.fitBounds([a, b], {
+          padding: [40, 40],
+          maxZoom: 16
+        });
       }
 
-    } catch {
-      map?.setView(
-        [-17.8252, 31.0335],
-        12
-      );
+      if (activeRide.pickupSource === "current") {
+        startRiderLocationTracking();
+      }
+
+    } catch (error) {
+      console.warn("Could not load ride route:", error);
+      map?.setView([-17.8252, 31.0335], 12);
     }
+  }
+
+
+  function startRiderLocationTracking() {
+    if (!navigator.geolocation || riderWatchId !== null) return;
+
+    riderWatchId = navigator.geolocation.watchPosition(
+      position => {
+        const point = [
+          position.coords.latitude,
+          position.coords.longitude
+        ];
+
+        if (riderMarker) {
+          riderMarker.setLatLng(point);
+        }
+
+        activeRide.pickupLat = point[0];
+        activeRide.pickupLng = point[1];
+
+        try {
+          localStorage.setItem(
+            "meiVelocityCustomerBooking",
+            JSON.stringify(activeRide)
+          );
+        } catch {}
+
+        if (approachLine && driverMarker) {
+          approachLine.setLatLngs([
+            driverMarker.getLatLng(),
+            point
+          ]);
+        }
+      },
+      error => {
+        console.warn("Live rider location unavailable:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 2000,
+        timeout: 12000
+      }
+    );
   }
 
 
@@ -6089,23 +6469,7 @@ if (
             point,
             {
               icon:
-                L.divIcon({
-                  className:
-                    "",
-
-                  html:
-                    '<span class="driver-marker">🚘</span>',
-
-                  iconSize: [
-                    38,
-                    38
-                  ],
-
-                  iconAnchor: [
-                    19,
-                    19
-                  ]
-                })
+                driverCarIcon()
             }
           )
             .addTo(map)
@@ -6113,10 +6477,20 @@ if (
               "Your driver"
             );
 
-        map.setView(
-          point,
-          14
-        );
+        if (riderMarker) {
+          map.fitBounds(
+            [
+              riderMarker.getLatLng(),
+              point
+            ],
+            {
+              padding: [55, 55],
+              maxZoom: 16
+            }
+          );
+        } else {
+          map.setView(point, 15);
+        }
 
       } else {
         driverMarker.setLatLng(
@@ -6124,16 +6498,37 @@ if (
         );
       }
 
+      if (riderMarker) {
+        const visibleBounds =
+          map.getBounds().pad(-0.12);
+
+        const pairBounds =
+          L.latLngBounds([
+            riderMarker.getLatLng(),
+            point
+          ]);
+
+        if (!visibleBounds.contains(pairBounds)) {
+          map.fitBounds(pairBounds, {
+            padding: [55, 55],
+            maxZoom: 16
+          });
+        }
+      }
+
       if (
-        pickupMarker
+        riderMarker || pickupMarker
       ) {
+        const riderPoint =
+          (riderMarker || pickupMarker).getLatLng();
+
         if (
           approachLine
         ) {
           approachLine.setLatLngs(
             [
               point,
-              pickupMarker.getLatLng()
+              riderPoint
             ]
           );
 
@@ -6142,7 +6537,7 @@ if (
             L.polyline(
               [
                 point,
-                pickupMarker.getLatLng()
+                riderPoint
               ],
               {
                 color:
@@ -6412,12 +6807,25 @@ if (
         );
       }
 
+      activeRide = {
+        ...activeRide,
+        ...d.booking,
+        pickupLat: d.booking.pickupLat ?? activeRide.pickupLat,
+        pickupLng: d.booking.pickupLng ?? activeRide.pickupLng,
+        dropoffLat: d.booking.dropoffLat ?? activeRide.dropoffLat,
+        dropoffLng: d.booking.dropoffLng ?? activeRide.dropoffLng,
+        pickupSource: d.booking.pickupSource ?? activeRide.pickupSource
+      };
+
+      text("ridePickup", activeRide.pickup || "Pickup");
+      text("rideDropoff", activeRide.dropoff || "Destination");
+
       renderBooking(
-        d.booking
+        activeRide
       );
 
       await refreshDriverMessageNotice(
-        d.booking
+        activeRide
       );
 
       text(
@@ -6615,6 +7023,13 @@ if (
     );
 
 
+  window.addEventListener("pagehide", () => {
+    if (riderWatchId !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(riderWatchId);
+      riderWatchId = null;
+    }
+  });
+
   initMap();
   poll();
 
@@ -6625,3 +7040,48 @@ if (
     );
 
 })();
+
+/* =========================================================
+   SERVICE WORKER / PUSH NOTIFICATIONS
+
+async function registerMeiServiceWorker() {
+  if (
+    !("serviceWorker" in navigator)
+  ) {
+    console.warn(
+      "Service workers are not supported on this device."
+    );
+
+    return null;
+  }
+
+  try {
+    const registration =
+      await navigator.serviceWorker.register(
+        "./service-worker.js"
+      );
+
+    console.log(
+      "MEI Velocity service worker ready:",
+      registration.scope
+    );
+
+    return registration;
+
+  } catch (error) {
+    console.error(
+      "Service worker registration failed:",
+      error
+    );
+
+    return null;
+  }
+}
+
+
+window.addEventListener(
+  "load",
+  () => {
+    registerMeiServiceWorker();
+  }
+);
