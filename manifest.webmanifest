@@ -1,0 +1,12 @@
+{
+  "id": "/",
+  "name": "M.E.I",
+  "short_name": "M.E.I",
+  "description": "Book rides and message your MEI Velocity driver.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f1",
+  "theme_color": "#ff7900",
+  "icons": [{"src": "/assets/mei-app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}]
+}

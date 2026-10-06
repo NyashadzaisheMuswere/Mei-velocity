@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MEI Velocity | Harare Taxi & Transport</title>
+<meta name="theme-color" content="#ff7900">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="M.E.I">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/mei_logo.jpg">
 <script>const workflowView=new URLSearchParams(location.search).get("view");if(workflowView==="confirm"||workflowView==="ride")document.documentElement.dataset.workflow=workflowView;</script>
 <link rel="manifest" href="manifest.json">
 
@@ -495,5 +500,12 @@
 <script defer src="map-config.js"></script>
 <script defer src="app.js?v=live-location-20261005"></script>
 
+<script>
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((error) => console.warn("M.E.I install support could not start.", error));
+  });
+}
+</script>
 </body>
 </html>
