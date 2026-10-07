@@ -185,16 +185,247 @@
   border-radius:50%;
   background:#ff7900;
 }
+/* DRIVER RIDE PROGRESS */
 
+.ride-progress{
+  margin-top:20px;
+}
+
+.progress-steps{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:6px;
+}
+
+.progress-step{
+  text-align:center;
+  font-size:12px;
+  font-weight:700;
+  color:#9ca3af;
+}
+
+.progress-step::before{
+  content:"";
+  display:block;
+  height:5px;
+  border-radius:999px;
+  background:#e5e7eb;
+  margin-bottom:7px;
+}
+
+.progress-step.done{
+  color:#111827;
+}
+
+.progress-step.done::before{
+  background:#ff7900;
+}
+
+.progress-step.current{
+  color:#ff7900;
+}
+
+.progress-step.current::before{
+  background:#ff7900;
+}
+
+.progress-next{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:14px;
+}
+
+.progress-next button{
+  width:auto;
+  min-width:170px;
+  margin:0;
+  padding:12px 20px;
+  background:#ff7900;
+  color:white;
+  font-weight:800;
+}
+
+@media(max-width:700px){
+  .progress-steps{
+    overflow-x:auto;
+    grid-template-columns:repeat(5,minmax(100px,1fr));
+  }
+
+  .progress-next button{
+    width:100%;
+  }
+}
 /* =========================================================
    DASHBOARD
 ========================================================= */
+/* ===============================
+   COMPACT CURRENT RIDE
+================================ */
 
+.driver-side-column{
+  grid-column:1 / -1;
+  width:100%;
+}
+
+.current-ride-card{
+  width:100%;
+}
+
+.compact-current-ride{
+  width:100%;
+}
+
+.compact-ride-summary{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:24px;
+  align-items:start;
+}
+
+.compact-customer h3{
+  margin:0;
+  font-size:30px;
+  line-height:1.1;
+  color:#111827;
+}
+
+.compact-phone{
+  margin:7px 0 0;
+  color:#6b7280;
+  font-size:15px;
+}
+
+.compact-price{
+  text-align:right;
+}
+
+.compact-price span{
+  display:block;
+  color:#6b7280;
+  font-size:12px;
+  margin-bottom:4px;
+}
+
+.compact-price strong{
+  font-size:30px;
+  color:#ff7900;
+}
+
+.compact-route{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 45px minmax(0,1fr);
+  align-items:center;
+  gap:16px;
+
+  margin-top:22px;
+  padding:18px 20px;
+
+  border-radius:14px;
+  background:#f6f7f9;
+}
+
+.compact-route-point{
+  min-width:0;
+}
+
+.compact-route-point small{
+  display:block;
+  margin-bottom:5px;
+
+  color:#6b7280;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+}
+
+.compact-route-point strong{
+  display:block;
+  font-size:16px;
+  line-height:1.4;
+}
+
+.compact-route-arrow{
+  width:42px;
+  height:42px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:50%;
+  background:#ff7900;
+  color:#fff;
+
+  font-size:22px;
+  font-weight:800;
+}
+
+.compact-action{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:14px;
+}
+
+.compact-action button{
+  width:auto;
+  margin:0;
+
+  padding:11px 20px;
+
+  background:#ff7900;
+  color:white;
+
+  font-weight:800;
+}
+
+.compact-current-ride .ride-chat{
+  margin-top:22px;
+  padding-top:20px;
+
+  border-top:1px solid #e5e7eb;
+}
+
+@media(max-width:700px){
+
+  .compact-ride-summary{
+    grid-template-columns:1fr;
+    gap:14px;
+  }
+
+  .compact-price{
+    text-align:left;
+  }
+
+  .compact-route{
+    grid-template-columns:1fr;
+  }
+
+  .compact-route-arrow{
+    transform:rotate(90deg);
+  }
+
+  .compact-action button{
+    width:100%;
+  }
+}
 .driver-dashboard-grid{
   display:grid;
-  grid-template-columns:minmax(0,1.65fr) minmax(340px,.85fr);
+  grid-template-columns:1fr;
   gap:22px;
-  align-items:start;
+  width:100%;
+}
+
+.driver-main-column,
+.driver-side-column{
+  width:100%;
+  max-width:none;
+  grid-column:1 / -1;
+}
+
+.driver-map-card,
+.driver-side-column > .card{
+  width:100%;
+  max-width:none;
 }
 
 .driver-main-column{
@@ -350,7 +581,9 @@
 
 #driverRideMap{
   width:100%;
-  height:360px;
+  height:480px;
+  min-height:420px;
+
   border-radius:14px;
   overflow:hidden;
   background:#e9ecef;
@@ -454,15 +687,13 @@
   font-size:17px;
 }
 
-@media(max-width:520px){
+@media(max-width:700px){
+
   #driverRideMap{
-    height:330px;
+    height:340px;
+    min-height:340px;
   }
 
-  .driver-map-info,
-  .driver-map-actions{
-    grid-template-columns:1fr;
-  }
 }
   </style>
 </head>
@@ -1828,25 +2059,232 @@ async function loadCurrentRide() {
       'Picked Up': 'Completed'
     }[ride.driverStatus];
 
-    const rideMarkup = `
-      <div class="ride-offer">
-        <h3>${ride.status === 'Completed' ? 'Latest Completed Ride' : 'Active Ride'}</h3>
-        ${ride.status === 'Completed' ? '<p>The ride has ended. You can still read and reply in this chat.</p>' : ''}
-        <p><strong>Customer:</strong> ${escapeHtml(ride.name)}</p>
-        <p><strong>Phone:</strong> ${escapeHtml(ride.phone)}</p>
-        <p><strong>Pickup:</strong> ${escapeHtml(ride.pickup)}</p>
-        <p><strong>Dropoff:</strong> ${escapeHtml(ride.dropoff)}</p>
-        <p><strong>Date:</strong> ${escapeHtml(ride.date)}</p>
-        <p><strong>Time:</strong> ${escapeHtml(ride.time)}</p>
-        <p><strong>Vehicle:</strong> ${escapeHtml(ride.vehicle)}</p>
-        <p><strong>Distance:</strong> ${escapeHtml(ride.distance)} km</p>
-        <p><strong>Fare:</strong> $${escapeHtml(ride.fare)}</p>
-        <p><strong>Payment:</strong> ${escapeHtml(ride.payment)}</p>
-        <p><strong>Ride status:</strong> <span class="status">${escapeHtml(ride.driverStatus)}</span></p>
-        ${nextAction ? `<button onclick="updateRideStatus('${nextAction}')">${nextAction}</button>` : ''}
-        <section class="ride-chat"><h3>Message customer <span id="driverChatNotice" class="chat-notice" hidden>New message</span></h3><button id="enableChatAlerts" class="chat-notify-button" type="button" onclick="enableDriverChatAlerts()">Turn on message alerts</button><div id="driverChatMessages" class="chat-messages" aria-live="polite"></div><form id="driverChatForm" class="chat-form"><input id="driverChatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required><button type="submit">Send</button></form><p id="driverChatStatus" role="status"></p></section>
+   const fareAmount =
+  Number(ride.fare || 0);
+
+const rideMarkup = `
+
+  <div class="compact-current-ride">
+
+    <!-- CUSTOMER + PRICE -->
+
+    <div class="compact-ride-summary">
+
+      <div class="compact-customer">
+
+        <h3>
+          ${escapeHtml(
+            ride.name || 'Customer'
+          )}
+        </h3>
+
+        <p class="compact-phone">
+          ${escapeHtml(
+            ride.phone || ''
+          )}
+        </p>
+
       </div>
-    `;
+
+
+      <div class="compact-price">
+
+        <span>
+          Ride price
+        </span>
+
+        <strong>
+          $${fareAmount.toFixed(2)}
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- FROM → TO -->
+
+    <div class="compact-route">
+
+      <div class="compact-route-point">
+
+        <small>
+          From
+        </small>
+
+        <strong>
+          ${escapeHtml(
+            ride.pickup || 'Pickup'
+          )}
+        </strong>
+
+      </div>
+
+
+      <div class="compact-route-arrow">
+        →
+      </div>
+
+
+      <div class="compact-route-point">
+
+        <small>
+          To
+        </small>
+
+        <strong>
+          ${escapeHtml(
+            ride.dropoff || 'Destination'
+          )}
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- NEXT RIDE STATUS -->
+
+    ${
+      nextAction
+        ? `
+        
+        `
+        : ''
+    }
+
+
+    <!-- MESSAGE CUSTOMER -->
+
+    <section class="ride-chat">
+
+      <h3>
+        Message customer
+
+        <span
+          id="driverChatNotice"
+          class="chat-notice"
+          hidden
+        >
+          New message
+        </span>
+      </h3>
+
+
+      <button
+        id="enableChatAlerts"
+        class="chat-notify-button"
+        type="button"
+        onclick="enableDriverChatAlerts()"
+      >
+        Turn on message alerts
+      </button>
+
+      <div class="ride-progress">
+
+  <div class="progress-steps">
+
+    ${
+      [
+        'Accepted',
+        'On the Way',
+        'Arrived',
+        'Picked Up',
+        'Completed'
+      ]
+      .map((step, index) => {
+
+        const statuses = [
+          'Accepted',
+          'On the Way',
+          'Arrived',
+          'Picked Up',
+          'Completed'
+        ];
+
+        const currentIndex =
+          statuses.indexOf(
+            ride.driverStatus
+          );
+
+        let className = '';
+
+        if (index < currentIndex) {
+          className = 'done';
+        }
+
+        if (index === currentIndex) {
+          className = 'current';
+        }
+
+        return `
+          <div class="progress-step ${className}">
+            ${step}
+          </div>
+        `;
+      })
+      .join('')
+    }
+
+  </div>
+
+
+  ${
+    nextAction
+      ? `
+        <div class="progress-next">
+
+          <button
+            type="button"
+            onclick="updateRideStatus('${nextAction}')"
+          >
+            ${nextAction}
+          </button>
+
+        </div>
+      `
+      : ''
+  }
+
+</div>
+
+
+      <div
+        id="driverChatMessages"
+        class="chat-messages"
+        aria-live="polite"
+      ></div>
+
+
+      <form
+        id="driverChatForm"
+        class="chat-form"
+      >
+
+        <input
+          id="driverChatInput"
+          maxlength="1000"
+          placeholder="Write a message…"
+          autocomplete="off"
+          required
+        >
+
+        <button type="submit">
+          Send
+        </button>
+
+      </form>
+
+
+      <p
+        id="driverChatStatus"
+        role="status"
+      ></p>
+
+    </section>
+
+  </div>
+`;
     if (rideSignature !== currentRideSnapshot) {
       currentRide.innerHTML = rideMarkup;
       currentRideSnapshot = rideSignature;
