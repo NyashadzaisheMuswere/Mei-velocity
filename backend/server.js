@@ -256,6 +256,7 @@ async function initializeDatabase() {
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_booking_messages_booking ON booking_messages ("bookingId", id)`);
   await pool.query(`
   ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS "completedAt" TIMESTAMP WITH TIME ZONE,
   ADD COLUMN IF NOT EXISTS "driverLat" NUMERIC,
   ADD COLUMN IF NOT EXISTS "driverLng" NUMERIC,
   ADD COLUMN IF NOT EXISTS "driverLocationUpdatedAt" TIMESTAMP WITH TIME ZONE,
@@ -931,6 +932,93 @@ app.get("/api/driver/bookings/:id/messages", driverAuth, async (req, res) => {
     res.status(500).json({ success: false, message: "Unable to load ride messages." });
   }
 });
+/* =========================================================
+   DRIVER RIDE HISTORY
+========================================================= */
+
+app.get(
+  "/api/driver/rides/history",
+  driverAuth,
+  async (req, res) => {
+
+    try {
+
+      const requestedLimit =
+        Number(req.query.limit);
+
+      const limit =
+        Number.isInteger(requestedLimit) &&
+        requestedLimit > 0
+
+          ? Math.min(
+              requestedLimit,
+              200
+            )
+
+          : 100;
+
+
+      const result =
+        await pool.query(`
+          SELECT
+
+            b.*,
+
+            (
+              SELECT
+                COUNT(*)::int
+
+              FROM booking_messages bm
+
+              WHERE
+                bm."bookingId" = b.id
+            ) AS "messageCount"
+
+          FROM bookings b
+
+          WHERE
+            b."assignedDriverId" = $1
+
+            AND b.status = 'Completed'
+
+            AND b."driverStatus" = 'Completed'
+
+          ORDER BY
+
+            COALESCE(
+              b."completedAt",
+              b."createdAt"
+            ) DESC
+
+          LIMIT $2
+        `, [
+          req.driverId,
+          limit
+        ]);
+
+
+      res.json({
+        success: true,
+        rides: result.rows
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Driver history error:",
+        error
+      );
+
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Unable to load previous rides."
+      });
+    }
+  }
+);
 
 app.post("/api/driver/bookings/:id/messages", driverAuth, async (req, res) => {
   const body = String(req.body.body || "").trim();
@@ -994,15 +1082,34 @@ app.patch("/api/driver/current-ride/status", driverAuth, async (req, res) => {
 
     const completed = status === "Completed";
 
-    const updated = await client.query(`
-      UPDATE bookings
-      SET
-        "driverStatus" = $1,
-        status = CASE WHEN $2 THEN 'Completed' ELSE status END
-      WHERE id = $3
-      RETURNING *
-    `, [status, completed, ride.id]);
+  const updated = await client.query(`
+  UPDATE bookings
 
+  SET
+    "driverStatus" = $1,
+
+    status =
+      CASE
+        WHEN $2
+        THEN 'Completed'
+        ELSE status
+      END,
+
+    "completedAt" =
+      CASE
+        WHEN $2
+        THEN NOW()
+        ELSE "completedAt"
+      END
+
+  WHERE id = $3
+
+  RETURNING *
+`, [
+  status,
+  completed,
+  ride.id
+]);
     if (completed) {
       await client.query(`
         UPDATE drivers

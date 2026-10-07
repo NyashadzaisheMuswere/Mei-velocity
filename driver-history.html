@@ -1,0 +1,2151 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+
+  <title>
+    MEI Velocity — Previous Rides
+  </title>
+
+
+  <style>
+
+    *{
+      box-sizing:border-box;
+    }
+
+
+    body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background:#f4f5f7;
+      color:#111827;
+    }
+
+
+    button{
+      font:inherit;
+      cursor:pointer;
+    }
+
+
+    /* =====================================================
+       TOP BAR
+    ====================================================== */
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:1000;
+
+      min-height:72px;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      gap:20px;
+
+      padding:12px 28px;
+
+      background:#0b1220;
+      color:white;
+
+      box-shadow:
+        0 3px 15px
+        rgba(0,0,0,.18);
+    }
+
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+
+      min-width:max-content;
+    }
+
+
+    .brand-mark{
+      width:38px;
+      height:38px;
+
+      display:grid;
+      place-items:center;
+
+      border-radius:11px;
+
+      background:#ff7900;
+
+      font-weight:900;
+      font-size:18px;
+    }
+
+
+    .brand-name{
+      font-weight:900;
+      font-size:18px;
+    }
+
+
+    .nav{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+
+    .nav a{
+      text-decoration:none;
+
+      color:#d9dee7;
+
+      padding:10px 14px;
+
+      border-radius:9px;
+
+      font-size:14px;
+      font-weight:700;
+    }
+
+
+    .nav a:hover,
+    .nav a.active{
+      color:white;
+
+      background:
+        rgba(255,255,255,.09);
+    }
+
+
+    .top-right{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+
+    .driver-status{
+      padding:8px 12px;
+
+      border-radius:999px;
+
+      background:
+        rgba(255,255,255,.09);
+
+      font-size:13px;
+
+      white-space:nowrap;
+    }
+
+
+    .logout{
+      border:0;
+
+      padding:9px 13px;
+
+      border-radius:9px;
+
+      background:white;
+      color:#111827;
+
+      font-weight:700;
+    }
+
+
+    /* =====================================================
+       PAGE
+    ====================================================== */
+
+    .page{
+      width:100%;
+
+      max-width:1450px;
+
+      margin:auto;
+
+      padding:
+        34px 32px 60px;
+    }
+
+
+    .heading{
+      display:flex;
+
+      justify-content:
+        space-between;
+
+      align-items:flex-end;
+
+      gap:20px;
+
+      margin-bottom:26px;
+    }
+
+
+    .heading h1{
+      margin:0 0 7px;
+
+      font-size:
+        clamp(
+          28px,
+          4vw,
+          40px
+        );
+    }
+
+
+    .heading p{
+      margin:0;
+      color:#6b7280;
+    }
+
+
+    .total-card{
+      min-width:150px;
+
+      padding:14px 18px;
+
+      border-radius:14px;
+
+      background:white;
+
+      border:
+        1px solid #e8ebef;
+
+      box-shadow:
+        0 3px 14px
+        rgba(0,0,0,.05);
+    }
+
+
+    .total-card small{
+      display:block;
+      color:#6b7280;
+      margin-bottom:4px;
+    }
+
+
+    .total-card strong{
+      font-size:24px;
+    }
+
+
+    /* =====================================================
+       DAY TABS
+    ====================================================== */
+
+    .days-wrapper{
+      overflow-x:auto;
+
+      padding-bottom:8px;
+
+      margin-bottom:18px;
+
+      scrollbar-width:thin;
+    }
+
+
+    .days{
+      display:flex;
+      gap:9px;
+
+      min-width:max-content;
+    }
+
+
+    .day-tab{
+      border:
+        1px solid #dfe3e8;
+
+      background:white;
+
+      color:#4b5563;
+
+      padding:
+        10px 17px;
+
+      border-radius:999px;
+
+      font-weight:700;
+    }
+
+
+    .day-tab:hover{
+      border-color:#ff7900;
+    }
+
+
+    .day-tab.active{
+      background:#ff7900;
+      border-color:#ff7900;
+      color:white;
+    }
+
+
+    /* =====================================================
+       HISTORY CARD
+    ====================================================== */
+
+    .history-card{
+      background:white;
+
+      border:
+        1px solid #e8ebef;
+
+      border-radius:18px;
+
+      padding:22px;
+
+      box-shadow:
+        0 5px 22px
+        rgba(0,0,0,.06);
+    }
+
+
+    .selected-date{
+      margin:
+        0 0 17px;
+
+      font-size:18px;
+    }
+
+
+    /* =====================================================
+       RIDE ROW
+    ====================================================== */
+
+    .ride{
+      border:
+        1px solid #eceff3;
+
+      border-radius:14px;
+
+      margin-bottom:11px;
+
+      overflow:hidden;
+
+      transition:
+        box-shadow .2s,
+        border-color .2s;
+    }
+
+
+    .ride:hover{
+      border-color:#ddd;
+
+      box-shadow:
+        0 3px 13px
+        rgba(0,0,0,.05);
+    }
+
+
+    .ride-summary{
+      width:100%;
+
+      border:0;
+
+      background:white;
+
+      display:grid;
+
+      grid-template-columns:
+        95px
+        minmax(260px,1.7fr)
+        minmax(110px,.7fr)
+        minmax(100px,.6fr)
+        44px;
+
+      align-items:center;
+
+      gap:18px;
+
+      padding:18px;
+
+      text-align:left;
+
+      color:#111827;
+    }
+
+
+    .ride-summary:hover{
+      background:#fafafa;
+    }
+
+
+    .ride-time{
+      font-weight:800;
+    }
+
+
+    .route{
+      min-width:0;
+    }
+
+
+    .route strong{
+      display:block;
+
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+
+    .route small{
+      display:block;
+
+      color:#777;
+
+      margin-top:5px;
+
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+
+    .fare{
+      font-weight:800;
+      font-size:17px;
+    }
+
+
+    .completed{
+      display:inline-block;
+
+      width:max-content;
+
+      padding:
+        6px 10px;
+
+      border-radius:999px;
+
+      background:#ecf8ef;
+      color:#147a32;
+
+      font-weight:700;
+      font-size:12px;
+    }
+
+
+    .arrow{
+      text-align:center;
+
+      font-size:24px;
+
+      color:#777;
+
+      transition:
+        transform .2s;
+    }
+
+
+    .ride.open
+    .arrow{
+      transform:
+        rotate(90deg);
+    }
+
+
+    /* =====================================================
+       EXPANDED RIDE
+    ====================================================== */
+
+    .ride-details{
+      display:none;
+
+      border-top:
+        1px solid #eceff3;
+
+      padding:20px;
+
+      background:#fafbfc;
+    }
+
+
+    .ride.open
+    .ride-details{
+      display:block;
+    }
+
+
+    .details-grid{
+      display:grid;
+
+      grid-template-columns:
+        repeat(
+          4,
+          minmax(0,1fr)
+        );
+
+      gap:12px;
+
+      margin-bottom:20px;
+    }
+
+
+    .detail{
+      padding:13px;
+
+      background:white;
+
+      border:
+        1px solid #eceff3;
+
+      border-radius:11px;
+    }
+
+
+    .detail small{
+      display:block;
+
+      color:#777;
+
+      margin-bottom:5px;
+    }
+
+
+    .detail strong{
+      display:block;
+
+      overflow-wrap:anywhere;
+    }
+
+
+    .locations{
+      display:grid;
+
+      grid-template-columns:
+        1fr 1fr;
+
+      gap:12px;
+
+      margin-bottom:18px;
+    }
+
+
+    .location{
+      background:white;
+
+      border:
+        1px solid #eceff3;
+
+      border-radius:12px;
+
+      padding:15px;
+    }
+
+
+    .location-label{
+      display:flex;
+
+      align-items:center;
+
+      gap:7px;
+
+      color:#777;
+
+      margin-bottom:7px;
+
+      font-size:13px;
+    }
+
+
+    .dot{
+      width:9px;
+      height:9px;
+
+      border-radius:50%;
+
+      background:#ff7900;
+    }
+
+
+    .dot.destination{
+      background:#111827;
+    }
+
+
+    .detail-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:9px;
+    }
+
+
+    .detail-actions button{
+      border:0;
+
+      border-radius:9px;
+
+      padding:
+        10px 15px;
+
+      font-weight:700;
+    }
+
+
+    .conversation-btn{
+      background:#ff7900;
+      color:white;
+    }
+
+
+    .route-btn{
+      background:#eef0f3;
+      color:#111827;
+    }
+
+
+    /* =====================================================
+       ARCHIVED CHAT
+    ====================================================== */
+
+    .archived-chat{
+      display:none;
+
+      margin-top:18px;
+
+      background:white;
+
+      border:
+        1px solid #e6e9ed;
+
+      border-radius:14px;
+
+      overflow:hidden;
+    }
+
+
+    .archived-chat.open{
+      display:block;
+    }
+
+
+    .chat-header{
+      padding:
+        15px 17px;
+
+      border-bottom:
+        1px solid #eceff3;
+
+      background:#fff8f1;
+    }
+
+
+    .chat-header strong{
+      display:block;
+      margin-bottom:4px;
+    }
+
+
+    .chat-header small{
+      color:#8a4300;
+    }
+
+
+    .chat-messages{
+      display:flex;
+      flex-direction:column;
+
+      gap:10px;
+
+      padding:18px;
+
+      max-height:380px;
+
+      overflow:auto;
+    }
+
+
+    .message{
+      max-width:72%;
+
+      padding:
+        10px 13px;
+
+      border-radius:
+        13px;
+
+      background:#f0f2f4;
+
+      overflow-wrap:anywhere;
+    }
+
+
+    .message.mine{
+      align-self:
+        flex-end;
+
+      background:#fff0df;
+    }
+
+
+    .message small{
+      display:block;
+
+      color:#777;
+
+      margin-bottom:4px;
+
+      font-size:10px;
+    }
+
+
+    .empty{
+      padding:45px 20px;
+
+      text-align:center;
+
+      color:#777;
+    }
+
+
+    .error{
+      color:#b42318;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ====================================================== */
+
+    @media(max-width:900px){
+
+      .topbar{
+        flex-wrap:wrap;
+      }
+
+
+      .nav{
+        order:3;
+
+        width:100%;
+
+        overflow-x:auto;
+      }
+
+
+      .ride-summary{
+        grid-template-columns:
+          75px
+          minmax(180px,1fr)
+          90px
+          35px;
+      }
+
+
+      .ride-summary
+      .completed{
+        display:none;
+      }
+
+
+      .details-grid{
+        grid-template-columns:
+          repeat(2,1fr);
+      }
+
+    }
+
+
+    @media(max-width:650px){
+
+      .topbar{
+        padding:
+          12px 15px;
+      }
+
+
+      .page{
+        padding:
+          24px 15px 50px;
+      }
+
+
+      .heading{
+        align-items:flex-start;
+        flex-direction:column;
+      }
+
+
+      .total-card{
+        width:100%;
+      }
+
+
+      .history-card{
+        padding:13px;
+      }
+
+
+      .ride-summary{
+        grid-template-columns:
+          60px
+          minmax(0,1fr)
+          30px;
+
+        gap:10px;
+
+        padding:15px;
+      }
+
+
+      .ride-summary
+      .fare{
+        display:none;
+      }
+
+
+      .locations,
+      .details-grid{
+        grid-template-columns:
+          1fr;
+      }
+
+
+      .message{
+        max-width:88%;
+      }
+
+
+      .brand-name{
+        font-size:15px;
+      }
+
+
+      .top-right{
+        width:100%;
+
+        justify-content:
+          space-between;
+      }
+
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+
+<header class="topbar">
+
+  <div class="brand">
+
+    <div class="brand-mark">
+      M
+    </div>
+
+    <div class="brand-name">
+      MEI VELOCITY
+    </div>
+
+  </div>
+
+
+  <nav class="nav">
+
+    <a href="driver.html">
+      Dashboard
+    </a>
+
+    <a
+      href="driver-history.html"
+      class="active"
+    >
+      Previous Rides
+    </a>
+
+  </nav>
+
+
+  <div class="top-right">
+
+    <div
+      id="driverStatus"
+      class="driver-status"
+    >
+      Driver
+    </div>
+
+    <button
+      id="logoutBtn"
+      class="logout"
+      type="button"
+    >
+      Log out
+    </button>
+
+  </div>
+
+</header>
+
+
+<main class="page">
+
+
+  <div class="heading">
+
+    <div>
+
+      <h1>
+        Previous Rides
+      </h1>
+
+      <p>
+        Review your completed trips and
+        previous conversations.
+      </p>
+
+    </div>
+
+
+    <div class="total-card">
+
+      <small>
+        Completed rides
+      </small>
+
+      <strong id="rideCount">
+        0
+      </strong>
+
+    </div>
+
+  </div>
+
+
+  <div class="days-wrapper">
+
+    <div
+      id="dayTabs"
+      class="days"
+    ></div>
+
+  </div>
+
+
+  <section class="history-card">
+
+    <h2
+      id="selectedDate"
+      class="selected-date"
+    >
+      Rides
+    </h2>
+
+
+    <div id="ridesList">
+
+      <div class="empty">
+        Loading previous rides…
+      </div>
+
+    </div>
+
+  </section>
+
+
+</main>
+
+
+<script>
+
+const API =
+  'https://mei-velocity1.onrender.com';
+
+
+const token =
+  localStorage.getItem(
+    'meiDriverToken'
+  );
+
+
+let allRides = [];
+
+let ridesByDay = {};
+
+let selectedDay = null;
+
+
+/* =========================================================
+   AUTH
+========================================================= */
+
+if (!token) {
+
+  window.location.href =
+    'driver.html';
+}
+
+
+async function loadDriver() {
+
+  try {
+
+    const response =
+      await fetch(
+        API + '/api/driver/me',
+        {
+          headers: {
+            Authorization:
+              'Bearer ' + token
+          }
+        }
+      );
+
+
+    if (!response.ok) {
+
+      logout();
+
+      return;
+    }
+
+
+    const data =
+      await response.json();
+
+
+    const driver =
+      data.driver || {};
+
+
+    document.getElementById(
+      'driverStatus'
+    ).textContent =
+      `${driver.name || 'Driver'} · ${
+        driver.status || 'Offline'
+      }`;
+
+
+  } catch (error) {
+
+    console.error(
+      'Unable to load driver:',
+      error
+    );
+  }
+}
+
+
+/* =========================================================
+   LOAD HISTORY
+========================================================= */
+
+async function loadHistory() {
+
+  const list =
+    document.getElementById(
+      'ridesList'
+    );
+
+
+  try {
+
+    const response =
+      await fetch(
+        API +
+        '/api/driver/rides/history?limit=100',
+        {
+          headers: {
+            Authorization:
+              'Bearer ' + token
+          }
+        }
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        'Unable to load previous rides.'
+      );
+    }
+
+
+    allRides =
+      data.rides || [];
+
+
+    document.getElementById(
+      'rideCount'
+    ).textContent =
+      allRides.length;
+
+
+    groupRidesByDay();
+
+    renderDayTabs();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    list.innerHTML =
+      `<div class="empty error">
+        ${escapeHtml(
+          error.message
+        )}
+      </div>`;
+  }
+}
+
+
+/* =========================================================
+   GROUP RIDES BY DAY
+========================================================= */
+
+function getRideDate(ride) {
+
+  const source =
+    ride.completedAt ||
+    ride.createdAt ||
+    ride.date;
+
+
+  const parsed =
+    new Date(source);
+
+
+  if (
+    !Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+
+    return parsed;
+  }
+
+
+  return null;
+}
+
+
+function dayKey(date) {
+
+  return [
+    date.getFullYear(),
+
+    String(
+      date.getMonth() + 1
+    ).padStart(2,'0'),
+
+    String(
+      date.getDate()
+    ).padStart(2,'0')
+
+  ].join('-');
+}
+
+
+function groupRidesByDay() {
+
+  ridesByDay = {};
+
+
+  allRides.forEach(
+    ride => {
+
+      const date =
+        getRideDate(ride);
+
+
+      if (!date) {
+        return;
+      }
+
+
+      const key =
+        dayKey(date);
+
+
+      if (!ridesByDay[key]) {
+
+        ridesByDay[key] = [];
+      }
+
+
+      ridesByDay[key]
+        .push(ride);
+    }
+  );
+
+
+  const days =
+    Object.keys(
+      ridesByDay
+    ).sort(
+      (a,b) =>
+        b.localeCompare(a)
+    );
+
+
+  selectedDay =
+    days[0] || null;
+}
+
+
+/* =========================================================
+   DAY LABELS
+========================================================= */
+
+function formatDayTab(key) {
+
+  const date =
+    new Date(
+      `${key}T12:00:00`
+    );
+
+
+  const today =
+    new Date();
+
+
+  const yesterday =
+    new Date();
+
+  yesterday.setDate(
+    today.getDate() - 1
+  );
+
+
+  if (
+    dayKey(date) ===
+    dayKey(today)
+  ) {
+
+    return 'Today';
+  }
+
+
+  if (
+    dayKey(date) ===
+    dayKey(yesterday)
+  ) {
+
+    return 'Yesterday';
+  }
+
+
+  return date
+    .toLocaleDateString(
+      undefined,
+      {
+        day:'numeric',
+        month:'short'
+      }
+    );
+}
+
+
+function fullDateLabel(key) {
+
+  const date =
+    new Date(
+      `${key}T12:00:00`
+    );
+
+
+  return date
+    .toLocaleDateString(
+      undefined,
+      {
+        weekday:'long',
+        day:'numeric',
+        month:'long',
+        year:'numeric'
+      }
+    );
+}
+
+
+/* =========================================================
+   DAY TABS
+========================================================= */
+
+function renderDayTabs() {
+
+  const tabs =
+    document.getElementById(
+      'dayTabs'
+    );
+
+
+  const days =
+    Object.keys(
+      ridesByDay
+    ).sort(
+      (a,b) =>
+        b.localeCompare(a)
+    );
+
+
+  if (!days.length) {
+
+    tabs.innerHTML = '';
+
+    document.getElementById(
+      'selectedDate'
+    ).textContent =
+      'Previous Rides';
+
+
+    document.getElementById(
+      'ridesList'
+    ).innerHTML =
+      `<div class="empty">
+        No completed rides yet.
+      </div>`;
+
+    return;
+  }
+
+
+  tabs.innerHTML =
+    days.map(
+      key => `
+
+        <button
+          class="day-tab ${
+            key === selectedDay
+              ? 'active'
+              : ''
+          }"
+
+          type="button"
+
+          data-day="${key}"
+        >
+          ${escapeHtml(
+            formatDayTab(key)
+          )}
+
+          ·
+
+          ${ridesByDay[key].length}
+        </button>
+
+      `
+    ).join('');
+
+
+  tabs
+    .querySelectorAll(
+      '.day-tab'
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          'click',
+          () => {
+
+            selectedDay =
+              button.dataset.day;
+
+
+            renderDayTabs();
+
+          }
+        );
+      }
+    );
+
+
+  renderSelectedDay();
+}
+
+
+/* =========================================================
+   RENDER RIDES
+========================================================= */
+
+function renderSelectedDay() {
+
+  const rides =
+    ridesByDay[
+      selectedDay
+    ] || [];
+
+
+  document.getElementById(
+    'selectedDate'
+  ).textContent =
+    fullDateLabel(
+      selectedDay
+    );
+
+
+  const list =
+    document.getElementById(
+      'ridesList'
+    );
+
+
+  list.innerHTML =
+    rides.map(
+      ride =>
+        createRideMarkup(
+          ride
+        )
+    ).join('');
+
+
+  list
+    .querySelectorAll(
+      '.ride-summary'
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          'click',
+          () => {
+
+            const ride =
+              button.closest(
+                '.ride'
+              );
+
+
+            ride.classList.toggle(
+              'open'
+            );
+          }
+        );
+      }
+    );
+
+
+  list
+    .querySelectorAll(
+      '.conversation-btn'
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          'click',
+          event => {
+
+            event.stopPropagation();
+
+            openConversation(
+              button.dataset.ride
+            );
+          }
+        );
+      }
+    );
+
+
+  list
+    .querySelectorAll(
+      '.route-btn'
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          'click',
+          event => {
+
+            event.stopPropagation();
+
+            openRoute(
+              button.dataset.ride
+            );
+          }
+        );
+      }
+    );
+}
+
+
+/* =========================================================
+   RIDE HTML
+========================================================= */
+
+function createRideMarkup(
+  ride
+) {
+
+  const date =
+    getRideDate(ride);
+
+
+  const time =
+    date
+
+      ? date.toLocaleTimeString(
+          [],
+          {
+            hour:'2-digit',
+            minute:'2-digit'
+          }
+        )
+
+      : escapeHtml(
+          ride.time ||
+          ''
+        );
+
+
+  const fare =
+    Number(
+      ride.fare || 0
+    );
+
+
+  const messages =
+    Number(
+      ride.messageCount || 0
+    );
+
+
+  return `
+
+    <article
+      class="ride"
+      data-ride="${escapeHtml(
+        ride.id
+      )}"
+    >
+
+      <button
+        class="ride-summary"
+        type="button"
+      >
+
+        <div class="ride-time">
+          ${escapeHtml(time)}
+        </div>
+
+
+        <div class="route">
+
+          <strong>
+            ${escapeHtml(
+              ride.pickup ||
+              'Pickup'
+            )}
+          </strong>
+
+          <small>
+            → ${escapeHtml(
+              ride.dropoff ||
+              'Destination'
+            )}
+          </small>
+
+        </div>
+
+
+        <div class="fare">
+          $${fare.toFixed(2)}
+        </div>
+
+
+        <span class="completed">
+          Completed
+        </span>
+
+
+        <div class="arrow">
+          ›
+        </div>
+
+      </button>
+
+
+      <div class="ride-details">
+
+
+        <div class="locations">
+
+          <div class="location">
+
+            <div class="location-label">
+
+              <span class="dot"></span>
+
+              Pickup
+
+            </div>
+
+            <strong>
+              ${escapeHtml(
+                ride.pickup ||
+                '—'
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="location">
+
+            <div class="location-label">
+
+              <span
+                class="dot destination"
+              ></span>
+
+              Destination
+
+            </div>
+
+            <strong>
+              ${escapeHtml(
+                ride.dropoff ||
+                '—'
+              )}
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="details-grid">
+
+          <div class="detail">
+
+            <small>
+              Customer
+            </small>
+
+            <strong>
+              ${escapeHtml(
+                ride.name ||
+                'Customer'
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="detail">
+
+            <small>
+              Distance
+            </small>
+
+            <strong>
+              ${escapeHtml(
+                ride.distance ||
+                0
+              )} km
+            </strong>
+
+          </div>
+
+
+          <div class="detail">
+
+            <small>
+              Fare
+            </small>
+
+            <strong>
+              $${fare.toFixed(2)}
+            </strong>
+
+          </div>
+
+
+          <div class="detail">
+
+            <small>
+              Payment
+            </small>
+
+            <strong>
+              ${escapeHtml(
+                ride.payment ||
+                'Cash'
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="detail">
+
+            <small>
+              Vehicle
+            </small>
+
+            <strong>
+              ${escapeHtml(
+                ride.vehicle ||
+                'Standard Ride'
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="detail">
+
+            <small>
+              Ride ID
+            </small>
+
+            <strong>
+              ${escapeHtml(
+                ride.id
+              )}
+            </strong>
+
+          </div>
+
+
+          <div class="detail">
+
+            <small>
+              Conversation
+            </small>
+
+            <strong>
+              ${messages}
+              message${
+                messages === 1
+                  ? ''
+                  : 's'
+              }
+            </strong>
+
+          </div>
+
+
+          <div class="detail">
+
+            <small>
+              Status
+            </small>
+
+            <strong>
+              Completed
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="detail-actions">
+
+          <button
+            class="conversation-btn"
+            type="button"
+            data-ride="${escapeHtml(
+              ride.id
+            )}"
+          >
+            View Conversation
+          </button>
+
+
+          <button
+            class="route-btn"
+            type="button"
+            data-ride="${escapeHtml(
+              ride.id
+            )}"
+          >
+            View Route
+          </button>
+
+        </div>
+
+
+        <div
+          class="archived-chat"
+          id="chat-${safeId(
+            ride.id
+          )}"
+        >
+
+          <div class="chat-header">
+
+            <strong>
+              Previous Conversation
+            </strong>
+
+            <small>
+              This conversation ended
+              when the ride was completed.
+            </small>
+
+          </div>
+
+
+          <div
+            class="chat-messages"
+            id="messages-${safeId(
+              ride.id
+            )}"
+          >
+
+            Loading messages…
+
+          </div>
+
+        </div>
+
+
+      </div>
+
+    </article>
+
+  `;
+}
+
+
+/* =========================================================
+   ARCHIVED CHAT
+========================================================= */
+
+async function openConversation(
+  rideId
+) {
+
+  const chat =
+    document.getElementById(
+      `chat-${safeId(
+        rideId
+      )}`
+    );
+
+
+  if (!chat) {
+    return;
+  }
+
+
+  if (
+    chat.classList.contains(
+      'open'
+    )
+  ) {
+
+    chat.classList.remove(
+      'open'
+    );
+
+    return;
+  }
+
+
+  chat.classList.add(
+    'open'
+  );
+
+
+  const messagesContainer =
+    document.getElementById(
+      `messages-${safeId(
+        rideId
+      )}`
+    );
+
+
+  messagesContainer
+    .textContent =
+      'Loading messages…';
+
+
+  try {
+
+    const response =
+      await fetch(
+
+        `${API}/api/driver/bookings/${encodeURIComponent(
+          rideId
+        )}/messages`,
+
+        {
+          headers: {
+            Authorization:
+              `Bearer ${token}`
+          }
+        }
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        'Unable to load conversation.'
+      );
+    }
+
+
+    const messages =
+      data.messages || [];
+
+
+    if (!messages.length) {
+
+      messagesContainer.innerHTML =
+        `<div class="empty">
+          No messages were sent
+          during this ride.
+        </div>`;
+
+      return;
+    }
+
+
+    messagesContainer.innerHTML =
+      messages.map(
+        message => {
+
+          const date =
+            new Date(
+              message.createdAt
+            );
+
+
+          const time =
+            Number.isNaN(
+              date.getTime()
+            )
+
+              ? ''
+
+              : date.toLocaleTimeString(
+                  [],
+                  {
+                    hour:'2-digit',
+                    minute:'2-digit'
+                  }
+                );
+
+
+          const mine =
+            message.senderType ===
+            'driver';
+
+
+          return `
+
+            <div
+              class="message ${
+                mine
+                  ? 'mine'
+                  : ''
+              }"
+            >
+
+              <small>
+
+                ${escapeHtml(
+                  mine
+                    ? 'You'
+                    : message.senderName
+                )}
+
+                ${time
+                  ? ' · ' +
+                    escapeHtml(time)
+                  : ''
+                }
+
+              </small>
+
+              ${escapeHtml(
+                message.body
+              )}
+
+            </div>
+
+          `;
+        }
+      ).join('');
+
+
+  } catch (error) {
+
+    messagesContainer.innerHTML =
+      `<div class="empty error">
+        ${escapeHtml(
+          error.message
+        )}
+      </div>`;
+  }
+}
+
+
+/* =========================================================
+   VIEW ROUTE
+========================================================= */
+
+function openRoute(
+  rideId
+) {
+
+  const ride =
+    allRides.find(
+      item =>
+        item.id === rideId
+    );
+
+
+  if (!ride) {
+    return;
+  }
+
+
+  if (
+    ride.pickupLat &&
+    ride.pickupLng &&
+    ride.dropoffLat &&
+    ride.dropoffLng
+  ) {
+
+    const origin =
+      `${ride.pickupLat},${ride.pickupLng}`;
+
+
+    const destination =
+      `${ride.dropoffLat},${ride.dropoffLng}`;
+
+
+    const url =
+      `https://www.google.com/maps/dir/?api=1` +
+
+      `&origin=${encodeURIComponent(
+        origin
+      )}` +
+
+      `&destination=${encodeURIComponent(
+        destination
+      )}` +
+
+      `&travelmode=driving`;
+
+
+    window.open(
+      url,
+      '_blank',
+      'noopener'
+    );
+
+
+    return;
+  }
+
+
+  const url =
+    `https://www.google.com/maps/dir/?api=1` +
+
+    `&origin=${encodeURIComponent(
+      ride.pickup || ''
+    )}` +
+
+    `&destination=${encodeURIComponent(
+      ride.dropoff || ''
+    )}` +
+
+    `&travelmode=driving`;
+
+
+  window.open(
+    url,
+    '_blank',
+    'noopener'
+  );
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ''
+  ).replace(
+    /[&<>"']/g,
+    character => ({
+
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+
+    })[character]
+  );
+}
+
+
+function safeId(value) {
+
+  return String(value)
+    .replace(
+      /[^a-zA-Z0-9_-]/g,
+      '_'
+    );
+}
+
+
+function logout() {
+
+  localStorage.removeItem(
+    'meiDriverToken'
+  );
+
+
+  window.location.href =
+    'driver.html';
+}
+
+
+document
+  .getElementById(
+    'logoutBtn'
+  )
+  .addEventListener(
+    'click',
+    logout
+  );
+
+
+loadDriver();
+
+loadHistory();
+
+</script>
+
+
+</body>
+</html>
