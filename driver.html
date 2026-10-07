@@ -1303,7 +1303,438 @@ body{
     padding:5px 7px;
   }
 }
-  </style>
+  
+/* =========================================================
+   NEW RIDE REQUEST POPUP
+========================================================= */
+
+.ride-popup-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(10,18,32,.58);
+  backdrop-filter:blur(4px);
+}
+
+.ride-popup-backdrop.hidden{
+  display:none !important;
+}
+
+.ride-popup{
+  width:min(520px,100%);
+  max-height:calc(100% - 40px);
+  overflow:auto;
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 20px 70px rgba(0,0,0,.30);
+}
+
+.ride-popup-badge{
+  display:inline-block;
+  margin-bottom:10px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#fff1e6;
+  color:#d95f00;
+  font-size:12px;
+  font-weight:800;
+}
+
+.ride-popup h2{
+  margin:0 0 20px;
+  font-size:26px;
+}
+
+.ride-popup-route{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  gap:12px;
+  align-items:center;
+  padding:16px;
+  border-radius:14px;
+  background:#f6f7f9;
+}
+
+.ride-popup-route small{
+  display:block;
+  margin-bottom:5px;
+  color:#777;
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.ride-popup-route strong{
+  display:block;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+
+.ride-popup-arrow{
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#ff7900;
+  color:#fff;
+  font-size:20px;
+}
+
+.ride-popup-fare{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:15px;
+  margin:18px 0;
+}
+
+.ride-popup-fare span{
+  color:#6b7280;
+}
+
+.ride-popup-fare strong{
+  color:#ff7900;
+  font-size:27px;
+}
+
+.ride-popup-actions{
+  display:grid;
+  grid-template-columns:1fr 1.4fr;
+  gap:10px;
+}
+
+.ride-popup-actions button{
+  margin:0;
+  min-height:48px;
+}
+
+.ride-popup-reject{
+  background:#eef0f3;
+  color:#111827;
+}
+
+.ride-popup-accept{
+  background:#ff7900;
+  color:#fff;
+}
+
+@media(max-width:600px){
+  .ride-popup{
+    padding:18px;
+  }
+
+  .ride-popup-route{
+    grid-template-columns:1fr;
+  }
+
+  .ride-popup-arrow{
+    margin:auto;
+    transform:rotate(90deg);
+  }
+
+  .ride-popup-actions{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* =========================================================
+   CLEAN TOP BAR + MOBILE/TABLET POLISH
+========================================================= */
+
+/* Only Online / Offline are primary driver status controls */
+#onlineBtn,
+#offlineBtn{
+  transition:background .2s ease, color .2s ease, border-color .2s ease;
+}
+
+#onlineBtn{
+  background:#253044;
+  color:#fff;
+}
+
+#offlineBtn{
+  background:#253044;
+  color:#fff;
+}
+
+#onlineBtn.status-active{
+  background:#16a34a;
+  color:#fff;
+}
+
+#offlineBtn.status-active{
+  background:#ff7900;
+  color:#fff;
+}
+
+#logoutBtn{
+  background:#fff;
+  color:#111827;
+  border:1px solid #e5e7eb;
+}
+
+/* Tablet */
+@media (max-width:1024px){
+
+  .driver-topbar{
+    gap:10px;
+  }
+
+  .driver-controls{
+    flex-wrap:nowrap;
+  }
+
+  #driverRideMap{
+    height:390px !important;
+    min-height:390px !important;
+  }
+}
+
+/* Phone */
+@media (max-width:700px){
+
+  .driver-topbar{
+    position:relative !important;
+    display:flex !important;
+    flex-direction:column;
+    align-items:stretch !important;
+    gap:10px !important;
+    padding:12px 12px 14px !important;
+  }
+
+  .driver-brand{
+    width:auto !important;
+    min-height:38px;
+    padding-right:74px;
+  }
+
+  .driver-brand-mark{
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    font-size:15px;
+  }
+
+  .driver-brand-text{
+    font-size:14px !important;
+  }
+
+  /* Keep logout available without making another large row */
+  #logoutBtn{
+    position:absolute;
+    top:12px;
+    right:12px;
+    width:auto !important;
+    min-height:34px !important;
+    margin:0 !important;
+    padding:7px 10px !important;
+    border-radius:8px;
+    font-size:11px !important;
+  }
+
+  .driver-nav{
+    order:2 !important;
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr;
+    gap:6px !important;
+    overflow:visible !important;
+    white-space:normal !important;
+    padding:0 !important;
+  }
+
+  .driver-nav a{
+    display:block;
+    width:100%;
+    padding:9px 6px;
+    text-align:center;
+    font-size:12px;
+  }
+
+  .driver-controls{
+    order:3 !important;
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+    margin:0 !important;
+  }
+
+  .driver-controls #onlineBtn,
+  .driver-controls #offlineBtn{
+    width:100% !important;
+    min-height:42px !important;
+    margin:0 !important;
+    padding:9px 10px !important;
+    font-size:12px !important;
+    border-radius:10px;
+  }
+
+  /* The logout button is positioned separately, not part of the status grid */
+  .driver-controls #logoutBtn{
+    width:auto !important;
+  }
+
+  .wrap{
+    padding:12px 10px 30px !important;
+  }
+
+  .driver-header{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto;
+    align-items:center !important;
+    gap:10px !important;
+    margin:12px 2px 16px;
+  }
+
+  .driver-profile{
+    min-width:0;
+  }
+
+  .driver-profile h1{
+    margin:0 0 3px;
+    font-size:20px !important;
+    line-height:1.18;
+  }
+
+  .driver-profile p{
+    font-size:12px;
+  }
+
+  .driver-status-box{
+    padding:8px 10px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+
+  .driver-status-dot{
+    width:7px;
+    height:7px;
+  }
+
+  .card{
+    padding:13px !important;
+    border-radius:15px !important;
+  }
+
+  .driver-map-head{
+    align-items:center;
+  }
+
+  .driver-map-head h2{
+    font-size:18px !important;
+  }
+
+  .driver-map-head p{
+    font-size:11px;
+  }
+
+  #driverRideMap{
+    height:280px !important;
+    min-height:280px !important;
+    border-radius:12px;
+  }
+
+  /* Keep these compact instead of creating a very tall map card */
+  .driver-map-info{
+    grid-template-columns:1fr 1fr !important;
+    gap:7px !important;
+    margin-top:9px;
+  }
+
+  .driver-map-info > div{
+    padding:9px !important;
+  }
+
+  .driver-map-info small{
+    font-size:10px;
+  }
+
+  .driver-map-info strong{
+    font-size:12px !important;
+  }
+
+  .driver-route-summary{
+    margin:9px 0 7px;
+    padding:9px 10px;
+    font-size:12px;
+  }
+
+  .driver-map-actions{
+    grid-template-columns:1fr 1fr !important;
+    gap:7px !important;
+  }
+
+  .driver-map-actions button{
+    min-height:42px !important;
+    padding:8px 6px !important;
+    font-size:11px !important;
+  }
+
+  .section-title{
+    font-size:17px;
+  }
+
+  .compact-customer h3{
+    font-size:21px !important;
+  }
+
+  .compact-price strong{
+    font-size:23px !important;
+  }
+
+  .compact-route{
+    margin-top:14px;
+    padding:12px !important;
+  }
+
+  .ride-popup-backdrop{
+    padding:12px;
+  }
+
+  .ride-popup{
+    border-radius:16px;
+    padding:16px;
+  }
+}
+
+/* Very small phones */
+@media (max-width:420px){
+
+  .driver-brand-text{
+    font-size:13px !important;
+  }
+
+  #driverRideMap{
+    height:245px !important;
+    min-height:245px !important;
+  }
+
+  .driver-map-info{
+    grid-template-columns:1fr !important;
+  }
+
+  .driver-map-actions{
+    grid-template-columns:1fr 1fr !important;
+  }
+
+  .driver-status-box{
+    padding:7px 8px;
+  }
+
+  .compact-customer h3{
+    font-size:19px !important;
+  }
+}
+
+</style>
 </head>
 <body>
   <div class="wrap">
@@ -1372,22 +1803,7 @@ body{
       >
         Offline
       </button>
-
-      <button
-        id="busyBtn"
-        type="button"
-      >
-        Busy
-      </button>
-
-      <button
-        id="demoGpsBtn"
-        type="button"
-      >
-        Demo GPS
-      </button>
-
-      <button
+<button
         id="logoutBtn"
         type="button"
       >
@@ -1548,10 +1964,9 @@ body{
         <!-- RIDE OFFERS -->
 
         <div
-  class="card"
-  id="currentRideCard"
-  hidden
->
+          class="card"
+          id="rideRequestsCard"
+        >
 
           <h2 class="section-title">
             Ride Requests
@@ -1576,7 +1991,11 @@ body{
       <aside class="driver-side-column">
 
 
-        <div class="card">
+        <div
+          class="card"
+          id="currentRideCard"
+          hidden
+        >
 
           <h2 class="section-title">
             Current Ride
@@ -1600,6 +2019,74 @@ body{
   </main>
 
 </div>
+
+<!-- =====================================================
+     NEW RIDE REQUEST POPUP
+====================================================== -->
+
+<div
+  id="rideRequestPopup"
+  class="ride-popup-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="rideRequestPopupTitle"
+>
+  <div class="ride-popup">
+
+    <span class="ride-popup-badge">
+      NEW RIDE REQUEST
+    </span>
+
+    <h2 id="rideRequestPopupTitle">
+      New passenger request
+    </h2>
+
+    <div class="ride-popup-route">
+
+      <div>
+        <small>From</small>
+        <strong id="popupPickup">Pickup</strong>
+      </div>
+
+      <div class="ride-popup-arrow">
+        →
+      </div>
+
+      <div>
+        <small>To</small>
+        <strong id="popupDropoff">Destination</strong>
+      </div>
+
+    </div>
+
+    <div class="ride-popup-fare">
+      <span>Ride price</span>
+      <strong id="popupFare">$0.00</strong>
+    </div>
+
+    <div class="ride-popup-actions">
+
+      <button
+        id="popupRejectBtn"
+        class="ride-popup-reject"
+        type="button"
+      >
+        Reject
+      </button>
+
+      <button
+        id="popupAcceptBtn"
+        class="ride-popup-accept"
+        type="button"
+      >
+        Accept Ride
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
 <script
   src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
 ></script>
@@ -2627,6 +3114,103 @@ document
 let currentRideSnapshot = '';
 let offersSnapshot = '';
 
+/* =========================================================
+   NEW RIDE REQUEST POPUP
+========================================================= */
+
+let lastPopupOfferId = null;
+let activePopupOffer = null;
+
+
+function showRideOfferPopup(offer) {
+
+  if (!offer) return;
+
+  const popup =
+    document.getElementById('rideRequestPopup');
+
+  const pickup =
+    document.getElementById('popupPickup');
+
+  const dropoff =
+    document.getElementById('popupDropoff');
+
+  const fare =
+    document.getElementById('popupFare');
+
+
+  if (
+    !popup ||
+    !pickup ||
+    !dropoff ||
+    !fare
+  ) {
+
+    console.warn(
+      'Ride request popup HTML is missing.'
+    );
+
+    return;
+  }
+
+
+  activePopupOffer = offer;
+
+
+  pickup.textContent =
+    offer.pickup || 'Pickup';
+
+
+  dropoff.textContent =
+    offer.dropoff || 'Destination';
+
+
+  fare.textContent =
+    `$${Number(
+      offer.fare || 0
+    ).toFixed(2)}`;
+
+
+  popup.classList.remove('hidden');
+
+
+  /* Browser notification */
+
+  if (
+    'Notification' in window &&
+    Notification.permission === 'granted'
+  ) {
+
+    new Notification(
+      'MEI Velocity — New Ride Request',
+      {
+        body:
+          `${offer.pickup || 'Pickup'} → ${offer.dropoff || 'Destination'}`
+      }
+    );
+  }
+}
+
+
+function hideRideOfferPopup() {
+
+  const popup =
+    document.getElementById(
+      'rideRequestPopup'
+    );
+
+
+  if (popup) {
+
+    popup.classList.add(
+      'hidden'
+    );
+  }
+
+
+  activePopupOffer = null;
+}
+
 async function loadCurrentRide() {
   const activeToken = localStorage.getItem('meiDriverToken');
   if (!activeToken || !currentRide) return;
@@ -2771,15 +3355,72 @@ const rideMarkup = `
     </div>
 
 
-    <!-- NEXT RIDE STATUS -->
+    <!-- DRIVER RIDE PROGRESS -->
 
-    ${
-      nextAction
-        ? `
-        
-        `
-        : ''
-    }
+    <div class="ride-progress">
+
+      <div class="progress-steps">
+
+        ${
+          [
+            'Accepted',
+            'On the Way',
+            'Arrived',
+            'Picked Up',
+            'Completed'
+          ]
+          .map((step, index) => {
+
+            const statuses = [
+              'Accepted',
+              'On the Way',
+              'Arrived',
+              'Picked Up',
+              'Completed'
+            ];
+
+            const currentIndex =
+              statuses.indexOf(
+                ride.driverStatus
+              );
+
+            let className = '';
+
+            if (index < currentIndex) {
+              className = 'done';
+            }
+
+            if (index === currentIndex) {
+              className = 'current';
+            }
+
+            return `
+              <div class="progress-step ${className}">
+                ${step}
+              </div>
+            `;
+          })
+          .join('')
+        }
+
+      </div>
+
+      ${
+        nextAction
+          ? `
+            <div class="progress-next">
+              <button
+                type="button"
+                onclick="updateRideStatus('${nextAction}')"
+              >
+                ${nextAction}
+              </button>
+            </div>
+          `
+          : ''
+      }
+
+    </div>
 
 
     <!-- MESSAGE CUSTOMER -->
@@ -2899,54 +3540,286 @@ async function updateRideStatus(newStatus) {
 }
 
 async function loadOffers() {
-  const activeToken = localStorage.getItem('meiDriverToken');
-  if (!activeToken) return;
+
+  const activeToken =
+    localStorage.getItem(
+      'meiDriverToken'
+    );
+
+  if (!activeToken) {
+    return;
+  }
 
   try {
-    const response = await fetch(`${API}/api/driver/offers`, {
-      headers: { Authorization: `Bearer ${activeToken}` }
-    });
-    const data = await response.json();
 
-    if (!data.success || !offersList) return;
+    const response =
+      await fetch(
+        `${API}/api/driver/offers`,
+        {
+          headers: {
+            Authorization:
+              `Bearer ${activeToken}`
+          }
+        }
+      );
 
-    if (!data.offers.length) {
-      if (offersSnapshot !== 'none') {
-        offersList.innerHTML = '<p>No ride offers right now.</p>';
-        offersSnapshot = 'none';
-      }
+    const data =
+      await response.json();
+
+
+    console.log(
+      'Driver offers:',
+      data
+    );
+
+
+    if (
+      !response.ok ||
+      !data.success
+    ) {
+
+      console.error(
+        'Unable to load offers:',
+        data
+      );
+
       return;
     }
 
-    const offersSignature = JSON.stringify(data.offers.map(offer => [offer.id, offer.status, offer.name, offer.phone, offer.pickup, offer.dropoff, offer.date, offer.time, offer.vehicle, offer.distance, offer.fare, offer.payment]));
-    if (offersSignature === offersSnapshot) return;
-    const offersMarkup = data.offers.map(offer => `
-      <div class="ride-offer">
-        <h3>New Ride</h3>
-        <p><strong>Customer:</strong> ${escapeHtml(offer.name)}</p>
-        <p><strong>Phone:</strong> ${escapeHtml(offer.phone)}</p>
-        <p><strong>Pickup:</strong> ${escapeHtml(offer.pickup)}</p>
-        <p><strong>Dropoff:</strong> ${escapeHtml(offer.dropoff)}</p>
-        <p><strong>Date:</strong> ${escapeHtml(offer.date)}</p>
-        <p><strong>Time:</strong> ${escapeHtml(offer.time)}</p>
-        <p><strong>Vehicle:</strong> ${escapeHtml(offer.vehicle)}</p>
-        <p><strong>Distance:</strong> ${escapeHtml(offer.distance)} km</p>
-        <p><strong>Fare:</strong> $${escapeHtml(offer.fare)}</p>
-        <p><strong>Payment:</strong> ${escapeHtml(offer.payment)}</p>
-        <div class="offer-buttons">
-          <button onclick="acceptOffer('${offer.id}')">Accept Ride</button>
-          <button onclick="rejectOffer('${offer.id}')">Reject</button>
-        </div>
-      </div>
-    `).join('');
-    offersList.innerHTML = offersMarkup;
-    offersSnapshot = offersSignature;
+
+    if (!offersList) {
+
+      console.error(
+        'offersList element is missing from driver.html'
+      );
+
+      return;
+    }
+
+
+    const offers =
+      Array.isArray(data.offers)
+        ? data.offers
+        : [];
+
+
+    /* =========================================
+       NO OFFERS
+    ========================================= */
+
+    if (!offers.length) {
+
+      offersList.innerHTML = `
+        <p>
+          No ride offers right now.
+        </p>
+      `;
+
+      offersSnapshot =
+        'none';
+
+      hideRideOfferPopup();
+
+      return;
+    }
+
+
+    /* =========================================
+       ALWAYS RENDER RIDE REQUESTS FIRST
+    ========================================= */
+
+    const offersSignature =
+      JSON.stringify(
+        offers.map(
+          offer => [
+            offer.id,
+            offer.pickup,
+            offer.dropoff,
+            offer.fare,
+            offer.status
+          ]
+        )
+      );
+
+
+    if (
+      offersSignature !==
+      offersSnapshot
+    ) {
+
+      offersList.innerHTML =
+        offers.map(
+          offer => {
+
+            const fare =
+              Number(
+                offer.fare || 0
+              );
+
+
+            return `
+
+              <div class="ride-offer">
+
+                <div>
+
+                  <small>
+                    NEW RIDE REQUEST
+                  </small>
+
+                  <h3>
+                    ${escapeHtml(
+                      offer.name ||
+                      'Passenger'
+                    )}
+                  </h3>
+
+                </div>
+
+
+                <div class="compact-route">
+
+                  <div class="compact-route-point">
+
+                    <small>
+                      From
+                    </small>
+
+                    <strong>
+                      ${escapeHtml(
+                        offer.pickup ||
+                        'Pickup'
+                      )}
+                    </strong>
+
+                  </div>
+
+
+                  <div class="compact-route-arrow">
+                    →
+                  </div>
+
+
+                  <div class="compact-route-point">
+
+                    <small>
+                      To
+                    </small>
+
+                    <strong>
+                      ${escapeHtml(
+                        offer.dropoff ||
+                        'Destination'
+                      )}
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div
+                  style="
+                    display:flex;
+                    align-items:center;
+                    justify-content:space-between;
+                    gap:15px;
+                    margin-top:15px;
+                    flex-wrap:wrap;
+                  "
+                >
+
+                  <strong
+                    style="
+                      color:#ff7900;
+                      font-size:24px;
+                    "
+                  >
+                    $${fare.toFixed(2)}
+                  </strong>
+
+
+                  <div class="offer-buttons">
+
+                    <button
+                      type="button"
+                      onclick="rejectOffer('${offer.id}')"
+                    >
+                      Reject
+                    </button>
+
+
+                    <button
+                      type="button"
+                      onclick="acceptOffer('${offer.id}')"
+                    >
+                      Accept Ride
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            `;
+          }
+        )
+        .join('');
+
+
+      offersSnapshot =
+        offersSignature;
+    }
+
+
+    /* =========================================
+       POPUP SECOND
+       Never allow popup errors to break list.
+    ========================================= */
+
+    const newestOffer =
+      offers[0];
+
+
+    if (
+      newestOffer &&
+      newestOffer.id !==
+        lastPopupOfferId
+    ) {
+
+      lastPopupOfferId =
+        newestOffer.id;
+
+
+      try {
+
+        showRideOfferPopup(
+          newestOffer
+        );
+
+      } catch (popupError) {
+
+        console.warn(
+          'Ride popup unavailable:',
+          popupError
+        );
+      }
+    }
+
+
   } catch (error) {
-    console.error('Unable to load ride offers:', error);
+
+    console.error(
+      'Unable to load ride offers:',
+      error
+    );
   }
 }
 
 async function acceptOffer(offerId) {
+  hideRideOfferPopup();
+
   try {
     const activeToken = localStorage.getItem('meiDriverToken');
     const response = await fetch(`${API}/api/driver/offers/${offerId}/accept`, {
@@ -2969,6 +3842,8 @@ async function acceptOffer(offerId) {
 }
 
 async function rejectOffer(offerId) {
+  hideRideOfferPopup();
+
   try {
     const activeToken = localStorage.getItem('meiDriverToken');
     const response = await fetch(`${API}/api/driver/offers/${offerId}/reject`, {
@@ -2989,6 +3864,27 @@ async function rejectOffer(offerId) {
   }
 }
 
+
+document
+  .getElementById('popupAcceptBtn')
+  ?.addEventListener(
+    'click',
+    async () => {
+      if (!activePopupOffer) return;
+      await acceptOffer(activePopupOffer.id);
+    }
+  );
+
+document
+  .getElementById('popupRejectBtn')
+  ?.addEventListener(
+    'click',
+    async () => {
+      if (!activePopupOffer) return;
+      await rejectOffer(activePopupOffer.id);
+    }
+  );
+
 /* Active ride / passenger location */
 
 setInterval(
@@ -3005,7 +3901,7 @@ setInterval(
   () => {
     loadOffers();
   },
-  12000
+  3000
 );
 
 // Refresh chat independently, without rebuilding the entire current-ride card.
@@ -3021,7 +3917,6 @@ setInterval(() => {
     const msg = document.getElementById('msg');
     const onlineBtn = document.getElementById('onlineBtn');
     const offlineBtn = document.getElementById('offlineBtn');
-    const busyBtn = document.getElementById('busyBtn');
     const logoutBtn = document.getElementById('logoutBtn');
 
     let token = localStorage.getItem('meiDriverToken');
@@ -3100,6 +3995,17 @@ setInterval(() => {
       driverName.textContent = driver.name || 'Driver';
       vehicle.textContent = (driver.vehicle || '') + (driver.plate ? '  ·  ' + driver.plate : '');
       status.textContent = driver.status || 'Offline';
+
+      onlineBtn.classList.toggle(
+        'status-active',
+        driver.status === 'Online'
+      );
+
+      offlineBtn.classList.toggle(
+        'status-active',
+        driver.status === 'Offline'
+      );
+
       setAppMessage('', true);
       loadCurrentRide();
       loadOffers();
@@ -3144,7 +4050,6 @@ setInterval(() => {
     loginBtn.addEventListener('click', login);
     onlineBtn.addEventListener('click', () => setStatus('Online'));
     offlineBtn.addEventListener('click', () => setStatus('Offline'));
-    busyBtn.addEventListener('click', () => setStatus('Busy'));
     logoutBtn.addEventListener('click', logout);
 
     passwordInput.addEventListener('keydown', event => {
@@ -3274,8 +4179,13 @@ setInterval(() => {
       return;
     }
 
-    const rideText = currentRide ? currentRide.textContent : '';
-    if (rideText.includes('Active Ride')) {
+    const currentRideCard =
+      document.getElementById('currentRideCard');
+
+    if (
+      currentRideCard &&
+      !currentRideCard.hidden
+    ) {
       startGpsTracking();
     } else {
       stopGpsTracking();
