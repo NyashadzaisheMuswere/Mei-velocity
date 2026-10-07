@@ -695,6 +695,614 @@
   }
 
 }
+
+/* =========================================================
+   FINAL RESPONSIVE DRIVER DASHBOARD
+   Desktop + Laptop + Tablet + Mobile
+========================================================= */
+
+/* Prevent any section from forcing the page wider */
+html,
+body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+body{
+  margin:0;
+}
+
+/* Main content */
+.wrap{
+  width:100% !important;
+  max-width:1450px !important;
+  margin:0 auto !important;
+  padding:24px 28px 45px !important;
+}
+
+/* All dashboard sections */
+.driver-dashboard-grid{
+  display:flex !important;
+  flex-direction:column !important;
+  width:100% !important;
+  max-width:100% !important;
+  gap:22px !important;
+}
+
+.driver-main-column,
+.driver-side-column{
+  display:contents !important;
+}
+
+.card,
+#driverMapCard,
+.driver-side-column > .card,
+.driver-main-column > .card{
+  width:100% !important;
+  max-width:100% !important;
+  min-width:0 !important;
+}
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.driver-topbar{
+  width:100%;
+  min-height:70px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:14px;
+
+  padding:12px 24px;
+
+  flex-wrap:wrap;
+}
+
+.driver-brand{
+  flex:0 0 auto;
+}
+
+.driver-nav{
+  display:flex;
+  align-items:center;
+
+  gap:6px;
+
+  min-width:0;
+}
+
+.driver-controls{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+
+  gap:7px;
+
+  flex-wrap:wrap;
+}
+
+.driver-controls button{
+  width:auto;
+  white-space:nowrap;
+}
+
+/* =========================================================
+   DRIVER HEADER
+========================================================= */
+
+.driver-header{
+  width:100%;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  gap:16px;
+
+  flex-wrap:wrap;
+}
+
+.driver-profile{
+  min-width:0;
+}
+
+.driver-profile h1{
+  overflow-wrap:anywhere;
+}
+
+/* =========================================================
+   MAP
+========================================================= */
+
+#driverMapCard{
+  order:1;
+}
+
+#driverRideMap{
+  width:100% !important;
+
+  height:520px !important;
+  min-height:520px !important;
+
+  border-radius:14px;
+
+  overflow:hidden;
+}
+
+.driver-map-info{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0,1fr));
+
+  gap:10px;
+}
+
+.driver-map-info > div{
+  min-width:0;
+}
+
+.driver-map-info strong{
+  overflow-wrap:anywhere;
+}
+
+.driver-map-actions{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0,1fr));
+
+  gap:10px;
+}
+
+.driver-map-actions button{
+  width:100%;
+  min-height:46px;
+}
+
+/* =========================================================
+   CURRENT RIDE
+========================================================= */
+
+.driver-side-column > .card{
+  order:2;
+}
+
+.compact-current-ride{
+  width:100%;
+  min-width:0;
+}
+
+.compact-ride-summary{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    auto;
+
+  align-items:start;
+
+  gap:20px;
+}
+
+.compact-customer{
+  min-width:0;
+}
+
+.compact-customer h3{
+  overflow-wrap:anywhere;
+}
+
+.compact-price{
+  white-space:nowrap;
+}
+
+.compact-route{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    44px
+    minmax(0,1fr);
+
+  gap:16px;
+
+  align-items:center;
+}
+
+.compact-route-point{
+  min-width:0;
+}
+
+.compact-route-point strong{
+  display:block;
+
+  overflow-wrap:anywhere;
+}
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.ride-progress{
+  width:100%;
+  min-width:0;
+}
+
+.progress-steps{
+  display:grid;
+
+  grid-template-columns:
+    repeat(5, minmax(0,1fr));
+
+  gap:7px;
+}
+
+.progress-step{
+  min-width:0;
+
+  text-align:center;
+
+  overflow-wrap:anywhere;
+}
+
+.progress-next{
+  display:flex;
+  justify-content:flex-end;
+
+  margin-top:14px;
+}
+
+/* =========================================================
+   CHAT
+========================================================= */
+
+.ride-chat{
+  width:100%;
+  max-width:100%;
+}
+
+.chat-messages{
+  width:100%;
+  max-width:100%;
+}
+
+.chat-message{
+  max-width:75%;
+  overflow-wrap:anywhere;
+}
+
+.chat-form{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    auto;
+
+  gap:9px;
+}
+
+.chat-form input{
+  width:100%;
+  min-width:0;
+
+  font-size:16px;
+}
+
+.chat-form button{
+  min-width:90px;
+}
+
+/* =========================================================
+   RIDE REQUESTS
+========================================================= */
+
+.driver-main-column > .card:not(#driverMapCard){
+  order:3;
+}
+
+.ride-offer{
+  width:100%;
+  max-width:100%;
+
+  overflow-wrap:anywhere;
+}
+
+.offer-buttons{
+  display:grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0,1fr));
+
+  gap:9px;
+}
+
+/* =========================================================
+   TABLET
+   roughly iPad / smaller laptops
+========================================================= */
+
+@media (max-width:1024px){
+
+  .wrap{
+    padding:
+      22px 20px 40px !important;
+  }
+
+  #driverRideMap{
+    height:450px !important;
+    min-height:450px !important;
+  }
+
+  .driver-topbar{
+    padding:12px 18px;
+  }
+
+  .driver-nav{
+    order:3;
+
+    width:100%;
+
+    overflow-x:auto;
+
+    padding-bottom:2px;
+  }
+
+  .driver-nav a{
+    flex:0 0 auto;
+  }
+
+  .driver-controls{
+    margin-left:auto;
+  }
+
+  .progress-step{
+    font-size:11px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width:700px){
+
+  .wrap{
+    padding:
+      14px 12px 32px !important;
+  }
+
+  .card{
+    padding:16px !important;
+
+    border-radius:14px !important;
+  }
+
+  /* Header */
+
+  .driver-topbar{
+    position:relative;
+
+    align-items:flex-start;
+
+    padding:12px;
+
+    gap:10px;
+  }
+
+  .driver-brand{
+    width:100%;
+  }
+
+  .driver-brand-text{
+    font-size:15px;
+  }
+
+  .driver-nav{
+    width:100%;
+
+    overflow-x:auto;
+
+    white-space:nowrap;
+  }
+
+  .driver-controls{
+    width:100%;
+
+    display:grid;
+
+    grid-template-columns:
+      repeat(2, minmax(0,1fr));
+
+    gap:7px;
+  }
+
+  .driver-controls button{
+    width:100%;
+
+    min-height:44px;
+
+    padding:9px 8px;
+
+    font-size:12px;
+  }
+
+  /* Driver */
+
+  .driver-header{
+    flex-direction:column;
+
+    align-items:flex-start;
+  }
+
+  .driver-profile h1{
+    font-size:23px;
+  }
+
+  /* Map */
+
+  #driverRideMap{
+    height:350px !important;
+    min-height:350px !important;
+  }
+
+  .driver-map-head{
+    gap:8px;
+  }
+
+  .driver-map-head h2{
+    font-size:20px;
+  }
+
+  .driver-map-info{
+    grid-template-columns:1fr;
+  }
+
+  .driver-map-actions{
+    grid-template-columns:1fr;
+  }
+
+  /* Ride information */
+
+  .compact-ride-summary{
+    grid-template-columns:1fr;
+    gap:13px;
+  }
+
+  .compact-customer h3{
+    font-size:24px;
+  }
+
+  .compact-price{
+    text-align:left;
+  }
+
+  .compact-price strong{
+    font-size:26px;
+  }
+
+  .compact-route{
+    grid-template-columns:1fr;
+
+    gap:10px;
+
+    padding:14px;
+  }
+
+  .compact-route-arrow{
+    margin:auto;
+
+    transform:rotate(90deg);
+  }
+
+  /* Progress becomes horizontally scrollable */
+
+  .progress-steps{
+    display:flex;
+
+    width:100%;
+
+    overflow-x:auto;
+
+    gap:7px;
+
+    padding-bottom:6px;
+
+    scroll-snap-type:x proximity;
+  }
+
+  .progress-step{
+    flex:0 0 105px;
+
+    scroll-snap-align:start;
+
+    font-size:11px;
+  }
+
+  .progress-next{
+    width:100%;
+  }
+
+  .progress-next button{
+    width:100%;
+
+    min-height:46px;
+  }
+
+  /* Chat */
+
+  .chat-message{
+    max-width:88%;
+  }
+
+  .chat-form{
+    grid-template-columns:1fr;
+  }
+
+  .chat-form input,
+  .chat-form button{
+    width:100%;
+    min-height:46px;
+  }
+
+  /* Ride offer buttons */
+
+  .offer-buttons{
+    grid-template-columns:1fr;
+  }
+}
+
+/* =========================================================
+   SMALL PHONES
+   iPhone SE / narrow Android screens
+========================================================= */
+
+@media (max-width:420px){
+
+  .wrap{
+    padding:
+      10px 9px 28px !important;
+  }
+
+  .card{
+    padding:14px !important;
+  }
+
+  #driverRideMap{
+    height:300px !important;
+    min-height:300px !important;
+  }
+
+  .driver-controls{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .driver-controls button{
+    font-size:11px;
+  }
+
+  .compact-customer h3{
+    font-size:21px;
+  }
+
+  .compact-phone{
+    font-size:14px;
+  }
+
+  .compact-price strong{
+    font-size:24px;
+  }
+
+  .live-badge{
+    font-size:10px;
+    padding:5px 7px;
+  }
+}
   </style>
 </head>
 <body>
@@ -939,7 +1547,11 @@
 
         <!-- RIDE OFFERS -->
 
-        <div class="card">
+        <div
+  class="card"
+  id="currentRideCard"
+  hidden
+>
 
           <h2 class="section-title">
             Ride Requests
@@ -2030,20 +2642,36 @@ async function loadCurrentRide() {
       return;
     }
 
-    if (!data.ride) {
-      document.getElementById(
-  'driverMapCard'
-).hidden = true;
-      driverChatSignature = '';
-      driverChatRideId = '';
-      if (currentRideSnapshot !== 'none') {
-        currentRide.innerHTML = '<p>No active ride.</p>';
-        currentRideSnapshot = 'none';
-      }
-      return;
-    }
+   if (
+  !data.ride ||
+  data.ride.status === 'Completed' ||
+  data.ride.driverStatus === 'Completed'
+) {
+
+  document.getElementById(
+    'currentRideCard'
+  ).hidden = true;
+
+  document.getElementById(
+    'driverMapCard'
+  ).hidden = true;
+
+  driverChatSignature = '';
+  driverChatRideId = '';
+
+  currentRide.innerHTML =
+    '<p>No active ride.</p>';
+
+  currentRideSnapshot =
+    'none';
+
+  return;
+}
 
     const ride = data.ride;
+    document.getElementById(
+  'currentRideCard'
+).hidden = false;
     updateDriverRideMap(
   ride
 );
@@ -2156,132 +2784,66 @@ const rideMarkup = `
 
     <!-- MESSAGE CUSTOMER -->
 
-    <section class="ride-chat">
-
-      <h3>
-        Message customer
-
-        <span
-          id="driverChatNotice"
-          class="chat-notice"
-          hidden
-        >
-          New message
-        </span>
-      </h3>
-
-
-      <button
-        id="enableChatAlerts"
-        class="chat-notify-button"
-        type="button"
-        onclick="enableDriverChatAlerts()"
-      >
-        Turn on message alerts
-      </button>
-
-      <div class="ride-progress">
-
-  <div class="progress-steps">
-
     ${
-      [
-        'Accepted',
-        'On the Way',
-        'Arrived',
-        'Picked Up',
-        'Completed'
-      ]
-      .map((step, index) => {
+  ride.driverStatus !== 'Completed'
+    ? `
+      <section class="ride-chat">
 
-        const statuses = [
-          'Accepted',
-          'On the Way',
-          'Arrived',
-          'Picked Up',
-          'Completed'
-        ];
+        <h3>
+          Message customer
 
-        const currentIndex =
-          statuses.indexOf(
-            ride.driverStatus
-          );
-
-        let className = '';
-
-        if (index < currentIndex) {
-          className = 'done';
-        }
-
-        if (index === currentIndex) {
-          className = 'current';
-        }
-
-        return `
-          <div class="progress-step ${className}">
-            ${step}
-          </div>
-        `;
-      })
-      .join('')
-    }
-
-  </div>
-
-
-  ${
-    nextAction
-      ? `
-        <div class="progress-next">
-
-          <button
-            type="button"
-            onclick="updateRideStatus('${nextAction}')"
+          <span
+            id="driverChatNotice"
+            class="chat-notice"
+            hidden
           >
-            ${nextAction}
-          </button>
+            New message
+          </span>
+        </h3>
 
-        </div>
-      `
-      : ''
-  }
-
-</div>
-
-
-      <div
-        id="driverChatMessages"
-        class="chat-messages"
-        aria-live="polite"
-      ></div>
-
-
-      <form
-        id="driverChatForm"
-        class="chat-form"
-      >
-
-        <input
-          id="driverChatInput"
-          maxlength="1000"
-          placeholder="Write a message…"
-          autocomplete="off"
-          required
+        <button
+          id="enableChatAlerts"
+          class="chat-notify-button"
+          type="button"
+          onclick="enableDriverChatAlerts()"
         >
-
-        <button type="submit">
-          Send
+          Turn on message alerts
         </button>
 
-      </form>
+        <div
+          id="driverChatMessages"
+          class="chat-messages"
+          aria-live="polite"
+        ></div>
 
+        <form
+          id="driverChatForm"
+          class="chat-form"
+        >
 
-      <p
-        id="driverChatStatus"
-        role="status"
-      ></p>
+          <input
+            id="driverChatInput"
+            maxlength="1000"
+            placeholder="Write a message…"
+            autocomplete="off"
+            required
+          >
 
-    </section>
+          <button type="submit">
+            Send
+          </button>
+
+        </form>
+
+        <p
+          id="driverChatStatus"
+          role="status"
+        ></p>
+
+      </section>
+    `
+    : ''
+}
 
   </div>
 `;
