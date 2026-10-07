@@ -1734,6 +1734,666 @@ body{
   }
 }
 
+
+/* =========================================================
+   MEI VELOCITY — MOBILE DRIVER APP SKIN
+   UI-only: keeps existing IDs, API calls and backend logic.
+========================================================= */
+
+.mobile-bottom-nav{
+  display:none;
+}
+
+@media (max-width:700px){
+
+  /* ---------- PAGE ---------- */
+
+  body{
+    background:#eef1f5;
+    padding-bottom:76px;
+  }
+
+  .wrap{
+    padding:0 10px 22px !important;
+  }
+
+  /* ---------- TOP APP BAR ---------- */
+
+  .driver-topbar{
+    position:relative !important;
+    display:grid !important;
+    grid-template-columns:1fr auto;
+    align-items:center !important;
+    gap:10px !important;
+
+    margin:0 !important;
+    padding:11px 12px 12px !important;
+
+    background:#0b1220;
+    border-radius:0 0 18px 18px;
+
+    box-shadow:
+      0 5px 16px
+      rgba(11,18,32,.16);
+  }
+
+  .driver-brand{
+    width:auto !important;
+    min-width:0 !important;
+    padding:0 !important;
+  }
+
+  .driver-brand-mark{
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    font-size:15px;
+  }
+
+  .driver-brand-text{
+    font-size:13px !important;
+    letter-spacing:.35px;
+  }
+
+  /* Desktop links disappear on phone.
+     Bottom icons handle navigation. */
+  .driver-nav{
+    display:none !important;
+  }
+
+  .driver-controls{
+    grid-column:1 / -1;
+    order:3 !important;
+
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+    gap:7px !important;
+
+    margin:0 !important;
+  }
+
+  .driver-controls #onlineBtn,
+  .driver-controls #offlineBtn{
+    min-height:42px !important;
+    margin:0 !important;
+    padding:8px 10px !important;
+
+    border-radius:12px;
+    font-size:12px !important;
+    font-weight:800;
+  }
+
+  /* Turn logout into a small icon-style utility. */
+  #logoutBtn{
+    position:absolute;
+    top:11px;
+    right:11px;
+
+    width:34px !important;
+    height:34px !important;
+    min-height:34px !important;
+
+    margin:0 !important;
+    padding:0 !important;
+
+    display:grid;
+    place-items:center;
+
+    border:1px solid rgba(255,255,255,.16);
+    border-radius:10px;
+
+    background:rgba(255,255,255,.08);
+    color:white;
+
+    font-size:0 !important;
+  }
+
+  #logoutBtn::before{
+    content:"↪";
+    font-size:18px;
+    line-height:1;
+  }
+
+  /* ---------- DRIVER IDENTITY ---------- */
+
+  .driver-header{
+    display:none !important;
+  }
+
+  #msg{
+    margin:8px 4px;
+    font-size:11px;
+  }
+
+  /* ---------- DASHBOARD ---------- */
+
+  .driver-dashboard-grid{
+    gap:10px !important;
+    margin-top:10px;
+  }
+
+  .card{
+    padding:12px !important;
+    border:0 !important;
+    border-radius:17px !important;
+
+    box-shadow:
+      0 3px 14px
+      rgba(15,23,42,.06) !important;
+  }
+
+  /* ---------- LIVE MAP ---------- */
+
+  #driverMapCard{
+    padding:10px !important;
+    overflow:hidden;
+  }
+
+  .driver-map-head{
+    margin:2px 2px 8px;
+    align-items:center;
+  }
+
+  .driver-map-head h2{
+    margin:0 !important;
+    font-size:16px !important;
+  }
+
+  .driver-map-head p{
+    display:none;
+  }
+
+  .live-badge{
+    padding:5px 8px;
+    font-size:0 !important;
+  }
+
+  .live-badge::before{
+    content:"●";
+    color:#16a34a;
+    font-size:12px;
+  }
+
+  #driverRideMap{
+    height:355px !important;
+    min-height:355px !important;
+    border-radius:14px !important;
+  }
+
+  /* Hide extra text boxes beneath map on phones.
+     The destination and customer remain in Current Ride. */
+  .driver-map-info,
+  .driver-route-summary{
+    display:none !important;
+  }
+
+  .driver-map-actions{
+    display:flex !important;
+    justify-content:center;
+    gap:9px !important;
+
+    margin-top:9px !important;
+  }
+
+  .driver-map-actions button{
+    width:48px !important;
+    height:48px !important;
+    min-height:48px !important;
+
+    padding:0 !important;
+    margin:0 !important;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:50% !important;
+    font-size:0 !important;
+
+    box-shadow:
+      0 4px 12px
+      rgba(15,23,42,.12);
+  }
+
+  #startNavigationBtn::before{
+    content:"➤";
+    font-size:20px;
+  }
+
+  #centerDriverMapBtn::before{
+    content:"◎";
+    font-size:22px;
+  }
+
+  /* ---------- CURRENT RIDE ---------- */
+
+  #currentRideCard{
+    padding:14px !important;
+  }
+
+  #currentRideCard > .section-title{
+    display:none;
+  }
+
+  .compact-current-ride{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .compact-ride-summary{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) auto !important;
+    align-items:start !important;
+    gap:12px !important;
+  }
+
+  .compact-customer h3{
+    margin:0 !important;
+    font-size:20px !important;
+    line-height:1.15;
+  }
+
+  .compact-phone{
+    margin:4px 0 0 !important;
+    font-size:12px !important;
+  }
+
+  .compact-price{
+    text-align:right !important;
+  }
+
+  .compact-price span{
+    display:none !important;
+  }
+
+  .compact-price strong{
+    font-size:22px !important;
+  }
+
+  .compact-route{
+    margin:0 !important;
+    padding:12px !important;
+
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr) !important;
+    align-items:center !important;
+    gap:8px !important;
+
+    border-radius:13px !important;
+    background:#f5f7fa !important;
+  }
+
+  .compact-route-point small{
+    font-size:0 !important;
+    margin-bottom:5px !important;
+  }
+
+  .compact-route-point:first-child small::before{
+    content:"●";
+    color:#16a34a;
+    font-size:13px;
+  }
+
+  .compact-route-point:last-child small::before{
+    content:"●";
+    color:#ff7900;
+    font-size:13px;
+  }
+
+  .compact-route-point strong{
+    font-size:12px !important;
+    line-height:1.35 !important;
+  }
+
+  .compact-route-arrow{
+    width:32px !important;
+    height:32px !important;
+    margin:0 !important;
+
+    transform:none !important;
+
+    font-size:16px !important;
+  }
+
+  /* ---------- PROGRESS ---------- */
+
+  .ride-progress{
+    margin-top:0 !important;
+  }
+
+  .progress-steps{
+    display:grid !important;
+    grid-template-columns:repeat(5,1fr) !important;
+
+    width:100% !important;
+    overflow:visible !important;
+
+    gap:5px !important;
+    padding:0 !important;
+  }
+
+  .progress-step{
+    flex:none !important;
+    min-width:0 !important;
+    font-size:0 !important;
+  }
+
+  .progress-step::before{
+    height:6px !important;
+    margin:0 !important;
+  }
+
+  .progress-next{
+    margin-top:10px !important;
+  }
+
+  .progress-next button{
+    width:100% !important;
+    min-height:46px !important;
+    margin:0 !important;
+
+    border-radius:13px !important;
+
+    background:#ff7900 !important;
+    color:white !important;
+
+    font-size:13px !important;
+    font-weight:900;
+  }
+
+  /* ---------- CHAT ---------- */
+
+  .compact-current-ride .ride-chat{
+    margin-top:0 !important;
+    padding-top:12px !important;
+  }
+
+  .ride-chat{
+    padding:0 !important;
+    border:0 !important;
+    background:transparent !important;
+  }
+
+  .ride-chat h3{
+    margin:0 0 8px !important;
+    font-size:0 !important;
+  }
+
+  .ride-chat h3::before{
+    content:"💬";
+    font-size:20px;
+  }
+
+  #enableChatAlerts{
+    display:none !important;
+  }
+
+  .chat-messages{
+    max-height:170px !important;
+    min-height:0 !important;
+  }
+
+  .chat-message{
+    max-width:84% !important;
+    font-size:12px !important;
+  }
+
+  .chat-form{
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 46px !important;
+    gap:7px !important;
+    margin-top:8px !important;
+  }
+
+  .chat-form input{
+    min-height:44px !important;
+    padding:10px 12px !important;
+
+    border-radius:13px !important;
+    font-size:16px !important;
+  }
+
+  .chat-form button{
+    width:46px !important;
+    min-width:46px !important;
+    min-height:44px !important;
+
+    padding:0 !important;
+
+    border-radius:13px !important;
+
+    background:#ff7900 !important;
+    color:white !important;
+
+    font-size:0 !important;
+  }
+
+  .chat-form button::before{
+    content:"➤";
+    font-size:18px;
+  }
+
+  #driverChatStatus{
+    display:none;
+  }
+
+  /* ---------- RIDE REQUESTS ---------- */
+
+  #rideRequestsCard{
+    padding:14px !important;
+  }
+
+  #rideRequestsCard > .section-title{
+    margin:0 0 10px !important;
+    font-size:0 !important;
+  }
+
+  #rideRequestsCard > .section-title::before{
+    content:"🔔";
+    font-size:20px;
+  }
+
+  #offersList > p{
+    margin:8px 0;
+    text-align:center;
+    color:#7b8494;
+    font-size:12px;
+  }
+
+  .ride-offer{
+    margin:0 !important;
+    padding:12px !important;
+
+    border:0 !important;
+    border-radius:14px !important;
+
+    background:#f7f8fa;
+  }
+
+  .ride-offer > div:first-child small{
+    font-size:0 !important;
+  }
+
+  .ride-offer > div:first-child small::before{
+    content:"🚕";
+    font-size:21px;
+  }
+
+  .ride-offer > div:first-child h3{
+    margin:6px 0 8px;
+    font-size:17px;
+  }
+
+  .ride-offer .compact-route{
+    background:white !important;
+  }
+
+  .ride-offer .offer-buttons{
+    display:grid !important;
+    grid-template-columns:48px 1fr !important;
+    gap:8px !important;
+  }
+
+  .ride-offer .offer-buttons button{
+    min-height:46px !important;
+    margin:0 !important;
+
+    border-radius:13px !important;
+    font-weight:800;
+  }
+
+  .ride-offer .offer-buttons button:first-child{
+    width:48px !important;
+    padding:0 !important;
+    font-size:0 !important;
+
+    background:#e9edf2 !important;
+    color:#111827 !important;
+  }
+
+  .ride-offer .offer-buttons button:first-child::before{
+    content:"×";
+    font-size:24px;
+  }
+
+  .ride-offer .offer-buttons button:last-child{
+    background:#ff7900 !important;
+    color:white !important;
+  }
+
+  /* ---------- NEW REQUEST POPUP ---------- */
+
+  .ride-popup-backdrop{
+    align-items:flex-end !important;
+    padding:10px !important;
+  }
+
+  .ride-popup{
+    width:100% !important;
+    max-height:84% !important;
+
+    padding:16px !important;
+
+    border-radius:22px 22px 16px 16px !important;
+  }
+
+  .ride-popup-badge{
+    font-size:0 !important;
+  }
+
+  .ride-popup-badge::before{
+    content:"🚕";
+    font-size:22px;
+  }
+
+  .ride-popup h2{
+    margin:4px 0 14px !important;
+    font-size:18px !important;
+  }
+
+  .ride-popup-route{
+    grid-template-columns:1fr !important;
+    gap:7px !important;
+  }
+
+  .ride-popup-arrow{
+    width:30px !important;
+    height:30px !important;
+
+    margin:0 auto !important;
+    transform:rotate(90deg) !important;
+
+    font-size:15px !important;
+  }
+
+  .ride-popup-actions{
+    grid-template-columns:52px 1fr !important;
+  }
+
+  .ride-popup-reject{
+    font-size:0 !important;
+  }
+
+  .ride-popup-reject::before{
+    content:"×";
+    font-size:24px;
+  }
+
+  /* ---------- BOTTOM NAV ---------- */
+
+  .mobile-bottom-nav{
+    position:fixed;
+    left:10px;
+    right:10px;
+    bottom:10px;
+    z-index:9000;
+
+    display:grid;
+    grid-template-columns:1fr 1fr;
+
+    min-height:58px;
+
+    padding:5px;
+
+    border-radius:17px;
+
+    background:#0b1220;
+
+    box-shadow:
+      0 10px 28px
+      rgba(11,18,32,.24);
+  }
+
+  .mobile-nav-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:2px;
+
+    min-height:48px;
+
+    border-radius:13px;
+
+    color:#aeb7c6;
+    text-decoration:none;
+  }
+
+  .mobile-nav-item.active{
+    color:#ff7900;
+    background:rgba(255,255,255,.06);
+  }
+
+  .mobile-nav-icon{
+    font-size:22px;
+    line-height:1;
+  }
+
+  .mobile-nav-label{
+    font-size:9px;
+    font-weight:700;
+  }
+}
+
+@media (max-width:390px){
+
+  #driverRideMap{
+    height:320px !important;
+    min-height:320px !important;
+  }
+
+  .compact-route-point strong{
+    font-size:11px !important;
+  }
+
+  .mobile-bottom-nav{
+    left:8px;
+    right:8px;
+    bottom:8px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2017,6 +2677,20 @@ body{
     </div>
 
   </main>
+
+
+  <!-- MOBILE-ONLY BOTTOM NAVIGATION -->
+  <nav class="mobile-bottom-nav" aria-label="Driver navigation">
+    <a href="driver.html" class="mobile-nav-item active" aria-label="Dashboard">
+      <span class="mobile-nav-icon">⌂</span>
+      <span class="mobile-nav-label">Home</span>
+    </a>
+
+    <a href="driver-history.html" class="mobile-nav-item" aria-label="Previous rides">
+      <span class="mobile-nav-icon">↻</span>
+      <span class="mobile-nav-label">History</span>
+    </a>
+  </nav>
 
 </div>
 
