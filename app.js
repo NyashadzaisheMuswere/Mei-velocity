@@ -5615,48 +5615,72 @@ if (
                   `Bearer ${customerSession.token}`
               },
 
-              body:
-                JSON.stringify({
-                  name:
-                    customerSession.customer.username,
+            body:
+  JSON.stringify({
 
-                  phone:
-                    customerSession.customer.phone,
+    name:
+      customerSession
+        .customer
+        .username,
 
-                  pickup:
-                    draft.pickup,
+    phone:
+      customerSession
+        .customer
+        .phone,
 
-                  dropoff:
-                    draft.dropoff,
+    pickup:
+      draft.pickup,
 
-                  date:
-                    draft.date,
+    dropoff:
+      draft.dropoff,
 
-                  time:
-                    draft.time,
+    date:
+      draft.date,
 
-                  vehicle:
-                    draft.vehicle,
+    time:
+      draft.time,
 
-                  distance:
-                    draft.distance,
+    vehicle:
+      draft.vehicle,
 
-                  fare:
-                    Math.round(
-                      fare * 100
-                    ) / 100,
+    distance:
+      draft.distance,
 
-                  baseFare:
-                    draft.baseFare,
+    fare:
+      Math.round(
+        fare * 100
+      ) / 100,
 
-                  payment:
-                    draft.payment ||
-                    "Cash",
+    baseFare:
+      draft.baseFare,
 
-                  promoCode:
-                    draft.promoCode ||
-                    ""
-                })
+    payment:
+      draft.payment ||
+      "Cash",
+
+    promoCode:
+      draft.promoCode ||
+      "",
+
+
+    /* Exact map coordinates */
+
+    pickupLat:
+      draft.pickupLat,
+
+    pickupLng:
+      draft.pickupLng,
+
+    dropoffLat:
+      draft.dropoffLat,
+
+    dropoffLng:
+      draft.dropoffLng,
+
+    pickupSource:
+      draft.pickupSource ||
+      "manual"
+  })
             }
           );
 
@@ -6139,48 +6163,202 @@ if (
   }
 
 
-  function startRiderLocationTracking() {
-    if (!navigator.geolocation || riderWatchId !== null) return;
+ let lastRiderLocationSentAt = 0;
 
-    riderWatchId = navigator.geolocation.watchPosition(
+
+/* =========================================================
+   SEND RIDER LIVE GPS TO SERVER
+========================================================= */
+
+async function sendRiderLocationToServer(
+  lat,
+  lng
+) {
+
+  if (
+    !activeRide?.id ||
+    !customerSession?.token
+  ) {
+    return;
+  }
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_BASE}/api/customer/bookings/${encodeURIComponent(
+          activeRide.id
+        )}/location`,
+        {
+          method: "PATCH",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${customerSession.token}`
+          },
+
+          body:
+            JSON.stringify({
+              lat,
+              lng
+            })
+        }
+      );
+
+
+    if (
+      !response.ok &&
+      response.status !== 404
+    ) {
+
+      const data =
+        await response
+          .json()
+          .catch(
+            () => ({})
+          );
+
+      console.warn(
+        "Rider live location update failed:",
+        data.message ||
+          response.status
+      );
+    }
+
+  } catch (error) {
+
+    console.warn(
+      "Could not send rider live location:",
+      error
+    );
+  }
+}
+
+
+/* =========================================================
+   TRACK PASSENGER LOCATION
+========================================================= */
+
+function startRiderLocationTracking() {
+
+  if (
+    !navigator.geolocation ||
+    riderWatchId !== null
+  ) {
+    return;
+  }
+
+
+  riderWatchId =
+    navigator.geolocation.watchPosition(
+
       position => {
+
         const point = [
+
           position.coords.latitude,
+
           position.coords.longitude
+
         ];
 
+
+        /* Move passenger marker */
+
         if (riderMarker) {
-          riderMarker.setLatLng(point);
+
+          riderMarker.setLatLng(
+            point
+          );
         }
 
-        activeRide.pickupLat = point[0];
-        activeRide.pickupLng = point[1];
+
+        /* Save latest position */
+
+        activeRide.pickupLat =
+          point[0];
+
+        activeRide.pickupLng =
+          point[1];
+
 
         try {
+
           localStorage.setItem(
             "meiVelocityCustomerBooking",
-            JSON.stringify(activeRide)
+            JSON.stringify(
+              activeRide
+            )
           );
+
         } catch {}
 
-        if (approachLine && driverMarker) {
+
+        /* Update line between
+           driver and passenger */
+
+        if (
+          approachLine &&
+          driverMarker
+        ) {
+
           approachLine.setLatLngs([
             driverMarker.getLatLng(),
             point
           ]);
         }
+
+
+        /* Send GPS to MEI backend
+           approximately every 3 seconds */
+
+        const now =
+          Date.now();
+
+
+        if (
+          now -
+            lastRiderLocationSentAt >=
+          3000
+        ) {
+
+          lastRiderLocationSentAt =
+            now;
+
+
+          sendRiderLocationToServer(
+            point[0],
+            point[1]
+          );
+        }
+
       },
+
+
       error => {
-        console.warn("Live rider location unavailable:", error);
+
+        console.warn(
+          "Live rider location unavailable:",
+          error
+        );
       },
+
+
       {
-        enableHighAccuracy: true,
-        maximumAge: 2000,
-        timeout: 12000
+        enableHighAccuracy:
+          true,
+
+        maximumAge:
+          2000,
+
+        timeout:
+          12000
       }
     );
-  }
-
+}
 
   function statusInfo(
     booking

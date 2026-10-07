@@ -197,6 +197,25 @@ async function initializeDatabase() {
     )
   `);
   await pool.query(`
+  CREATE TABLE IF NOT EXISTS customer_push_subscriptions (
+    id BIGSERIAL PRIMARY KEY,
+    "customerId" TEXT NOT NULL
+      REFERENCES customers(id)
+      ON DELETE CASCADE,
+
+    endpoint TEXT NOT NULL UNIQUE,
+    subscription JSONB NOT NULL,
+
+    "createdAt"
+      TIMESTAMP WITH TIME ZONE
+      DEFAULT NOW(),
+
+    "updatedAt"
+      TIMESTAMP WITH TIME ZONE
+      DEFAULT NOW()
+  )
+`);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS customer_verification_codes (
       phone TEXT PRIMARY KEY,
       username TEXT NOT NULL,
@@ -236,14 +255,17 @@ async function initializeDatabase() {
   `);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_booking_messages_booking ON booking_messages ("bookingId", id)`);
   await pool.query(`
-    ALTER TABLE bookings
-    ADD COLUMN IF NOT EXISTS "customerId" TEXT REFERENCES customers(id),
-    ADD COLUMN IF NOT EXISTS "promoCode" TEXT,
-    ADD COLUMN IF NOT EXISTS discount NUMERIC DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS "baseFare" NUMERIC DEFAULT 0,
-    ADD COLUMN IF NOT EXISTS rating INTEGER,
-    ADD COLUMN IF NOT EXISTS "ratedAt" TIMESTAMP WITH TIME ZONE
-  `);
+  ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS "driverLat" NUMERIC,
+  ADD COLUMN IF NOT EXISTS "driverLng" NUMERIC,
+  ADD COLUMN IF NOT EXISTS "driverLocationUpdatedAt" TIMESTAMP WITH TIME ZONE,
+  ADD COLUMN IF NOT EXISTS "pickupLat" NUMERIC,
+  ADD COLUMN IF NOT EXISTS "pickupLng" NUMERIC,
+  ADD COLUMN IF NOT EXISTS "dropoffLat" NUMERIC,
+  ADD COLUMN IF NOT EXISTS "dropoffLng" NUMERIC,
+  ADD COLUMN IF NOT EXISTS "pickupSource" TEXT DEFAULT 'manual',
+  ADD COLUMN IF NOT EXISTS "riderLocationUpdatedAt" TIMESTAMP WITH TIME ZONE
+`);
   await pool.query(`
     ALTER TABLE bookings
     ADD COLUMN IF NOT EXISTS "assignedDriverId" TEXT
@@ -365,6 +387,203 @@ async function dispatchPendingBookings() {
   return created;
 }
 
+async function sendPushToCustomer(
+  customerId,
+  payload
+) {
+  if (
+    !customerId ||
+    !VAPID_PUBLIC_KEY ||
+    !VAPID_PRIVATE_KEY
+  ) {
+    return;
+  }
+
+  try {
+    const result =
+      await pool.query(
+        `
+        SELECT id, subscription
+        FROM customer_push_subscriptions
+        WHERE "customerId" = $1
+        `,
+        [customerId]
+      );
+
+    for (
+      const row of result.rows
+    ) {
+      try {
+        await webpush.sendNotification(
+          row.subscription,
+          JSON.stringify(payload)
+        );
+
+      } catch (error) {
+        console.error(
+          "Push notification failed:",
+          error.statusCode ||
+          error.message
+        );
+
+        if (
+          error.statusCode === 404 ||
+          error.statusCode === 410
+        ) {
+          await pool.query(
+            `
+            DELETE FROM customer_push_subscriptions
+            WHERE id = $1
+            `,
+            [row.id]
+          );
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error(
+      "Customer push error:",
+      error
+    );
+  }
+}
+
+/* =========================================================
+   CUSTOMER PUSH NOTIFICATIONS
+========================================================= */
+
+app.get(
+  "/api/customer/push-public-key",
+  (req, res) => {
+    if (!VAPID_PUBLIC_KEY) {
+      return res.status(503).json({
+        success: false,
+        message:
+          "Push notifications are not configured."
+      });
+    }
+
+    res.json({
+      success: true,
+      publicKey: VAPID_PUBLIC_KEY
+    });
+  }
+);
+
+
+app.post(
+  "/api/customer/push-subscriptions",
+  customerAuth,
+  async (req, res) => {
+    try {
+      const subscription =
+        req.body.subscription;
+
+      if (
+        !subscription ||
+        !subscription.endpoint ||
+        !subscription.keys?.p256dh ||
+        !subscription.keys?.auth
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A valid push subscription is required."
+        });
+      }
+
+      await pool.query(
+        `
+        INSERT INTO customer_push_subscriptions
+          ("customerId", endpoint, subscription)
+        VALUES ($1, $2, $3::jsonb)
+
+        ON CONFLICT (endpoint)
+        DO UPDATE SET
+          "customerId" = EXCLUDED."customerId",
+          subscription = EXCLUDED.subscription,
+          "updatedAt" = NOW()
+        `,
+        [
+          req.customerId,
+          subscription.endpoint,
+          JSON.stringify(subscription)
+        ]
+      );
+
+      res.json({
+        success: true,
+        message:
+          "Push notifications enabled."
+      });
+
+    } catch (error) {
+      console.error(
+        "Save push subscription error:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Unable to enable push notifications."
+      });
+    }
+  }
+);
+
+
+app.delete(
+  "/api/customer/push-subscriptions",
+  customerAuth,
+  async (req, res) => {
+    try {
+      const endpoint =
+        String(
+          req.body.endpoint || ""
+        ).trim();
+
+      if (!endpoint) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Push subscription endpoint is required."
+        });
+      }
+
+      await pool.query(
+        `
+        DELETE FROM customer_push_subscriptions
+        WHERE "customerId" = $1
+          AND endpoint = $2
+        `,
+        [
+          req.customerId,
+          endpoint
+        ]
+      );
+
+      res.json({
+        success: true,
+        message:
+          "Push notifications disabled."
+      });
+
+    } catch (error) {
+      console.error(
+        "Remove push subscription error:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+        message:
+          "Unable to disable push notifications."
+      });
+    }
+  }
+);
 // DRIVER OFFER ROUTES
 
 app.get("/api/driver/offers", driverAuth, async (req, res) => {
@@ -846,17 +1065,40 @@ app.patch("/api/driver/location", driverAuth, async (req, res) => {
       RETURNING id, "driverLat", "driverLng", "driverLocationUpdatedAt"
     `, [lat, lng, req.driverId]);
 
-    if (!result.rows.length) {
-      return res.status(404).json({
-        success: false,
-        message: "No active ride found."
-      });
-    }
+   if (!result.rows.length) {
 
-    res.json({
-      success: true,
-      location: result.rows[0]
-    });
+  return res.status(404).json({
+    success: false,
+    message:
+      "No active ride found."
+  });
+}
+
+
+/* Save the driver's latest position
+   on the driver account too */
+
+await pool.query(`
+  UPDATE drivers
+
+  SET
+    lat = $1,
+    lng = $2
+
+  WHERE id = $3
+`, [
+  lat,
+  lng,
+  req.driverId
+]);
+
+
+res.json({
+  success: true,
+
+  location:
+    result.rows[0]
+});
   } catch (error) {
     console.error("Driver location error:", error);
     res.status(500).json({
@@ -1042,6 +1284,113 @@ app.get("/api/customer/bookings/:id/status", customerAuth, async (req, res) => {
   }
 });
 
+/* =========================================================
+   CUSTOMER LIVE PICKUP LOCATION
+========================================================= */
+
+app.patch(
+  "/api/customer/bookings/:id/location",
+  customerAuth,
+  async (req, res) => {
+
+    const lat =
+      Number(req.body.lat);
+
+    const lng =
+      Number(req.body.lng);
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng) ||
+      lat < -90 ||
+      lat > 90 ||
+      lng < -180 ||
+      lng > 180
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid rider GPS coordinates."
+      });
+    }
+
+    try {
+
+      const result =
+        await pool.query(`
+          UPDATE bookings
+
+          SET
+            "pickupLat" = $1,
+            "pickupLng" = $2,
+            "riderLocationUpdatedAt" = NOW()
+
+          WHERE id = $3
+
+            AND "customerId" = $4
+
+            AND (
+              status = 'Pending'
+
+              OR (
+                status = 'Confirmed'
+
+                AND "driverStatus" IN (
+                  'Accepted',
+                  'On the Way',
+                  'Arrived'
+                )
+              )
+            )
+
+          RETURNING
+            id,
+            "pickupLat",
+            "pickupLng",
+            "riderLocationUpdatedAt"
+        `, [
+          lat,
+          lng,
+          req.params.id,
+          req.customerId
+        ]);
+
+      if (!result.rows.length) {
+
+        return res
+          .status(404)
+          .json({
+            success: false,
+
+            message:
+              "No ride is available for live rider location sharing."
+          });
+      }
+
+      res.json({
+        success: true,
+
+        location:
+          result.rows[0]
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Rider location error:",
+        error
+      );
+
+      res.status(500).json({
+        success: false,
+
+        message:
+          "Unable to update rider location."
+      });
+    }
+  }
+);
+
 app.get("/api/promotions", (req, res) => {
   res.json({ success: true, offers: [{ code: "WELCOME10", title: "Welcome ride credit", description: "Save up to $10 on one ride. One use per phone number." }] });
 });
@@ -1055,7 +1404,21 @@ app.post("/api/promotions/validate", (req, res) => {
 // CUSTOMER BOOKING
 app.post("/api/bookings", customerAuth, async (req, res) => {
   try {
-    const { pickup, dropoff, date, time, vehicle, distance, fare, payment } = req.body;
+    const {
+  pickup,
+  dropoff,
+  date,
+  time,
+  vehicle,
+  distance,
+  fare,
+  payment,
+  pickupLat,
+  pickupLng,
+  dropoffLat,
+  dropoffLng,
+  pickupSource
+} = req.body;
     const customerResult = await pool.query(`SELECT username, phone FROM customers WHERE id=$1`, [req.customerId]);
     const customer = customerResult.rows[0];
     if (!customer) return res.status(401).json({ success: false, message: "Please sign in again before booking." });
@@ -1074,17 +1437,73 @@ app.post("/api/bookings", customerAuth, async (req, res) => {
       return res.status(400).json({ success: false, message: "Enter a valid fare offer up to twice the estimated fare." });
     }
     const booking = {
-      id: `MEI-${crypto.randomUUID()}`,
-      name, phone, pickup, dropoff, date, time,
-      vehicle: vehicle || "Standard Ride",
-      distance: Number(distance) || 0,
-      baseFare,
-      discount,
-      promoCode: promoCode || null,
-      fare: Math.min(offeredFare, referenceFare),
-      payment: payment || "Cash",
-      status: "Pending"
-    };
+  id: `MEI-${crypto.randomUUID()}`,
+
+  name,
+  phone,
+  pickup,
+  dropoff,
+  date,
+  time,
+
+  vehicle:
+    vehicle || "Standard Ride",
+
+  distance:
+    Number(distance) || 0,
+
+  baseFare,
+
+  discount,
+
+  promoCode:
+    promoCode || null,
+
+  fare:
+    Math.min(
+      offeredFare,
+      referenceFare
+    ),
+
+  payment:
+    payment || "Cash",
+
+  pickupLat:
+    Number.isFinite(
+      Number(pickupLat)
+    )
+      ? Number(pickupLat)
+      : null,
+
+  pickupLng:
+    Number.isFinite(
+      Number(pickupLng)
+    )
+      ? Number(pickupLng)
+      : null,
+
+  dropoffLat:
+    Number.isFinite(
+      Number(dropoffLat)
+    )
+      ? Number(dropoffLat)
+      : null,
+
+  dropoffLng:
+    Number.isFinite(
+      Number(dropoffLng)
+    )
+      ? Number(dropoffLng)
+      : null,
+
+  pickupSource:
+    String(
+      pickupSource || "manual"
+    ).slice(0, 30),
+
+  status:
+    "Pending"
+};
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -1096,13 +1515,61 @@ app.post("/api/bookings", customerAuth, async (req, res) => {
           return res.status(409).json({ success: false, message: "This welcome credit has already been used with that phone number." });
         }
       }
-      await client.query(`
-        INSERT INTO bookings
-        (id, "customerId", name, phone, pickup, dropoff, date, time, vehicle, distance, fare, "baseFare", discount, "promoCode", payment, status)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
-      `, [booking.id, req.customerId || null, booking.name, booking.phone, booking.pickup, booking.dropoff,
-        booking.date, booking.time, booking.vehicle, booking.distance, booking.fare, booking.baseFare,
-        booking.discount, booking.promoCode, booking.payment, booking.status]);
+    await client.query(`
+  INSERT INTO bookings
+  (
+    id,
+    "customerId",
+    name,
+    phone,
+    pickup,
+    dropoff,
+    date,
+    time,
+    vehicle,
+    distance,
+    fare,
+    "baseFare",
+    discount,
+    "promoCode",
+    payment,
+    status,
+    "pickupLat",
+    "pickupLng",
+    "dropoffLat",
+    "dropoffLng",
+    "pickupSource"
+  )
+
+  VALUES (
+    $1,$2,$3,$4,$5,
+    $6,$7,$8,$9,$10,
+    $11,$12,$13,$14,$15,
+    $16,$17,$18,$19,$20,$21
+  )
+`, [
+  booking.id,
+  req.customerId || null,
+  booking.name,
+  booking.phone,
+  booking.pickup,
+  booking.dropoff,
+  booking.date,
+  booking.time,
+  booking.vehicle,
+  booking.distance,
+  booking.fare,
+  booking.baseFare,
+  booking.discount,
+  booking.promoCode,
+  booking.payment,
+  booking.status,
+  booking.pickupLat,
+  booking.pickupLng,
+  booking.dropoffLat,
+  booking.dropoffLng,
+  booking.pickupSource
+]);
       await client.query("COMMIT");
     } catch (error) {
       await client.query("ROLLBACK");

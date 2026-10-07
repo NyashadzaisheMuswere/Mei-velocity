@@ -3,8 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MEI Velocity Driver</title>
-  <style>
+ 
+ <title>MEI Velocity Driver</title>
+ <link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+ <style>
     *{box-sizing:border-box}
     body{font-family:Arial,sans-serif;background:#f4f5f7;margin:0;color:#111}
     .wrap{max-width:520px;margin:auto;padding:18px}
@@ -20,6 +25,162 @@
     .success{color:#087b2e}
     .error{color:#b00020}
     .ride-chat{margin-top:18px;padding:14px;border:1px solid #e3e8e0;border-radius:12px;background:#fff}.ride-chat h3{margin:0 0 10px}.chat-notice{display:inline-block;margin-left:7px;padding:4px 8px;border-radius:14px;background:#fff0c2;color:#704d00;font-size:11px}.chat-notice[hidden]{display:none}.chat-notify-button{width:auto;margin:0 0 10px;padding:8px 11px;border:1px solid #dce2d7;background:#f4f7ef;color:#30382d;font-size:12px}.chat-messages{display:flex;flex-direction:column;gap:8px;max-height:240px;min-height:54px;overflow:auto}.chat-message{max-width:88%;padding:9px 11px;border-radius:12px;background:#f1f3ee;overflow-wrap:anywhere;font-size:13px}.chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:3px;color:#697164;font-size:10px}.chat-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;margin-top:10px}.chat-form input{min-width:0;margin:0;padding:10px}.chat-form button{width:auto;margin:0;padding:0 15px;background:#b3d735;color:#17200a;font-weight:700}
+  /* =========================================================
+   DRIVER LIVE MAP
+========================================================= */
+
+.driver-map-card{
+  overflow:hidden;
+}
+
+.driver-map-card[hidden]{
+  display:none;
+}
+
+.driver-map-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.driver-map-head h2{
+  margin:0 0 4px;
+}
+
+.driver-map-head p{
+  margin:0;
+  color:#666;
+  font-size:13px;
+}
+
+.live-badge{
+  flex:0 0 auto;
+  padding:6px 10px;
+  border-radius:999px;
+  background:#e9f7ec;
+  color:#147a32;
+  font-size:12px;
+  font-weight:700;
+}
+
+#driverRideMap{
+  width:100%;
+  height:360px;
+  border-radius:14px;
+  overflow:hidden;
+  background:#e9ecef;
+}
+
+.driver-map-info{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:14px;
+}
+
+.driver-map-info > div{
+  padding:12px;
+  background:#f6f7f8;
+  border-radius:10px;
+}
+
+.driver-map-info small{
+  display:block;
+  color:#777;
+  margin-bottom:3px;
+}
+
+.driver-map-info strong{
+  display:block;
+  font-size:14px;
+  line-height:1.35;
+}
+
+.driver-route-summary{
+  margin:13px 0 8px;
+  padding:11px 13px;
+  border-radius:10px;
+  background:#fff5eb;
+  color:#8a4300;
+  font-weight:700;
+}
+
+.driver-map-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+  margin-top:10px;
+}
+
+.driver-map-actions button{
+  margin:0;
+}
+
+.navigation-button{
+  background:#ff7900;
+  color:#fff;
+}
+
+.center-map-button{
+  background:#eeeeee;
+  color:#111;
+}
+
+.driver-car-map-icon,
+.driver-rider-map-icon,
+.driver-destination-map-icon{
+  background:transparent;
+  border:0;
+}
+
+.driver-car-map-pin{
+  display:grid;
+  place-items:center;
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  background:#111;
+  border:3px solid #fff;
+  box-shadow:0 3px 10px rgba(0,0,0,.28);
+  font-size:22px;
+}
+
+.driver-rider-map-pin{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:#ff7900;
+  border:3px solid #fff;
+  box-shadow:0 3px 10px rgba(0,0,0,.25);
+  font-size:20px;
+}
+
+.driver-destination-map-pin{
+  display:grid;
+  place-items:center;
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:#111;
+  border:3px solid #fff;
+  box-shadow:0 3px 10px rgba(0,0,0,.25);
+  font-size:17px;
+}
+
+@media(max-width:520px){
+  #driverRideMap{
+    height:330px;
+  }
+
+  .driver-map-info,
+  .driver-map-actions{
+    grid-template-columns:1fr;
+  }
+}
   </style>
 </head>
 <body>
@@ -51,19 +212,111 @@
         <p id="msg"></p>
       </div>
 
-      <div class="card">
-        <h2>Current Ride</h2>
-        <div id="currentRide"><p>No active ride.</p></div>
-      </div>
+<div class="card">
+  <h2>Current Ride</h2>
+  <div id="currentRide">
+    <p>No active ride.</p>
+  </div>
+</div>
 
-      <div class="card">
-        <h2>Ride offers</h2>
-        <div id="offersList"><p>No ride offers right now.</p></div>
-      </div>
+
+<!-- DRIVER LIVE MAP -->
+
+<div
+  id="driverMapCard"
+  class="card driver-map-card"
+  hidden
+>
+  <div class="driver-map-head">
+
+    <div>
+      <h2>Live Ride Map</h2>
+
+      <p id="driverMapStatus">
+        Waiting for ride location…
+      </p>
     </div>
+
+    <span class="live-badge">
+      ● LIVE
+    </span>
+
   </div>
 
-  <script>
+
+  <div id="driverRideMap"></div>
+
+
+  <div class="driver-map-info">
+
+    <div>
+      <small>Going to</small>
+
+      <strong id="driverMapTarget">
+        Pickup
+      </strong>
+    </div>
+
+
+    <div>
+      <small>Customer</small>
+
+      <strong id="driverMapCustomer">
+        —
+      </strong>
+    </div>
+
+  </div>
+
+
+  <div
+    id="driverRouteSummary"
+    class="driver-route-summary"
+  >
+    Calculating route…
+  </div>
+
+
+  <div class="driver-map-actions">
+
+    <button
+      id="startNavigationBtn"
+      class="navigation-button"
+      type="button"
+    >
+      🧭 Start Navigation
+    </button>
+
+
+    <button
+      id="centerDriverMapBtn"
+      class="center-map-button"
+      type="button"
+    >
+      Center Map
+    </button>
+
+  </div>
+
+</div>
+
+
+<div class="card">
+  <h2>Ride offers</h2>
+
+  <div id="offersList">
+    <p>No ride offers right now.</p>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+></script>
+
+<script>
 
     const API = 'https://mei-velocity1.onrender.com';
 
@@ -178,6 +431,910 @@
         status.textContent = 'Allow notifications for this site in your browser settings to get message alerts.';
       }
     }
+/* =========================================================
+   DRIVER LIVE RIDE MAP
+========================================================= */
+
+let liveDriverMap = null;
+
+let liveDriverMarker = null;
+
+let liveRiderMarker = null;
+
+let liveDestinationMarker = null;
+
+let liveDriverRoute = null;
+
+let latestDriverPosition = null;
+
+let latestRideForMap = null;
+
+let lastRouteRequestAt = 0;
+
+let lastRouteDriverPosition = null;
+
+let currentNavigationTarget = null;
+
+
+/* =========================================================
+   MAP ICONS
+========================================================= */
+
+function driverMapCarIcon() {
+
+  return L.divIcon({
+
+    className:
+      'driver-car-map-icon',
+
+    html:
+      '<span class="driver-car-map-pin">🚘</span>',
+
+    iconSize:
+      [42, 42],
+
+    iconAnchor:
+      [21, 21]
+  });
+}
+
+
+function driverMapRiderIcon() {
+
+  return L.divIcon({
+
+    className:
+      'driver-rider-map-icon',
+
+    html:
+      '<span class="driver-rider-map-pin">📍</span>',
+
+    iconSize:
+      [38, 38],
+
+    iconAnchor:
+      [19, 38]
+  });
+}
+
+
+function driverMapDestinationIcon() {
+
+  return L.divIcon({
+
+    className:
+      'driver-destination-map-icon',
+
+    html:
+      '<span class="driver-destination-map-pin">🏁</span>',
+
+    iconSize:
+      [36, 36],
+
+    iconAnchor:
+      [18, 36]
+  });
+}
+
+
+/* =========================================================
+   INITIALISE MAP
+========================================================= */
+
+function initialiseDriverRideMap() {
+
+  if (
+    liveDriverMap ||
+    !window.L
+  ) {
+    return;
+  }
+
+
+  liveDriverMap =
+    L.map(
+      'driverRideMap',
+      {
+        zoomControl:
+          true
+      }
+    )
+      .setView(
+        [-17.8252, 31.0335],
+        13
+      );
+
+
+  L.tileLayer(
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      maxZoom:
+        19,
+
+      attribution:
+        '&copy; OpenStreetMap contributors'
+    }
+  )
+    .addTo(
+      liveDriverMap
+    );
+
+
+  setTimeout(
+    () => {
+      liveDriverMap
+        ?.invalidateSize();
+    },
+    150
+  );
+}
+
+
+/* =========================================================
+   LOCATION HELPERS
+========================================================= */
+
+function validCoordinate(
+  value
+) {
+
+  return (
+    value !== null &&
+    value !== undefined &&
+    value !== '' &&
+    Number.isFinite(
+      Number(value)
+    )
+  );
+}
+
+
+function distanceBetweenPoints(
+  first,
+  second
+) {
+
+  if (
+    !first ||
+    !second
+  ) {
+    return Infinity;
+  }
+
+
+  const earthRadius =
+    6371000;
+
+
+  const lat1 =
+    first[0] *
+    Math.PI / 180;
+
+  const lat2 =
+    second[0] *
+    Math.PI / 180;
+
+  const deltaLat =
+    (
+      second[0] -
+      first[0]
+    ) *
+    Math.PI / 180;
+
+  const deltaLng =
+    (
+      second[1] -
+      first[1]
+    ) *
+    Math.PI / 180;
+
+
+  const a =
+    Math.sin(
+      deltaLat / 2
+    ) ** 2 +
+
+    Math.cos(lat1) *
+    Math.cos(lat2) *
+
+    Math.sin(
+      deltaLng / 2
+    ) ** 2;
+
+
+  return (
+    earthRadius *
+    2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    )
+  );
+}
+
+
+/* =========================================================
+   ADDRESS FALLBACK
+========================================================= */
+
+async function geocodeDriverAddress(
+  address
+) {
+
+  const query =
+    address
+      .toLowerCase()
+      .includes('harare')
+
+      ? address
+
+      : `${address}, Harare, Zimbabwe`;
+
+
+  const response =
+    await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(
+        query
+      )}`
+    );
+
+
+  const data =
+    await response.json();
+
+
+  if (
+    !data.length
+  ) {
+    return null;
+  }
+
+
+  return [
+    Number(
+      data[0].lat
+    ),
+
+    Number(
+      data[0].lon
+    )
+  ];
+}
+
+
+/* =========================================================
+   GET PICKUP / DESTINATION COORDINATES
+========================================================= */
+
+async function getRideCoordinates(
+  ride
+) {
+
+  let pickup = null;
+
+  let dropoff = null;
+
+
+  if (
+    validCoordinate(
+      ride.pickupLat
+    ) &&
+    validCoordinate(
+      ride.pickupLng
+    )
+  ) {
+
+    pickup = [
+      Number(
+        ride.pickupLat
+      ),
+
+      Number(
+        ride.pickupLng
+      )
+    ];
+
+  } else {
+
+    pickup =
+      await geocodeDriverAddress(
+        ride.pickup
+      );
+  }
+
+
+  if (
+    validCoordinate(
+      ride.dropoffLat
+    ) &&
+    validCoordinate(
+      ride.dropoffLng
+    )
+  ) {
+
+    dropoff = [
+      Number(
+        ride.dropoffLat
+      ),
+
+      Number(
+        ride.dropoffLng
+      )
+    ];
+
+  } else {
+
+    dropoff =
+      await geocodeDriverAddress(
+        ride.dropoff
+      );
+  }
+
+
+  return {
+    pickup,
+    dropoff
+  };
+}
+
+
+/* =========================================================
+   MOVE DRIVER MARKER IMMEDIATELY
+========================================================= */
+
+function updateDriverOwnPosition(
+  lat,
+  lng
+) {
+
+  if (
+    !Number.isFinite(
+      Number(lat)
+    ) ||
+    !Number.isFinite(
+      Number(lng)
+    )
+  ) {
+    return;
+  }
+
+
+  latestDriverPosition = [
+    Number(lat),
+    Number(lng)
+  ];
+
+
+  if (
+    !liveDriverMap
+  ) {
+    return;
+  }
+
+
+  if (
+    !liveDriverMarker
+  ) {
+
+    liveDriverMarker =
+      L.marker(
+        latestDriverPosition,
+        {
+          icon:
+            driverMapCarIcon(),
+
+          zIndexOffset:
+            1100
+        }
+      )
+        .addTo(
+          liveDriverMap
+        )
+        .bindPopup(
+          'You'
+        );
+
+  } else {
+
+    liveDriverMarker
+      .setLatLng(
+        latestDriverPosition
+      );
+  }
+}
+
+
+/* =========================================================
+   DRAW ROAD ROUTE
+========================================================= */
+
+async function drawDriverRoadRoute(
+  destination
+) {
+
+  if (
+    !latestDriverPosition ||
+    !destination ||
+    !liveDriverMap
+  ) {
+    return;
+  }
+
+
+  const now =
+    Date.now();
+
+
+  const moved =
+    distanceBetweenPoints(
+      lastRouteDriverPosition,
+      latestDriverPosition
+    );
+
+
+  if (
+    lastRouteDriverPosition &&
+    moved < 35 &&
+    now - lastRouteRequestAt <
+      12000
+  ) {
+    return;
+  }
+
+
+  lastRouteRequestAt =
+    now;
+
+  lastRouteDriverPosition =
+    [
+      ...latestDriverPosition
+    ];
+
+
+  try {
+
+    const start =
+      latestDriverPosition;
+
+
+    const response =
+      await fetch(
+
+        `https://router.project-osrm.org/route/v1/driving/` +
+
+        `${start[1]},${start[0]};` +
+
+        `${destination[1]},${destination[0]}` +
+
+        `?overview=full&geometries=geojson`
+
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (
+      data.code !== 'Ok' ||
+      !data.routes?.length
+    ) {
+
+      throw new Error(
+        'Route unavailable.'
+      );
+    }
+
+
+    const route =
+      data.routes[0];
+
+
+    const points =
+      route.geometry.coordinates
+        .map(
+          ([lng, lat]) =>
+            [lat, lng]
+        );
+
+
+    if (
+      liveDriverRoute
+    ) {
+
+      liveDriverRoute
+        .setLatLngs(
+          points
+        );
+
+    } else {
+
+      liveDriverRoute =
+        L.polyline(
+          points,
+          {
+            color:
+              '#ff7900',
+
+            weight:
+              6,
+
+            opacity:
+              0.92
+          }
+        )
+          .addTo(
+            liveDriverMap
+          );
+    }
+
+
+    const kilometres =
+      route.distance /
+      1000;
+
+
+    const minutes =
+      Math.max(
+        1,
+        Math.round(
+          route.duration /
+          60
+        )
+      );
+
+
+    document.getElementById(
+      'driverRouteSummary'
+    ).textContent =
+      `${minutes} min • ${kilometres.toFixed(
+        1
+      )} km`;
+
+
+  } catch (error) {
+
+    console.warn(
+      'Could not calculate road route:',
+      error
+    );
+
+
+    document.getElementById(
+      'driverRouteSummary'
+    ).textContent =
+      'Route information temporarily unavailable.';
+  }
+}
+
+
+/* =========================================================
+   FIT DRIVER + TARGET ON SCREEN
+========================================================= */
+
+function fitDriverRideMap() {
+
+  if (
+    !liveDriverMap ||
+    !latestDriverPosition ||
+    !currentNavigationTarget
+  ) {
+    return;
+  }
+
+
+  liveDriverMap.fitBounds(
+    [
+      latestDriverPosition,
+      currentNavigationTarget
+    ],
+    {
+      padding:
+        [55, 55],
+
+      maxZoom:
+        16
+    }
+  );
+}
+
+
+/* =========================================================
+   UPDATE DRIVER RIDE MAP
+========================================================= */
+
+async function updateDriverRideMap(
+  ride
+) {
+
+  latestRideForMap =
+    ride;
+
+
+  const mapCard =
+    document.getElementById(
+      'driverMapCard'
+    );
+
+
+  if (
+    !ride ||
+    ride.status ===
+      'Completed' ||
+    ride.driverStatus ===
+      'Completed'
+  ) {
+
+    mapCard.hidden =
+      true;
+
+    return;
+  }
+
+
+  mapCard.hidden =
+    false;
+
+
+  initialiseDriverRideMap();
+
+
+  setTimeout(
+    () =>
+      liveDriverMap
+        ?.invalidateSize(),
+    100
+  );
+
+
+  document.getElementById(
+    'driverMapCustomer'
+  ).textContent =
+    ride.name ||
+    'Passenger';
+
+
+  const coordinates =
+    await getRideCoordinates(
+      ride
+    );
+
+
+  const pickup =
+    coordinates.pickup;
+
+  const dropoff =
+    coordinates.dropoff;
+
+
+  if (
+    pickup
+  ) {
+
+    if (
+      !liveRiderMarker
+    ) {
+
+      liveRiderMarker =
+        L.marker(
+          pickup,
+          {
+            icon:
+              driverMapRiderIcon(),
+
+            zIndexOffset:
+              1000
+          }
+        )
+          .addTo(
+            liveDriverMap
+          )
+          .bindPopup(
+            'Passenger / pickup'
+          );
+
+    } else {
+
+      liveRiderMarker
+        .setLatLng(
+          pickup
+        );
+    }
+  }
+
+
+  if (
+    dropoff
+  ) {
+
+    if (
+      !liveDestinationMarker
+    ) {
+
+      liveDestinationMarker =
+        L.marker(
+          dropoff,
+          {
+            icon:
+              driverMapDestinationIcon()
+          }
+        )
+          .addTo(
+            liveDriverMap
+          )
+          .bindPopup(
+            'Destination'
+          );
+
+    } else {
+
+      liveDestinationMarker
+        .setLatLng(
+          dropoff
+        );
+    }
+  }
+
+
+  /* Before passenger pickup:
+     navigate to passenger.
+
+     After pickup:
+     navigate to destination.
+  */
+
+  const passengerCollected =
+    ride.driverStatus ===
+      'Picked Up';
+
+
+  currentNavigationTarget =
+    passengerCollected
+      ? dropoff
+      : pickup;
+
+
+  document.getElementById(
+    'driverMapTarget'
+  ).textContent =
+    passengerCollected
+
+      ? (
+          ride.dropoff ||
+          'Destination'
+        )
+
+      : (
+          ride.pickup ||
+          'Passenger pickup'
+        );
+
+
+  document.getElementById(
+    'driverMapStatus'
+  ).textContent =
+    passengerCollected
+
+      ? 'Navigating to destination'
+
+      : 'Navigating to passenger';
+
+
+  /* Use driver GPS returned
+     by backend if available */
+
+  if (
+    validCoordinate(
+      ride.driverLat
+    ) &&
+    validCoordinate(
+      ride.driverLng
+    )
+  ) {
+
+    updateDriverOwnPosition(
+      Number(
+        ride.driverLat
+      ),
+
+      Number(
+        ride.driverLng
+      )
+    );
+  }
+
+
+  if (
+    latestDriverPosition &&
+    currentNavigationTarget
+  ) {
+
+    await drawDriverRoadRoute(
+      currentNavigationTarget
+    );
+
+
+    fitDriverRideMap();
+
+  } else {
+
+    document.getElementById(
+      'driverRouteSummary'
+    ).textContent =
+      'Waiting for your GPS location…';
+
+
+    if (
+      currentNavigationTarget
+    ) {
+
+      liveDriverMap.setView(
+        currentNavigationTarget,
+        16
+      );
+    }
+  }
+}
+
+
+/* =========================================================
+   START GOOGLE MAPS NAVIGATION
+========================================================= */
+
+document
+  .getElementById(
+    'startNavigationBtn'
+  )
+  ?.addEventListener(
+    'click',
+    () => {
+
+      if (
+        !currentNavigationTarget
+      ) {
+
+        alert(
+          'Passenger location is not available yet.'
+        );
+
+        return;
+      }
+
+
+      const [
+        lat,
+        lng
+      ] =
+        currentNavigationTarget;
+
+
+      const url =
+        `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+          `${lat},${lng}`
+        )}&travelmode=driving`;
+
+
+      window.open(
+        url,
+        '_blank',
+        'noopener'
+      );
+    }
+  );
+
+
+/* =========================================================
+   CENTER MAP
+========================================================= */
+
+document
+  .getElementById(
+    'centerDriverMapBtn'
+  )
+  ?.addEventListener(
+    'click',
+    fitDriverRideMap
+  );
 
 let currentRideSnapshot = '';
 let offersSnapshot = '';
@@ -198,6 +1355,9 @@ async function loadCurrentRide() {
     }
 
     if (!data.ride) {
+      document.getElementById(
+  'driverMapCard'
+).hidden = true;
       driverChatSignature = '';
       driverChatRideId = '';
       if (currentRideSnapshot !== 'none') {
@@ -208,6 +1368,9 @@ async function loadCurrentRide() {
     }
 
     const ride = data.ride;
+    updateDriverRideMap(
+  ride
+);
     const rideSignature = JSON.stringify([ride.id, ride.status, ride.driverStatus, ride.name, ride.phone, ride.pickup, ride.dropoff, ride.date, ride.time, ride.vehicle, ride.distance, ride.fare, ride.payment]);
     const previousChatInput = document.getElementById('driverChatInput');
     const chatDraft = previousChatInput?.value || '';
@@ -381,10 +1544,24 @@ async function rejectOffer(offerId) {
   }
 }
 
-setInterval(() => {
-  loadCurrentRide();
-  loadOffers();
-}, 12000);
+/* Active ride / passenger location */
+
+setInterval(
+  () => {
+    loadCurrentRide();
+  },
+  4000
+);
+
+
+/* New ride offers */
+
+setInterval(
+  () => {
+    loadOffers();
+  },
+  12000
+);
 
 // Refresh chat independently, without rebuilding the entire current-ride card.
 setInterval(() => {
@@ -476,7 +1653,7 @@ setInterval(() => {
       app.classList.remove('hidden');
 
       driverName.textContent = driver.name || 'Driver';
-      vehicle.textContent = (driver.vehicle || '') + (driver.plate ? ' Â· ' + driver.plate : '');
+      vehicle.textContent = (driver.vehicle || '') + (driver.plate ? '  ·  ' + driver.plate : '');
       status.textContent = driver.status || 'Offline';
       setAppMessage('', true);
       loadCurrentRide();
@@ -541,11 +1718,15 @@ setInterval(() => {
     if (!activeToken) return;
 
     const now = Date.now();
-    if (now - lastGpsSentAt < 5000) return;
+    if (now - lastGpsSentAt < 3000) return;
 
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
 
+    updateDriverOwnPosition(
+  lat,
+  lng
+);
     try {
       const response = await fetch(`${API}/api/driver/location`, {
         method: 'PATCH',
