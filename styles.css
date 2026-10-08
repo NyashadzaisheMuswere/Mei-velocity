@@ -2076,3 +2076,955 @@ html[data-workflow="confirm"] body,html[data-workflow="ride"] body{background:#f
 }
 /* Allow the password-recovery account modal to open above the ride-confirmation workflow. */
 html[data-workflow="confirm"] #accountDialog[open]{display:block!important}
+
+
+/* ==========================================================================
+   MEI VELOCITY — CUSTOMER PHONE-FIRST UI
+   Primary target: portrait phones and tablets.
+   CSS-only: existing IDs, JavaScript, maps, booking flow, auth and API logic
+   remain unchanged.
+   ========================================================================== */
+
+@media (max-width: 700px){
+
+  html,
+  body{
+    width:100%;
+    min-width:320px;
+    max-width:100%;
+    overflow-x:hidden;
+    background:#f3f5f2;
+  }
+
+  body{
+    overscroll-behavior-y:none;
+  }
+
+  /* -------------------------------------------------------
+     HOME: FULL-SCREEN MAP + BOTTOM BOOKING SHEET
+  ------------------------------------------------------- */
+
+  .hero:has(#homeMap){
+    position:relative;
+    width:100%;
+    height:100dvh;
+    min-height:100dvh;
+    padding:0;
+    overflow:hidden;
+    background:#e9ede7;
+  }
+
+  .hero:has(#homeMap) .hero-content{
+    width:100%;
+    height:100%;
+    max-width:none;
+    margin:0;
+  }
+
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    position:absolute;
+    inset:0;
+  }
+
+  .hero:has(#homeMap) .home-map{
+    z-index:1;
+  }
+
+  .hero:has(#homeMap) .hero-shade{
+    display:none;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE APP HEADER
+  ------------------------------------------------------- */
+
+  .hero:has(#homeMap) .app-topbar{
+    position:absolute;
+    z-index:1000;
+    top:max(10px,env(safe-area-inset-top));
+    left:10px;
+    right:10px;
+
+    min-height:54px;
+    padding:7px 8px;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+
+    border:1px solid rgba(255,255,255,.72);
+    border-radius:17px;
+
+    background:rgba(255,255,255,.94);
+    box-shadow:0 7px 24px rgba(20,27,21,.13);
+    backdrop-filter:blur(14px);
+  }
+
+  .hero:has(#homeMap) .app-brand{
+    width:98px;
+    height:40px;
+    padding:0;
+    border:0;
+    border-radius:11px;
+    background:transparent;
+    box-shadow:none;
+  }
+
+  .hero:has(#homeMap) .app-brand img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+
+  .hero:has(#homeMap) .app-actions{
+    display:flex;
+    align-items:center;
+    gap:2px;
+  }
+
+  .hero:has(#homeMap) .app-account,
+  .hero:has(#homeMap) .app-menu>summary{
+    width:40px;
+    height:40px;
+    border-radius:12px;
+    background:#f7f8f6;
+    color:#171c18;
+    border:0;
+    box-shadow:none;
+  }
+
+  .hero:has(#homeMap) .app-account::before{
+    width:23px;
+    height:23px;
+  }
+
+  .hero:has(#homeMap) .app-account::after{
+    width:7px;
+    height:7px;
+    top:3px;
+    right:3px;
+    border-width:2px;
+  }
+
+  .hero:has(#homeMap) .app-menu>summary span{
+    width:19px;
+    height:2px;
+  }
+
+  .hero:has(#homeMap) .app-menu-panel{
+    top:47px;
+    right:0;
+    width:min(215px,calc(100vw - 24px));
+    border-radius:15px;
+  }
+
+  /* -------------------------------------------------------
+     HOME SHORTCUTS: ICON-FIRST, MINIMAL WORDS
+  ------------------------------------------------------- */
+
+  .hero:has(#homeMap) .app-shortcuts{
+    position:absolute;
+    z-index:900;
+    top:calc(max(10px,env(safe-area-inset-top)) + 66px);
+    left:10px;
+    right:10px;
+
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:6px;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    min-width:0;
+    padding:0;
+    gap:3px;
+    color:#29302b;
+    text-shadow:none;
+    font-size:8px;
+    font-weight:800;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:39px;
+    height:39px;
+    border:1px solid rgba(25,35,26,.07);
+    border-radius:13px;
+    background:rgba(255,255,255,.94);
+    color:#171c18;
+    box-shadow:0 5px 16px rgba(20,28,21,.10);
+  }
+
+  .hero:has(#homeMap) .shortcut-icon::before{
+    width:19px;
+    height:19px;
+  }
+
+  /* Remove decorative place-name labels on phones */
+  .hero:has(#homeMap) .map-label{
+    display:none !important;
+  }
+
+  .hero:has(#homeMap) .map-location{
+    top:auto;
+    left:12px;
+    right:auto;
+    bottom:calc(min(56dvh,580px) + 16px);
+    transform:none;
+
+    max-width:58vw;
+    padding:7px 10px;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+    border-radius:14px;
+    font-size:10px;
+  }
+
+  .hero:has(#homeMap) .map-location span:last-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  .hero:has(#homeMap) .map-locate{
+    top:auto;
+    right:13px;
+    bottom:calc(min(56dvh,580px) + 14px);
+
+    width:43px;
+    height:43px;
+
+    border-radius:14px;
+    font-size:20px;
+  }
+
+  /* -------------------------------------------------------
+     PHONE BOOKING SHEET
+  ------------------------------------------------------- */
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    position:absolute;
+    z-index:950;
+
+    left:0;
+    right:0;
+    bottom:0;
+
+    width:100%;
+    max-height:min(56dvh,580px);
+
+    padding:
+      8px
+      14px
+      max(14px,env(safe-area-inset-bottom));
+
+    overflow-x:hidden;
+    overflow-y:auto;
+
+    border:0;
+    border-radius:24px 24px 0 0;
+
+    background:#fff;
+    color:#1d221e;
+
+    box-shadow:0 -10px 34px rgba(24,31,25,.14);
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-handle{
+    width:44px;
+    height:5px;
+    margin:0 auto 10px;
+    background:#d3d8d2;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode h1{
+    margin:0;
+    font-size:21px;
+    line-height:1.15;
+    letter-spacing:-.035em;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-subtitle{
+    margin:4px 0 10px;
+    font-size:11px;
+  }
+
+  .hero:has(#homeMap) .trip-search{
+    gap:7px;
+    margin-top:0;
+  }
+
+  .hero:has(#homeMap) .trip-field{
+    min-height:53px;
+    padding:7px 43px 6px 39px;
+    border-radius:13px;
+    background:#f6f7f5;
+  }
+
+  .hero:has(#homeMap) .trip-field::before{
+    left:13px;
+    top:19px;
+    width:11px;
+    height:11px;
+    border-width:3px;
+  }
+
+  .hero:has(#homeMap) .destination-field::before{
+    width:11px;
+    height:11px;
+  }
+
+  .hero:has(#homeMap) .trip-field>span{
+    margin-bottom:0;
+    font-size:9px;
+  }
+
+  .hero:has(#homeMap) .trip-field input{
+    min-height:26px;
+    font-size:16px;
+  }
+
+  .hero:has(#homeMap) .trip-field button{
+    right:7px;
+    width:32px;
+    height:32px;
+    font-size:17px;
+  }
+
+  .hero:has(#homeMap) .trip-timing{
+    min-height:39px;
+    padding:3px;
+    border-radius:11px;
+  }
+
+  .hero:has(#homeMap) .timing-choice{
+    min-height:35px;
+    border-radius:9px;
+    font-size:11px;
+  }
+
+  .hero:has(#homeMap) .schedule-fields{
+    gap:6px;
+  }
+
+  .hero:has(#homeMap) .schedule-fields input{
+    min-height:43px;
+    padding:8px;
+    font-size:13px;
+  }
+
+  .hero:has(#homeMap) .find-rides{
+    min-height:46px;
+    border-radius:13px;
+    font-size:14px;
+  }
+
+  /* Keep legal/location text available but visually quiet */
+  .hero:has(#homeMap) .location-disclosure{
+    margin:0;
+    font-size:8px;
+    line-height:1.25;
+    opacity:.72;
+  }
+
+  .hero:has(#homeMap) .trip-message:not(:empty){
+    padding:6px 8px;
+    border-radius:9px;
+    font-size:10px;
+  }
+
+  .hero:has(#homeMap) .saved-locations{
+    padding-top:5px;
+  }
+
+  .hero:has(#homeMap) .saved-locations>button{
+    max-width:140px;
+    padding:6px 9px;
+    font-size:9px;
+  }
+
+  /* Hide secondary promo/support clutter on the main phone booking screen */
+  .hero:has(#homeMap) .bottom-sheet.route-mode > .promo-row,
+  .hero:has(#homeMap) .bottom-sheet.route-mode > .support-link{
+    display:none !important;
+  }
+
+  /* -------------------------------------------------------
+     RIDE OPTIONS
+  ------------------------------------------------------- */
+
+  .hero:has(#homeMap) .ride-quotes{
+    margin-top:8px;
+  }
+
+  .hero:has(#homeMap) .quote-heading{
+    margin-bottom:7px;
+  }
+
+  .hero:has(#homeMap) .quote-heading strong{
+    font-size:13px;
+  }
+
+  .hero:has(#homeMap) .quote-heading small,
+  .hero:has(#homeMap) .quote-heading button{
+    font-size:9px;
+  }
+
+  .hero:has(#homeMap) .quote-cards{
+    gap:6px;
+  }
+
+  .hero:has(#homeMap) .quote-card{
+    min-height:55px;
+    padding:8px 9px;
+    gap:8px;
+    border-radius:12px;
+  }
+
+  .hero:has(#homeMap) .quote-card .vehicle-symbol{
+    width:36px;
+    height:36px;
+    border-radius:11px;
+    font-size:18px;
+  }
+
+  .hero:has(#homeMap) .quote-info strong{
+    font-size:12px;
+  }
+
+  .hero:has(#homeMap) .quote-info small{
+    font-size:9px;
+  }
+
+  .hero:has(#homeMap) .quote-price{
+    font-size:14px;
+  }
+
+  /* -------------------------------------------------------
+     OLD EXPANDED BOOKING BLOCK
+     Still functional if JS opens it, but phone-optimized.
+  ------------------------------------------------------- */
+
+  .hero:has(.booking.booking-open){
+    min-height:100dvh;
+    height:auto;
+    overflow:visible;
+  }
+
+  .hero:has(.booking.booking-open) .hero-content{
+    min-height:0;
+    height:auto;
+  }
+
+  .hero:has(.booking.booking-open) .booking.booking-open{
+    width:100%;
+    min-height:100dvh;
+    margin:0;
+    padding:
+      max(18px,env(safe-area-inset-top))
+      14px
+      max(24px,env(safe-area-inset-bottom));
+
+    border-radius:0;
+    background:#f5f7f3;
+  }
+
+  .booking.booking-open .booking-top{
+    display:grid;
+    gap:10px;
+  }
+
+  .booking.booking-open .booking-top h2{
+    font-size:20px;
+  }
+
+  .booking.booking-open .tabs{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:5px;
+    margin:0;
+  }
+
+  .booking.booking-open .tabs button{
+    min-height:42px;
+    padding:8px;
+    border-radius:10px;
+    font-size:11px;
+  }
+
+  .booking.booking-open .inputs,
+  .booking.booking-open .summary{
+    grid-template-columns:1fr !important;
+    gap:8px;
+  }
+
+  .booking.booking-open .field input,
+  .booking.booking-open .field select,
+  .booking.booking-open .summary select{
+    width:100%;
+    min-height:47px;
+    font-size:16px;
+  }
+
+  .booking.booking-open .get-fare,
+  .booking.booking-open .book-btn{
+    width:100%;
+    min-height:49px;
+  }
+
+  .booking.booking-open .summary>div{
+    padding:11px;
+  }
+
+  /* -------------------------------------------------------
+     ACCOUNT / AUTH AS PHONE BOTTOM SHEET
+  ------------------------------------------------------- */
+
+  .auth-dialog,
+  .workflow-dialog{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    top:auto;
+
+    width:100% !important;
+    max-width:none !important;
+    max-height:88dvh !important;
+
+    margin:0 !important;
+    padding:
+      19px
+      16px
+      max(20px,env(safe-area-inset-bottom)) !important;
+
+    border:0 !important;
+    border-radius:24px 24px 0 0 !important;
+
+    overflow-y:auto;
+  }
+
+  .auth-brand{
+    margin-bottom:10px;
+  }
+
+  .auth-brand img{
+    width:100px;
+    height:46px;
+  }
+
+  .auth-tabs{
+    margin-bottom:14px;
+  }
+
+  .auth-tabs button{
+    min-height:38px;
+    font-size:12px;
+  }
+
+  .auth-panel h2,
+  .account-profile h2{
+    font-size:20px !important;
+  }
+
+  .auth-panel>p,
+  .account-profile>p{
+    margin-bottom:13px !important;
+    font-size:11px !important;
+  }
+
+  .auth-panel label{
+    margin:9px 0 !important;
+  }
+
+  .auth-panel label>input,
+  .password-field input{
+    min-height:46px;
+    font-size:16px !important;
+  }
+
+  .account-primary,
+  .auth-secondary,
+  .auth-dialog .primary-button{
+    min-height:46px;
+  }
+
+  /* -------------------------------------------------------
+     CONFIRM RIDE PAGE — ONE-HAND PHONE FLOW
+  ------------------------------------------------------- */
+
+  html[data-workflow="confirm"] body{
+    background:#f4f5f3;
+  }
+
+  #confirmPage:not([hidden]){
+    min-height:100dvh;
+  }
+
+  .workflow-header{
+    position:sticky;
+    top:0;
+    z-index:50;
+
+    height:56px;
+    padding:
+      max(7px,env(safe-area-inset-top))
+      13px
+      7px;
+
+    background:rgba(255,255,255,.96);
+  }
+
+  .workflow-header .back-link{
+    font-size:0;
+  }
+
+  .workflow-header .back-link::before{
+    content:"←";
+    display:grid;
+    place-items:center;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:#f2f4f1;
+    font-size:20px;
+  }
+
+  .workflow-logo{
+    width:75px;
+    height:36px;
+  }
+
+  .workflow-content{
+    width:100%;
+    margin:0;
+    padding:
+      17px
+      13px
+      max(26px,env(safe-area-inset-bottom));
+  }
+
+  .workflow-content h1{
+    font-size:23px;
+  }
+
+  .workflow-content>.lead{
+    margin-bottom:12px;
+    font-size:12px;
+  }
+
+  .workflow-card{
+    margin:9px 0;
+    padding:13px;
+    border-radius:15px;
+    box-shadow:none;
+  }
+
+  .route-row{
+    padding:8px 0;
+  }
+
+  .route-row strong{
+    font-size:13px;
+  }
+
+  .ride-meta{
+    gap:5px;
+    margin-top:8px;
+  }
+
+  .ride-meta span{
+    padding:5px 8px;
+    font-size:10px;
+  }
+
+  .price-row strong{
+    font-size:21px;
+  }
+
+  .price-input{
+    min-height:48px;
+    font-size:17px;
+  }
+
+  .account-chip{
+    padding:11px;
+  }
+
+  .account-chip>strong{
+    font-size:11px;
+  }
+
+  .workflow-content>.primary-button{
+    min-height:52px;
+    border-radius:14px;
+    font-size:14px;
+  }
+
+  /* -------------------------------------------------------
+     LIVE RIDE TRACKING — MAP FIRST
+  ------------------------------------------------------- */
+
+  html[data-workflow="ride"] body{
+    background:#eef1ec;
+  }
+
+  #ridePage:not([hidden]){
+    display:block;
+    width:100%;
+    min-height:100dvh;
+  }
+
+  .tracking-header{
+    position:absolute;
+    z-index:700;
+    top:max(10px,env(safe-area-inset-top));
+    left:10px;
+  }
+
+  .tracking-home{
+    width:42px;
+    height:42px;
+    padding:0;
+    display:grid;
+    place-items:center;
+
+    border-radius:50%;
+    font-size:0;
+
+    box-shadow:0 5px 18px rgba(20,28,21,.15);
+  }
+
+  .tracking-home::before{
+    content:"←";
+    font-size:20px;
+  }
+
+  .tracking-map{
+    height:58dvh;
+    min-height:330px;
+  }
+
+  .map-status-pill{
+    top:max(12px,env(safe-area-inset-top));
+    max-width:64vw;
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+
+    padding:8px 11px;
+    font-size:10px;
+  }
+
+  .tracking-sheet{
+    width:100%;
+    margin:-22px 0 0;
+    padding:
+      16px
+      14px
+      max(22px,env(safe-area-inset-bottom));
+
+    border-radius:23px 23px 0 0;
+  }
+
+  .tracking-sheet h1{
+    font-size:20px;
+  }
+
+  .tracking-subtitle{
+    font-size:11px;
+  }
+
+  .tracking-progress{
+    gap:4px;
+    margin:12px 0;
+  }
+
+  .tracking-progress span{
+    height:5px;
+  }
+
+  .driver-panel{
+    grid-template-columns:43px 1fr auto;
+    gap:9px;
+    padding:10px;
+    border-radius:13px;
+  }
+
+  .driver-avatar{
+    width:42px;
+    height:42px;
+    font-size:20px;
+  }
+
+  .driver-detail small{
+    font-size:9px;
+  }
+
+  .driver-detail strong{
+    font-size:13px;
+  }
+
+  .plate-chip{
+    padding:5px 7px;
+    font-size:10px;
+  }
+
+  .tracking-route{
+    gap:7px;
+    margin:10px 0;
+    padding:10px;
+    border-radius:12px;
+  }
+
+  .tracking-route>div{
+    font-size:11px;
+  }
+
+  .tracking-actions{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:7px;
+  }
+
+  .tracking-actions>*{
+    min-height:44px !important;
+    padding:6px !important;
+    font-size:10px !important;
+    text-align:center;
+  }
+
+  .driver-message-notice{
+    margin:8px 0;
+    padding:9px 10px;
+    font-size:10px;
+  }
+
+  .ride-chat{
+    margin:9px 0;
+    padding:10px;
+  }
+
+  .ride-chat h2{
+    font-size:15px;
+  }
+
+  .chat-messages{
+    max-height:160px;
+  }
+
+  .chat-form{
+    grid-template-columns:minmax(0,1fr) 46px;
+    gap:6px;
+  }
+
+  .chat-form input{
+    min-height:43px;
+    font-size:16px;
+  }
+
+  .chat-form button{
+    width:46px;
+    min-width:46px;
+    min-height:43px;
+    padding:0;
+    font-size:0;
+  }
+
+  .chat-form button::before{
+    content:"➤";
+    font-size:17px;
+  }
+}
+
+
+/* Very small portrait phones */
+@media (max-width: 380px){
+
+  .hero:has(#homeMap) .app-brand{
+    width:88px;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts{
+    gap:3px;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:36px;
+    height:36px;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    font-size:7px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    max-height:58dvh;
+    padding-left:11px;
+    padding-right:11px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode h1{
+    font-size:19px;
+  }
+
+  .tracking-map{
+    height:55dvh;
+  }
+
+  .tracking-actions{
+    grid-template-columns:1fr 1fr;
+  }
+}
+
+
+/* Tablets: preserve the phone-first visual language without stretching it */
+@media (min-width:701px) and (max-width:1024px){
+
+  .hero:has(#homeMap) .app-topbar{
+    top:max(16px,env(safe-area-inset-top));
+    left:18px;
+    right:18px;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts{
+    top:86px;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    left:50%;
+    right:auto;
+    bottom:18px;
+
+    width:min(620px,calc(100% - 36px));
+    max-height:68dvh;
+
+    transform:translateX(-50%);
+
+    border:1px solid #e6e9e4;
+    border-radius:25px;
+  }
+
+  .hero:has(#homeMap) .map-location{
+    bottom:28px;
+  }
+
+  .hero:has(#homeMap) .map-locate{
+    bottom:28px;
+  }
+
+  .workflow-content{
+    width:min(calc(100% - 40px),680px);
+  }
+
+  .tracking-map{
+    height:58dvh;
+  }
+
+  .tracking-sheet{
+    width:min(calc(100% - 36px),700px);
+    margin:-24px auto 0;
+  }
+}
+
