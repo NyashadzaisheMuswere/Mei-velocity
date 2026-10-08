@@ -23,7 +23,7 @@
   name="apple-mobile-web-app-title"
   content="MEI Velocity"
 >
-<link rel="stylesheet" href="styles.css?v=mobile-map-confirm-20261008">
+<link rel="stylesheet" href="styles.css?v=review-inline-fix-20261008">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
@@ -49,6 +49,317 @@
 .rider-location-pin::before{content:"";position:absolute;inset:2px;border:2px solid rgba(220,38,38,.35);border-radius:50%}
 .driver-car-pin{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid #ff7900;box-shadow:0 4px 12px rgba(0,0,0,.3);font-size:24px;line-height:1}
 @media(max-width:650px){.ride-tracker{padding:15px}.ride-step{min-width:68px}.driver-card{grid-template-columns:1fr}}
+</style>
+
+
+<style id="mei-mobile-confirm-override">
+@media (max-width:700px){
+
+  html[data-workflow="confirm"] body{
+    height:100dvh !important;
+    min-height:100dvh !important;
+    overflow:hidden !important;
+    background:#eef1ec !important;
+  }
+
+  /* Re-show the SAME customer home/map behind review */
+  html[data-workflow="confirm"] #home{
+    position:fixed !important;
+    inset:0 !important;
+    z-index:1 !important;
+    display:block !important;
+    width:100% !important;
+    height:100dvh !important;
+    min-height:100dvh !important;
+    overflow:hidden !important;
+    background:#eef1ec !important;
+  }
+
+  html[data-workflow="confirm"] #home .hero-content{
+    display:block !important;
+    width:100% !important;
+    height:100% !important;
+    min-height:100% !important;
+  }
+
+  html[data-workflow="confirm"] #home .home-map{
+    display:block !important;
+  }
+
+  /* Hide only the old booking sheet while reviewing */
+  html[data-workflow="confirm"] #homeSheet,
+  html[data-workflow="confirm"] #book,
+  html[data-workflow="confirm"] #home .map-location,
+  html[data-workflow="confirm"] #home .map-locate{
+    display:none !important;
+  }
+
+  html[data-workflow="confirm"] .section,
+  html[data-workflow="confirm"] .benefits,
+  html[data-workflow="confirm"] .cta,
+  html[data-workflow="confirm"] footer{
+    display:none !important;
+  }
+
+  /* Review becomes a bottom sheet over the existing map */
+  html[data-workflow="confirm"] #confirmPage:not([hidden]){
+    position:fixed !important;
+    z-index:2000 !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+    top:auto !important;
+
+    display:block !important;
+    width:100% !important;
+    max-height:58dvh !important;
+    margin:0 !important;
+    padding:0 !important;
+
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+
+    border-radius:25px 25px 0 0 !important;
+    background:#fff !important;
+    box-shadow:0 -10px 32px rgba(20,28,21,.17) !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage::before{
+    content:"";
+    position:sticky;
+    z-index:5;
+    top:0;
+    display:block;
+    width:48px;
+    height:5px;
+    margin:8px auto 2px;
+    border-radius:10px;
+    background:#b9beb9;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-header{
+    position:static !important;
+    display:flex !important;
+    align-items:center !important;
+    height:34px !important;
+    padding:0 13px !important;
+    border:0 !important;
+    background:#fff !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-logo{
+    display:none !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .back-link{
+    width:30px !important;
+    height:30px !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    border-radius:50% !important;
+    background:#f2f4f1 !important;
+    font-size:0 !important;
+    text-decoration:none !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .back-link::before{
+    content:"←";
+    font-size:17px;
+    color:#252a26;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-content{
+    width:100% !important;
+    margin:0 !important;
+    padding:1px 13px max(14px,env(safe-area-inset-bottom)) !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-content h1{
+    margin:0 0 9px !important;
+    font-size:22px !important;
+    line-height:1.08 !important;
+    font-weight:900 !important;
+    letter-spacing:-.035em !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-content>.lead,
+  html[data-workflow="confirm"] #confirmPage .workflow-card .help{
+    display:none !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-card{
+    margin:7px 0 !important;
+    padding:10px 11px !important;
+    border:1px solid #e5e8e3 !important;
+    border-radius:15px !important;
+    background:#fff !important;
+    box-shadow:none !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .route-row{
+    grid-template-columns:20px minmax(0,1fr) !important;
+    gap:8px !important;
+    padding:6px 0 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .route-row + .route-row{
+    border-top:1px solid #eef0ed !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .route-row small{
+    font-size:9px !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .route-row strong{
+    display:block !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    font-size:12px !important;
+    line-height:1.28 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .ride-meta{
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:5px !important;
+    margin-top:7px !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .ride-meta span{
+    min-width:0 !important;
+    padding:7px 5px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    border-radius:10px !important;
+    background:#f5f6f4 !important;
+    text-align:center !important;
+    font-size:9px !important;
+    font-weight:800 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmVehicle::before{content:"🚗 ";}
+  html[data-workflow="confirm"] #confirmDistance::before{content:"↔ ";}
+  html[data-workflow="confirm"] #confirmSchedule::before{content:"◷ ";}
+
+  /* Fare card: only one number, no repeated explanation */
+  html[data-workflow="confirm"] #confirmPage .workflow-card:has(#confirmFare){
+    border-top:3px solid #ff7900 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-card:has(#confirmFare) .price-row{
+    display:none !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage label[for="confirmFare"]{
+    margin:0 0 4px !important;
+    font-size:0 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage label[for="confirmFare"]::before{
+    content:"Fare";
+    color:#68706a;
+    font-size:10px;
+    font-weight:800;
+  }
+
+  html[data-workflow="confirm"] #confirmFare{
+    width:100% !important;
+    min-height:42px !important;
+    margin:0 !important;
+    padding:5px 9px !important;
+    border:0 !important;
+    border-radius:10px !important;
+    background:#f7f8f6 !important;
+    color:#151915 !important;
+    box-shadow:none !important;
+    font-size:22px !important;
+    font-weight:900 !important;
+  }
+
+  /* Payment in one compact row */
+  html[data-workflow="confirm"] #confirmPage .workflow-card:has(.payment-option){
+    display:flex !important;
+    align-items:center !important;
+    min-height:50px !important;
+    gap:8px !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-card:has(.payment-option)>strong{
+    font-size:0 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .workflow-card:has(.payment-option)>strong::before{
+    content:"Payment";
+    color:#68706a;
+    font-size:9px;
+    font-weight:800;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .payment-option{
+    flex:1 !important;
+    margin:0 !important;
+    padding:8px 9px !important;
+    border:0 !important;
+    border-radius:10px !important;
+    background:#f7f8f6 !important;
+    font-size:11px !important;
+    font-weight:800 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .account-chip{
+    min-height:46px !important;
+    padding:8px 9px !important;
+    gap:7px !important;
+    border-radius:13px !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .account-chip>strong{
+    min-width:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    font-size:9px !important;
+  }
+
+  html[data-workflow="confirm"] #confirmPage .account-chip>button{
+    flex:none !important;
+    padding:7px 9px !important;
+    border-radius:9px !important;
+    font-size:9px !important;
+  }
+
+  html[data-workflow="confirm"] #confirmRequest{
+    width:100% !important;
+    min-height:49px !important;
+    margin:9px 0 0 !important;
+    border:0 !important;
+    border-radius:14px !important;
+    background:#ff7900 !important;
+    color:#fff !important;
+    font-size:14px !important;
+    font-weight:900 !important;
+  }
+
+  html[data-workflow="confirm"] #confirmRequest::after{
+    content:" →";
+  }
+
+  html[data-workflow="confirm"] #confirmMessage{
+    margin:5px 0 0 !important;
+    min-height:0 !important;
+    font-size:9px !important;
+  }
+
+  html[data-workflow="confirm"] #confirmMessage:empty{
+    display:none !important;
+  }
+
+  html[data-workflow="confirm"] #confirmAccountDialog[open]{
+    z-index:6000 !important;
+  }
+}
 </style>
 
 </head>
@@ -495,7 +806,82 @@
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script defer src="map-config.js"></script>
 <script defer src="app.js?v=live-location-20261005"></script>
-<script defer src="mobile-confirm.js?v=20261008"></script>
+
+<script>
+(function () {
+  function isPhoneConfirm() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("view") === "confirm" &&
+      window.matchMedia("(max-width: 700px)").matches;
+  }
+
+  async function restoreReviewMap() {
+    if (!isPhoneConfirm()) return;
+
+    let draft = null;
+
+    try {
+      draft = JSON.parse(
+        localStorage.getItem("meiVelocityBookingDraft") || "null"
+      );
+    } catch {}
+
+    if (!draft?.pickup || !draft?.dropoff) return;
+
+    try {
+      if (typeof initHomeMap === "function") {
+        initHomeMap();
+      }
+
+      const pickup = document.getElementById("pickup");
+      const dropoff = document.getElementById("dropoff");
+
+      if (pickup) pickup.value = draft.pickup;
+      if (dropoff) dropoff.value = draft.dropoff;
+
+      if (typeof calculateFare === "function") {
+        await calculateFare();
+      }
+
+      setTimeout(() => {
+        try {
+          if (typeof homeMap !== "undefined" && homeMap) {
+            homeMap.invalidateSize();
+
+            if (
+              typeof homeRouteLine !== "undefined" &&
+              homeRouteLine
+            ) {
+              homeMap.fitBounds(
+                homeRouteLine.getBounds(),
+                {
+                  paddingTopLeft:[30,70],
+                  paddingBottomRight:[
+                    30,
+                    Math.min(
+                      Math.round(window.innerHeight * 0.46),
+                      410
+                    )
+                  ],
+                  maxZoom:15
+                }
+              );
+            }
+          }
+        } catch {}
+      }, 180);
+
+    } catch (error) {
+      console.warn("Review map restore skipped:", error);
+    }
+  }
+
+  window.addEventListener("load", () => {
+    setTimeout(restoreReviewMap, 120);
+  });
+})();
+</script>
+
 
 </body>
 </html>
