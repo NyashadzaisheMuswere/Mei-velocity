@@ -2742,6 +2742,368 @@ body{
   }
 }
 
+
+/* =========================================================
+   PHONE-FIRST DRIVER LOGIN — FINAL OVERRIDES
+   Primary target: portrait phones. Tablets scale up naturally.
+========================================================= */
+
+#loginCard.driver-login-screen{
+  position:fixed;
+  inset:0;
+  z-index:20000;
+
+  width:100%;
+  min-height:100dvh;
+  height:100dvh;
+
+  margin:0;
+  padding:0;
+
+  border:0;
+  border-radius:0;
+
+  overflow:hidden;
+
+  background-size:cover !important;
+  background-position:62% center !important;
+  background-repeat:no-repeat !important;
+}
+
+/* Darken the lower half so the logo and controls stay readable */
+#loginCard.driver-login-screen::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,.05) 0%,
+      rgba(0,0,0,.10) 30%,
+      rgba(0,0,0,.38) 54%,
+      rgba(0,0,0,.82) 73%,
+      rgba(0,0,0,.96) 100%
+    );
+}
+
+.driver-login-overlay{
+  display:none;
+}
+
+/* Main landing screen */
+.driver-login-content{
+  position:relative;
+  z-index:2;
+
+  width:100%;
+  max-width:430px;
+  min-height:100dvh;
+  height:100dvh;
+
+  margin:0 auto;
+
+  padding:
+    max(22px, env(safe-area-inset-top))
+    20px
+    max(24px, env(safe-area-inset-bottom));
+
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
+
+/* Brand sits above the action buttons, like a native app splash/login */
+.driver-login-brand{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+
+  margin:0 0 42px;
+
+  text-align:center;
+}
+
+.driver-login-logo{
+  margin:0;
+
+  color:#ff7900;
+
+  font-size:66px;
+  line-height:.86;
+  font-weight:1000;
+  letter-spacing:-8px;
+
+  text-shadow:
+    0 5px 18px rgba(255,121,0,.18);
+}
+
+.driver-login-brand h1{
+  margin:17px 0 4px;
+
+  color:#fff;
+
+  font-size:22px;
+  line-height:1.1;
+  font-weight:900;
+  letter-spacing:.8px;
+}
+
+.driver-login-brand p{
+  margin:0;
+
+  color:rgba(255,255,255,.88);
+
+  font-size:10px;
+  line-height:1;
+  font-weight:700;
+  letter-spacing:6px;
+}
+
+/* Buttons are thumb-friendly and stay near the bottom */
+.driver-login-actions{
+  width:100%;
+
+  display:grid;
+  gap:11px;
+
+  padding-bottom:2px;
+}
+
+.driver-login-primary,
+.driver-login-secondary{
+  width:100%;
+  min-height:54px;
+
+  margin:0;
+  padding:0 20px;
+
+  border-radius:999px;
+
+  font-size:15px;
+  font-weight:800;
+}
+
+.driver-login-primary{
+  background:#ff7900;
+  color:#fff;
+}
+
+.driver-login-secondary{
+  border:1.4px solid rgba(255,255,255,.82);
+  background:rgba(0,0,0,.25);
+  color:#fff;
+
+  backdrop-filter:blur(7px);
+}
+
+.driver-login-arrow{
+  right:18px;
+  font-size:26px;
+}
+
+/* Login form appears as a phone-friendly bottom panel */
+.driver-login-form-panel{
+  position:relative;
+  z-index:3;
+
+  width:100%;
+  max-width:430px;
+  min-height:100dvh;
+  height:100dvh;
+
+  margin:0 auto;
+
+  padding:
+    max(18px, env(safe-area-inset-top))
+    14px
+    max(18px, env(safe-area-inset-bottom));
+
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
+
+.driver-login-form-panel.hidden{
+  display:none !important;
+}
+
+.driver-login-back{
+  position:absolute;
+  top:max(16px, env(safe-area-inset-top));
+  left:14px;
+
+  width:42px;
+  height:42px;
+
+  margin:0;
+  padding:0;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:50%;
+  background:rgba(0,0,0,.42);
+  color:#fff;
+
+  font-size:28px;
+}
+
+.driver-login-form-brand{
+  margin:0 0 14px;
+  text-align:left;
+}
+
+.driver-login-form-brand .driver-login-logo{
+  font-size:42px;
+  letter-spacing:-5px;
+}
+
+.driver-login-form-brand h2{
+  margin:9px 0 0;
+
+  color:#fff;
+
+  font-size:22px;
+  line-height:1.15;
+}
+
+.driver-login-fields{
+  width:100%;
+
+  display:grid;
+  gap:8px;
+
+  padding:16px;
+
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:22px;
+
+  background:rgba(4,9,18,.84);
+
+  box-shadow:
+    0 16px 46px rgba(0,0,0,.30);
+
+  backdrop-filter:blur(16px);
+}
+
+.driver-login-fields label{
+  margin:4px 3px 0;
+
+  color:rgba(255,255,255,.72);
+
+  font-size:11px;
+  font-weight:700;
+}
+
+#loginCard #phone,
+#loginCard #password{
+  width:100%;
+  min-height:50px;
+
+  margin:0 0 4px;
+  padding:0 14px;
+
+  border-radius:13px;
+
+  font-size:16px;
+}
+
+.driver-login-submit{
+  min-height:52px !important;
+  margin-top:7px !important;
+}
+
+/* Very small phones */
+@media (max-width:360px){
+
+  .driver-login-content{
+    padding-left:16px;
+    padding-right:16px;
+  }
+
+  .driver-login-brand{
+    margin-bottom:32px;
+  }
+
+  .driver-login-logo{
+    font-size:58px;
+  }
+
+  .driver-login-brand h1{
+    font-size:20px;
+  }
+
+  .driver-login-brand p{
+    font-size:9px;
+    letter-spacing:5px;
+  }
+
+  .driver-login-primary,
+  .driver-login-secondary{
+    min-height:50px;
+    font-size:14px;
+  }
+}
+
+/* Larger phones */
+@media (min-width:430px) and (max-width:700px){
+
+  .driver-login-content,
+  .driver-login-form-panel{
+    max-width:470px;
+    padding-left:26px;
+    padding-right:26px;
+  }
+
+  .driver-login-brand{
+    margin-bottom:50px;
+  }
+
+  .driver-login-logo{
+    font-size:74px;
+  }
+
+  .driver-login-brand h1{
+    font-size:24px;
+  }
+}
+
+/* Tablets: keep portrait-app proportions instead of stretching everything */
+@media (min-width:701px) and (max-width:1100px){
+
+  #loginCard.driver-login-screen{
+    background-position:center !important;
+  }
+
+  .driver-login-content,
+  .driver-login-form-panel{
+    max-width:520px;
+    padding-left:34px;
+    padding-right:34px;
+  }
+
+  .driver-login-brand{
+    margin-bottom:56px;
+  }
+
+  .driver-login-logo{
+    font-size:82px;
+  }
+
+  .driver-login-brand h1{
+    font-size:28px;
+  }
+
+  .driver-login-primary,
+  .driver-login-secondary{
+    min-height:60px;
+    font-size:17px;
+  }
+}
+
 </style>
 </head>
 <body>
