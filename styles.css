@@ -3028,3 +3028,1444 @@ html[data-workflow="confirm"] #accountDialog[open]{display:block!important}
   }
 }
 
+
+/* ==========================================================================
+   MOBILE HEADER FIX — DESKTOP-STYLE BAR, NO MAP OVERLAP
+   Keeps the existing HTML and JavaScript intact.
+   ========================================================================== */
+
+@media (max-width:700px){
+
+  /* Reserve real page space for the mobile header instead of floating it
+     on top of the map. */
+  .hero:has(#homeMap){
+    padding-top:126px !important;
+    background:#fff;
+  }
+
+  .hero:has(#homeMap) .hero-content{
+    height:calc(100dvh - 126px) !important;
+  }
+
+  /* Full-width white header like desktop */
+  .hero:has(#homeMap) .app-topbar{
+    position:absolute !important;
+    z-index:1200 !important;
+
+    top:0 !important;
+    left:0 !important;
+    right:0 !important;
+
+    width:100% !important;
+    height:68px !important;
+    min-height:68px !important;
+
+    margin:0 !important;
+    padding:
+      max(8px,env(safe-area-inset-top))
+      14px
+      8px !important;
+
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+
+    border:0 !important;
+    border-bottom:1px solid #e7e9e5 !important;
+    border-radius:0 !important;
+
+    background:#fff !important;
+
+    box-shadow:
+      0 2px 10px
+      rgba(20,28,21,.06) !important;
+
+    backdrop-filter:none !important;
+  }
+
+  .hero:has(#homeMap) .app-brand{
+    width:108px !important;
+    height:48px !important;
+
+    display:flex !important;
+    align-items:center !important;
+
+    padding:0 !important;
+
+    border:0 !important;
+    border-radius:0 !important;
+
+    background:transparent !important;
+    box-shadow:none !important;
+  }
+
+  .hero:has(#homeMap) .app-brand img{
+    width:108px !important;
+    height:48px !important;
+
+    object-fit:contain !important;
+    object-position:left center !important;
+  }
+
+  .hero:has(#homeMap) .app-actions{
+    display:flex !important;
+    align-items:center !important;
+    gap:3px !important;
+  }
+
+  .hero:has(#homeMap) .app-account,
+  .hero:has(#homeMap) .app-menu>summary{
+    width:42px !important;
+    height:42px !important;
+
+    border:0 !important;
+    border-radius:50% !important;
+
+    background:transparent !important;
+    box-shadow:none !important;
+
+    color:#171b18 !important;
+  }
+
+  /* Put the same four shortcut actions in a dedicated white nav strip.
+     They are no longer floating over the map. */
+  .hero:has(#homeMap) .app-shortcuts{
+    position:absolute !important;
+    z-index:1100 !important;
+
+    top:68px !important;
+    left:0 !important;
+    right:0 !important;
+
+    width:100% !important;
+    height:58px !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(4,1fr) !important;
+    align-items:center !important;
+
+    gap:0 !important;
+    padding:4px 8px 6px !important;
+
+    background:#fff !important;
+    border-bottom:1px solid #e7e9e5 !important;
+
+    box-shadow:
+      0 2px 8px
+      rgba(20,28,21,.04) !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    min-width:0 !important;
+    height:48px !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+
+    gap:2px !important;
+
+    color:#252a26 !important;
+    text-shadow:none !important;
+
+    font-size:8px !important;
+    font-weight:700 !important;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:25px !important;
+    height:25px !important;
+
+    display:grid !important;
+    place-items:center !important;
+
+    border:0 !important;
+    border-radius:0 !important;
+
+    background:transparent !important;
+    box-shadow:none !important;
+
+    color:#171b18 !important;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon::before{
+    width:18px !important;
+    height:18px !important;
+  }
+
+  /* The actual map starts below the two-row header. */
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    top:126px !important;
+    bottom:0 !important;
+  }
+
+  /* Keep menu anchored to the top bar */
+  .hero:has(#homeMap) .app-menu-panel{
+    top:49px !important;
+    right:0 !important;
+  }
+
+  /* Map controls now sit inside the map, below the header. */
+  .hero:has(#homeMap) .map-locate{
+    right:13px !important;
+    top:142px !important;
+    bottom:auto !important;
+  }
+
+  .hero:has(#homeMap) .map-location{
+    top:142px !important;
+    left:13px !important;
+    right:auto !important;
+    bottom:auto !important;
+
+    max-width:calc(100vw - 76px) !important;
+  }
+
+  /* Booking sheet stays attached to the bottom of the phone screen */
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    bottom:0 !important;
+  }
+}
+
+
+/* Narrow phones: keep the same structure, only reduce branding slightly. */
+@media (max-width:380px){
+
+  .hero:has(#homeMap){
+    padding-top:120px !important;
+  }
+
+  .hero:has(#homeMap) .hero-content{
+    height:calc(100dvh - 120px) !important;
+  }
+
+  .hero:has(#homeMap) .app-topbar{
+    height:64px !important;
+    min-height:64px !important;
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand{
+    width:92px !important;
+    height:44px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand img{
+    width:92px !important;
+    height:44px !important;
+  }
+
+  .hero:has(#homeMap) .app-account,
+  .hero:has(#homeMap) .app-menu>summary{
+    width:38px !important;
+    height:38px !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts{
+    top:64px !important;
+    height:56px !important;
+  }
+
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    top:120px !important;
+  }
+
+  .hero:has(#homeMap) .map-locate,
+  .hero:has(#homeMap) .map-location{
+    top:136px !important;
+  }
+}
+
+
+/* ==========================================================================
+   MEI VELOCITY CUSTOMER — APPROVED PHONE DESIGN
+   Visual-only layer. No backend, API, booking, auth, location, map or
+   ride-tracking JavaScript is changed.
+   ========================================================================== */
+
+@media (max-width:700px){
+
+  :root{
+    --mobile-header-h:76px;
+    --mobile-tabs-h:72px;
+    --mobile-top-total:148px;
+    --mei-orange:#ff7900;
+    --mei-orange-dark:#e76800;
+    --mei-ink:#141814;
+    --mei-soft:#f4f5f3;
+    --mei-border:#e5e7e4;
+  }
+
+  html,
+  body{
+    width:100%;
+    min-width:320px;
+    max-width:100%;
+    margin:0;
+    overflow-x:hidden;
+    background:#fff;
+  }
+
+  /* ========== APP FRAME ========== */
+
+  .hero:has(#homeMap){
+    position:relative;
+    width:100%;
+    height:100dvh !important;
+    min-height:100dvh !important;
+    padding:0 !important;
+    overflow:hidden !important;
+    background:#eef1ec;
+  }
+
+  .hero:has(#homeMap) .hero-content{
+    position:relative;
+    width:100%;
+    height:100% !important;
+    min-height:0 !important;
+    max-width:none;
+    margin:0;
+  }
+
+  /* ========== DESKTOP-LIKE WHITE TOP BAR ========== */
+
+  .hero:has(#homeMap) .app-topbar{
+    position:absolute !important;
+    z-index:1600 !important;
+    top:0 !important;
+    left:0 !important;
+    right:0 !important;
+
+    width:100% !important;
+    height:var(--mobile-header-h) !important;
+    min-height:var(--mobile-header-h) !important;
+
+    margin:0 !important;
+    padding:
+      max(10px,env(safe-area-inset-top))
+      16px
+      9px !important;
+
+    display:flex !important;
+    align-items:center !important;
+    justify-content:space-between !important;
+
+    border:0 !important;
+    border-bottom:1px solid #eceeeb !important;
+    border-radius:0 !important;
+
+    background:rgba(255,255,255,.985) !important;
+    box-shadow:0 2px 10px rgba(21,28,22,.055) !important;
+    backdrop-filter:blur(14px);
+  }
+
+  /* Replace the old image visually with the clean M + MEI VELOCITY lock-up.
+     The original image remains in the HTML, so no asset dependency is removed. */
+  .hero:has(#homeMap) .app-brand{
+    position:relative !important;
+    width:190px !important;
+    height:48px !important;
+    min-width:0 !important;
+
+    display:flex !important;
+    align-items:center !important;
+
+    padding:0 !important;
+
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+
+    overflow:visible !important;
+    text-decoration:none !important;
+  }
+
+  .hero:has(#homeMap) .app-brand img{
+    position:absolute;
+    width:1px !important;
+    height:1px !important;
+    opacity:0 !important;
+    pointer-events:none;
+  }
+
+  .hero:has(#homeMap) .app-brand::before{
+    content:"M";
+    position:static !important;
+
+    width:44px;
+    height:44px;
+
+    display:grid;
+    place-items:center;
+
+    margin-right:10px;
+
+    color:var(--mei-orange);
+    background:transparent;
+
+    font-size:35px;
+    line-height:1;
+    font-weight:1000;
+    font-style:normal;
+    letter-spacing:-6px;
+    white-space:normal;
+  }
+
+  .hero:has(#homeMap) .app-brand::after{
+    content:"MEI VELOCITY";
+    position:static !important;
+
+    color:#161a17;
+
+    font-size:17px;
+    line-height:1;
+    font-weight:900;
+    font-style:normal;
+    letter-spacing:.02em;
+    white-space:nowrap;
+  }
+
+  .hero:has(#homeMap) .app-actions{
+    display:flex !important;
+    align-items:center !important;
+    gap:4px !important;
+    margin-left:auto !important;
+  }
+
+  .hero:has(#homeMap) .app-account,
+  .hero:has(#homeMap) .app-menu>summary{
+    width:43px !important;
+    height:43px !important;
+
+    display:grid !important;
+    place-items:center !important;
+
+    border:0 !important;
+    border-radius:50% !important;
+
+    background:#f4f5f3 !important;
+    color:#121613 !important;
+    box-shadow:none !important;
+  }
+
+  .hero:has(#homeMap) .app-account::before{
+    width:24px !important;
+    height:24px !important;
+  }
+
+  .hero:has(#homeMap) .app-account::after{
+    top:2px !important;
+    right:2px !important;
+    width:8px !important;
+    height:8px !important;
+    border:2px solid #fff !important;
+    background:var(--mei-orange) !important;
+  }
+
+  .hero:has(#homeMap) .app-menu>summary{
+    border-radius:12px !important;
+    background:#fff !important;
+  }
+
+  .hero:has(#homeMap) .app-menu>summary span{
+    width:22px !important;
+    height:2.4px !important;
+    background:#121613 !important;
+  }
+
+  .hero:has(#homeMap) .app-menu-panel{
+    top:50px !important;
+    right:0 !important;
+    width:min(220px,calc(100vw - 24px)) !important;
+    border-radius:16px !important;
+  }
+
+  /* ========== FIVE-TAB SERVICE BAR ========== */
+
+  .hero:has(#homeMap) .app-shortcuts{
+    position:absolute !important;
+    z-index:1500 !important;
+
+    top:var(--mobile-header-h) !important;
+    left:0 !important;
+    right:0 !important;
+
+    width:100% !important;
+    height:var(--mobile-tabs-h) !important;
+
+    display:grid !important;
+    grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+    align-items:stretch !important;
+
+    gap:0 !important;
+    padding:4px 6px 0 !important;
+
+    background:#fff !important;
+    border-bottom:1px solid #e9ebe8 !important;
+    box-shadow:0 2px 8px rgba(22,29,23,.045) !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    position:relative;
+
+    min-width:0 !important;
+    height:67px !important;
+
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+
+    gap:4px !important;
+
+    padding:3px 1px 7px !important;
+
+    color:#151915 !important;
+    text-shadow:none !important;
+    text-decoration:none !important;
+
+    font-size:9px !important;
+    font-weight:650 !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a.shortcut-active{
+    color:var(--mei-orange) !important;
+    font-weight:850 !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a.shortcut-active::after{
+    content:"";
+    position:absolute;
+    left:17%;
+    right:17%;
+    bottom:0;
+
+    height:4px;
+    border-radius:5px 5px 0 0;
+
+    background:var(--mei-orange);
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:38px !important;
+    height:34px !important;
+
+    display:grid !important;
+    place-items:center !important;
+
+    border:0 !important;
+    border-radius:10px !important;
+
+    background:#f6f7f5 !important;
+    color:#111 !important;
+
+    box-shadow:none !important;
+
+    font-size:0 !important;
+  }
+
+  .hero:has(#homeMap) .shortcut-active .shortcut-icon{
+    color:var(--mei-orange) !important;
+    background:#fff4eb !important;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon::before{
+    content:"";
+    display:block;
+    width:22px !important;
+    height:22px !important;
+
+    background:currentColor;
+
+    -webkit-mask-repeat:no-repeat;
+    -webkit-mask-position:center;
+    -webkit-mask-size:contain;
+
+    mask-repeat:no-repeat;
+    mask-position:center;
+    mask-size:contain;
+  }
+
+  /* Ride — car */
+  .hero:has(#homeMap) [data-action="ride"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.4 5h13.2l2.1 6H22v8h-2v2h-3v-2H7v2H4v-2H2v-8h1.3ZM7 7l-1.4 4h12.8L17 7Zm-1 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm12 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5.4 5h13.2l2.1 6H22v8h-2v2h-3v-2H7v2H4v-2H2v-8h1.3ZM7 7l-1.4 4h12.8L17 7Zm-1 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm12 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'/%3E%3C/svg%3E");
+  }
+
+  /* Schedule — calendar/clock */
+  .hero:has(#homeMap) [data-action="schedule"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2h2v2h6V2h2v2h3v18H4V4h3Zm11 8H6v10h12Zm-6 1a4 4 0 1 1-4 4 4 4 0 0 1 4-4Zm1 2h-2v3h3v-2h-1Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 2h2v2h6V2h2v2h3v18H4V4h3Zm11 8H6v10h12Zm-6 1a4 4 0 1 1-4 4 4 4 0 0 1 4-4Zm1 2h-2v3h3v-2h-1Z'/%3E%3C/svg%3E");
+  }
+
+  /* Deliveries — package */
+  .hero:has(#homeMap) [data-action="deliveries"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12 2 9 5v10l-9 5-9-5V7Zm0 2.3L6.4 7.4 12 10.5l5.6-3.1ZM5 9v6.8l6 3.3v-6.8Zm8 10.1 6-3.3V9l-6 3.3Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m12 2 9 5v10l-9 5-9-5V7Zm0 2.3L6.4 7.4 12 10.5l5.6-3.1ZM5 9v6.8l6 3.3v-6.8Zm8 10.1 6-3.3V9l-6 3.3Z'/%3E%3C/svg%3E");
+  }
+
+  /* Shop — cart */
+  .hero:has(#homeMap) [data-action="shop"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 3h3l2.3 11.5A2 2 0 0 0 9.3 16H18a2 2 0 0 0 1.9-1.4L22 7H7l-.4-2H2Zm8 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2 3h3l2.3 11.5A2 2 0 0 0 9.3 16H18a2 2 0 0 0 1.9-1.4L22 7H7l-.4-2H2Zm8 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm8 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z'/%3E%3C/svg%3E");
+  }
+
+  /* Corporate — briefcase */
+  .hero:has(#homeMap) [data-action="pros"] .shortcut-icon::before{
+    -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 3h6a2 2 0 0 1 2 2v2h4v14H3V7h4V5a2 2 0 0 1 2-2Zm0 4h6V5H9Zm-4 6v6h14v-6h-5v2h-4v-2Zm14-4H5v2h5v-1h4v1h5Z'/%3E%3C/svg%3E");
+    mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 3h6a2 2 0 0 1 2 2v2h4v14H3V7h4V5a2 2 0 0 1 2-2Zm0 4h6V5H9Zm-4 6v6h14v-6h-5v2h-4v-2Zm14-4H5v2h5v-1h4v1h5Z'/%3E%3C/svg%3E");
+  }
+
+  /* ========== MAP ========== */
+
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    position:absolute !important;
+    top:var(--mobile-top-total) !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+  }
+
+  .hero:has(#homeMap) .home-map{
+    z-index:1;
+    background:#e8ede6;
+  }
+
+  .hero:has(#homeMap) .hero-bg,
+  .hero:has(#homeMap) .hero-shade,
+  .hero:has(#homeMap) .map-label{
+    display:none !important;
+  }
+
+  /* Only keep one real working location control. */
+  .hero:has(#homeMap) .map-locate{
+    position:absolute !important;
+    z-index:800 !important;
+
+    top:calc(var(--mobile-top-total) + 20px) !important;
+    right:14px !important;
+    bottom:auto !important;
+
+    width:48px !important;
+    height:48px !important;
+
+    border:1px solid #e7e9e5 !important;
+    border-radius:50% !important;
+
+    background:#fff !important;
+    color:#161a17 !important;
+
+    box-shadow:0 7px 20px rgba(19,27,20,.15) !important;
+
+    font-size:23px !important;
+  }
+
+  .hero:has(#homeMap) .map-location{
+    position:absolute !important;
+    z-index:800 !important;
+
+    top:auto !important;
+    left:14px !important;
+    right:auto !important;
+
+    /* Sit above the bottom sheet. */
+    bottom:min(54dvh,560px) !important;
+
+    max-width:62vw !important;
+    padding:8px 11px !important;
+
+    transform:none !important;
+
+    overflow:hidden;
+
+    border:1px solid #e7e9e5 !important;
+    border-radius:18px !important;
+
+    background:#fff !important;
+    color:#303632 !important;
+
+    box-shadow:0 5px 18px rgba(21,29,22,.13) !important;
+
+    font-size:10px !important;
+  }
+
+  .hero:has(#homeMap) .map-location span:last-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  /* ========== BOTTOM SHEET ========== */
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    position:absolute !important;
+    z-index:1000 !important;
+
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+
+    width:100% !important;
+    max-height:min(54dvh,560px) !important;
+
+    padding:
+      8px
+      14px
+      max(13px,env(safe-area-inset-bottom)) !important;
+
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+
+    border:0 !important;
+    border-radius:25px 25px 0 0 !important;
+
+    background:#fff !important;
+    color:var(--mei-ink) !important;
+
+    box-shadow:0 -8px 28px rgba(22,30,23,.13) !important;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-handle{
+    width:48px !important;
+    height:5px !important;
+    margin:0 auto 10px !important;
+
+    border:0 !important;
+    border-radius:8px !important;
+
+    background:#b6bbb7 !important;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode h1{
+    margin:0 0 10px !important;
+
+    color:#111511 !important;
+
+    font-size:25px !important;
+    line-height:1.08 !important;
+    font-weight:900 !important;
+    letter-spacing:-.045em !important;
+  }
+
+  /* The approved design is intentionally cleaner: subtitle stays in DOM
+     for semantics but is not visually repeated. */
+  .hero:has(#homeMap) .bottom-sheet.route-mode .sheet-subtitle{
+    display:none !important;
+  }
+
+  .hero:has(#homeMap) .trip-search{
+    display:grid !important;
+    gap:7px !important;
+    margin:0 !important;
+  }
+
+  .hero:has(#homeMap) .trip-field{
+    min-height:58px !important;
+    padding:8px 43px 7px 43px !important;
+
+    border:1px solid #e2e5e1 !important;
+    border-radius:15px !important;
+
+    background:#f8f9f7 !important;
+  }
+
+  .hero:has(#homeMap) .trip-field::before{
+    left:14px !important;
+    top:21px !important;
+
+    width:13px !important;
+    height:13px !important;
+
+    border:3px solid var(--mei-orange) !important;
+  }
+
+  .hero:has(#homeMap) .destination-field::before{
+    width:13px !important;
+    height:13px !important;
+
+    border:0 !important;
+    border-radius:3px !important;
+
+    background:var(--mei-orange) !important;
+  }
+
+  .hero:has(#homeMap) .trip-field>span{
+    margin:0 0 1px !important;
+
+    color:#727973 !important;
+
+    font-size:9px !important;
+  }
+
+  .hero:has(#homeMap) .trip-field input{
+    width:100% !important;
+    min-height:28px !important;
+
+    color:#222722 !important;
+
+    font-size:16px !important;
+    line-height:1.2 !important;
+  }
+
+  .hero:has(#homeMap) .trip-field input::placeholder{
+    color:#8d938f !important;
+  }
+
+  .hero:has(#homeMap) .trip-field button{
+    right:7px !important;
+    top:50% !important;
+
+    width:34px !important;
+    height:34px !important;
+
+    transform:translateY(-50%) !important;
+
+    border:0 !important;
+    border-radius:50% !important;
+
+    background:#fff0e4 !important;
+    color:#d85f00 !important;
+
+    font-size:18px !important;
+  }
+
+  /* Ride now / Schedule */
+  .hero:has(#homeMap) .trip-timing{
+    min-height:46px !important;
+
+    display:grid !important;
+    grid-template-columns:1fr 1fr !important;
+
+    gap:5px !important;
+    padding:3px !important;
+
+    border-radius:13px !important;
+
+    background:#f1f3f0 !important;
+  }
+
+  .hero:has(#homeMap) .timing-choice{
+    min-height:40px !important;
+
+    border:0 !important;
+    border-radius:11px !important;
+
+    background:transparent !important;
+    color:#505750 !important;
+
+    font-size:11px !important;
+    font-weight:800 !important;
+  }
+
+  .hero:has(#homeMap) .timing-choice.active{
+    color:#fff !important;
+    background:#171c18 !important;
+    box-shadow:none !important;
+  }
+
+  .hero:has(#homeMap) .timing-choice[data-when="now"]::before{
+    content:"🚕";
+    margin-right:6px;
+  }
+
+  .hero:has(#homeMap) .timing-choice[data-when="later"]::before{
+    content:"▣";
+    margin-right:6px;
+  }
+
+  .hero:has(#homeMap) .schedule-fields{
+    gap:6px !important;
+  }
+
+  .hero:has(#homeMap) .schedule-fields input{
+    min-height:43px !important;
+    padding:8px 10px !important;
+
+    border:1px solid #e2e5e1 !important;
+    border-radius:11px !important;
+
+    background:#fff !important;
+    color:#222722 !important;
+
+    font-size:13px !important;
+  }
+
+  .hero:has(#homeMap) .find-rides{
+    min-height:51px !important;
+
+    border:0 !important;
+    border-radius:14px !important;
+
+    background:var(--mei-orange) !important;
+    color:#fff !important;
+
+    box-shadow:0 7px 18px rgba(255,121,0,.20) !important;
+
+    font-size:15px !important;
+    font-weight:900 !important;
+  }
+
+  .hero:has(#homeMap) .find-rides::after{
+    content:"→" !important;
+    margin-left:10px !important;
+    font-size:19px !important;
+  }
+
+  /* Less instructional copy on the main phone screen. */
+  .hero:has(#homeMap) .location-disclosure{
+    display:none !important;
+  }
+
+  .hero:has(#homeMap) .trip-message{
+    margin:0 !important;
+    min-height:0 !important;
+
+    color:#b65000 !important;
+
+    font-size:9px !important;
+    line-height:1.3 !important;
+  }
+
+  .hero:has(#homeMap) .trip-message:empty{
+    display:none !important;
+  }
+
+  .hero:has(#homeMap) .saved-locations{
+    min-height:33px !important;
+
+    display:flex !important;
+    align-items:center !important;
+
+    gap:6px !important;
+    padding:2px 0 0 !important;
+
+    overflow-x:auto !important;
+    scrollbar-width:none;
+  }
+
+  .hero:has(#homeMap) .saved-locations::-webkit-scrollbar{
+    display:none;
+  }
+
+  .hero:has(#homeMap) .saved-locations>small{
+    flex:none !important;
+
+    color:#727873 !important;
+
+    font-size:9px !important;
+  }
+
+  .hero:has(#homeMap) .saved-locations>small::before{
+    content:"◷ ";
+  }
+
+  .hero:has(#homeMap) .saved-locations>button{
+    flex:none !important;
+    max-width:145px !important;
+
+    padding:7px 10px !important;
+
+    border:1px solid #e5e7e4 !important;
+    border-radius:18px !important;
+
+    background:#f6f7f5 !important;
+    color:#3d433e !important;
+
+    font-size:9px !important;
+  }
+
+  /* Secondary marketing rows are intentionally hidden on the phone booking
+     screen; their pages/links still exist in the menu and tabs. */
+  .hero:has(#homeMap) .bottom-sheet.route-mode > .promo-row,
+  .hero:has(#homeMap) .bottom-sheet.route-mode > .support-link{
+    display:none !important;
+  }
+
+  /* ========== VEHICLE CHOICES ========== */
+
+  .hero:has(#homeMap) .ride-quotes{
+    margin-top:6px !important;
+  }
+
+  .hero:has(#homeMap) .quote-heading{
+    margin-bottom:6px !important;
+  }
+
+  .hero:has(#homeMap) .quote-heading strong{
+    font-size:13px !important;
+  }
+
+  .hero:has(#homeMap) .quote-heading small,
+  .hero:has(#homeMap) .quote-heading button{
+    font-size:9px !important;
+  }
+
+  .hero:has(#homeMap) .quote-cards{
+    gap:6px !important;
+  }
+
+  .hero:has(#homeMap) .quote-card{
+    min-height:56px !important;
+
+    gap:8px !important;
+    padding:8px 9px !important;
+
+    border:1px solid #e2e5e1 !important;
+    border-radius:13px !important;
+
+    background:#fff !important;
+  }
+
+  .hero:has(#homeMap) .quote-card.selected{
+    border-color:var(--mei-orange) !important;
+    background:#fff8f2 !important;
+  }
+
+  .hero:has(#homeMap) .quote-card .vehicle-symbol{
+    width:37px !important;
+    height:37px !important;
+
+    border-radius:11px !important;
+
+    background:#fff0e4 !important;
+
+    font-size:19px !important;
+  }
+
+  .hero:has(#homeMap) .quote-info strong{
+    font-size:12px !important;
+  }
+
+  .hero:has(#homeMap) .quote-info small{
+    font-size:9px !important;
+  }
+
+  .hero:has(#homeMap) .quote-price{
+    font-size:14px !important;
+  }
+
+  /* ========== ACCOUNT DIALOG ========== */
+
+  .auth-dialog,
+  .workflow-dialog{
+    position:fixed !important;
+
+    top:auto !important;
+    left:0 !important;
+    right:0 !important;
+    bottom:0 !important;
+
+    width:100% !important;
+    max-width:none !important;
+    max-height:88dvh !important;
+
+    margin:0 !important;
+
+    padding:
+      18px
+      16px
+      max(20px,env(safe-area-inset-bottom)) !important;
+
+    border:0 !important;
+    border-radius:24px 24px 0 0 !important;
+
+    overflow-y:auto !important;
+
+    background:#fff !important;
+  }
+
+  /* ========== CONFIRM PAGE ========== */
+
+  html[data-workflow="confirm"] body{
+    background:#f5f6f4 !important;
+  }
+
+  .workflow-header{
+    position:sticky !important;
+    z-index:100 !important;
+    top:0 !important;
+
+    height:58px !important;
+
+    padding:
+      max(8px,env(safe-area-inset-top))
+      13px
+      7px !important;
+
+    background:#fff !important;
+    border-bottom:1px solid #e8eae7 !important;
+  }
+
+  .workflow-header .back-link{
+    font-size:0 !important;
+  }
+
+  .workflow-header .back-link::before{
+    content:"←";
+
+    width:38px;
+    height:38px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:50%;
+
+    background:#f2f4f1;
+
+    font-size:20px;
+  }
+
+  .workflow-logo{
+    width:78px !important;
+    height:37px !important;
+  }
+
+  .workflow-content{
+    width:100% !important;
+
+    margin:0 !important;
+    padding:
+      17px
+      13px
+      max(26px,env(safe-area-inset-bottom)) !important;
+  }
+
+  .workflow-content h1{
+    font-size:23px !important;
+  }
+
+  .workflow-content>.lead{
+    margin-bottom:12px !important;
+    font-size:12px !important;
+  }
+
+  .workflow-card{
+    margin:9px 0 !important;
+    padding:13px !important;
+
+    border-radius:15px !important;
+    box-shadow:none !important;
+  }
+
+  .workflow-content>.primary-button{
+    min-height:52px !important;
+
+    border-radius:14px !important;
+
+    background:var(--mei-orange) !important;
+    color:#fff !important;
+
+    font-size:14px !important;
+  }
+
+  /* ========== LIVE RIDE SCREEN ========== */
+
+  html[data-workflow="ride"] body{
+    background:#eef1ec !important;
+  }
+
+  #ridePage:not([hidden]){
+    display:block !important;
+    width:100% !important;
+    min-height:100dvh !important;
+  }
+
+  .tracking-header{
+    position:absolute !important;
+    z-index:700 !important;
+
+    top:max(10px,env(safe-area-inset-top)) !important;
+    left:10px !important;
+  }
+
+  .tracking-home{
+    width:42px !important;
+    height:42px !important;
+
+    padding:0 !important;
+
+    display:grid !important;
+    place-items:center !important;
+
+    border-radius:50% !important;
+
+    font-size:0 !important;
+
+    box-shadow:0 5px 18px rgba(20,28,21,.15) !important;
+  }
+
+  .tracking-home::before{
+    content:"←";
+    font-size:20px;
+  }
+
+  .tracking-map{
+    height:58dvh !important;
+    min-height:330px !important;
+  }
+
+  .map-status-pill{
+    top:max(12px,env(safe-area-inset-top)) !important;
+
+    max-width:64vw !important;
+
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+
+    padding:8px 11px !important;
+
+    font-size:10px !important;
+  }
+
+  .tracking-sheet{
+    width:100% !important;
+
+    margin:-22px 0 0 !important;
+
+    padding:
+      16px
+      14px
+      max(22px,env(safe-area-inset-bottom)) !important;
+
+    border-radius:23px 23px 0 0 !important;
+  }
+
+  .tracking-sheet h1{
+    font-size:20px !important;
+  }
+
+  .tracking-subtitle{
+    font-size:11px !important;
+  }
+
+  .tracking-progress{
+    gap:4px !important;
+    margin:12px 0 !important;
+  }
+
+  .driver-panel{
+    grid-template-columns:43px minmax(0,1fr) auto !important;
+
+    gap:9px !important;
+    padding:10px !important;
+
+    border-radius:13px !important;
+  }
+
+  .driver-avatar{
+    width:42px !important;
+    height:42px !important;
+
+    font-size:20px !important;
+  }
+
+  .driver-detail small{
+    font-size:9px !important;
+  }
+
+  .driver-detail strong{
+    font-size:13px !important;
+  }
+
+  .plate-chip{
+    padding:5px 7px !important;
+    font-size:10px !important;
+  }
+
+  .tracking-route{
+    gap:7px !important;
+
+    margin:10px 0 !important;
+    padding:10px !important;
+
+    border-radius:12px !important;
+  }
+
+  .tracking-actions{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:7px !important;
+  }
+
+  .tracking-actions>*{
+    min-height:44px !important;
+    padding:6px !important;
+
+    font-size:10px !important;
+    text-align:center !important;
+  }
+
+  .chat-form{
+    grid-template-columns:minmax(0,1fr) 46px !important;
+    gap:6px !important;
+  }
+
+  .chat-form input{
+    min-height:43px !important;
+    font-size:16px !important;
+  }
+
+  .chat-form button{
+    width:46px !important;
+    min-width:46px !important;
+    min-height:43px !important;
+
+    padding:0 !important;
+
+    font-size:0 !important;
+  }
+
+  .chat-form button::before{
+    content:"➤";
+    font-size:17px;
+  }
+}
+
+
+/* Very small phones */
+@media (max-width:380px){
+
+  .hero:has(#homeMap){
+    --mobile-header-h:70px;
+    --mobile-tabs-h:66px;
+    --mobile-top-total:136px;
+  }
+
+  .hero:has(#homeMap) .app-topbar{
+    padding-left:10px !important;
+    padding-right:10px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand{
+    width:160px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand::before{
+    width:38px !important;
+    height:38px !important;
+
+    margin-right:7px !important;
+
+    font-size:31px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand::after{
+    font-size:14px !important;
+  }
+
+  .hero:has(#homeMap) .app-account,
+  .hero:has(#homeMap) .app-menu>summary{
+    width:38px !important;
+    height:38px !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    height:61px !important;
+    font-size:8px !important;
+  }
+
+  .hero:has(#homeMap) .shortcut-icon{
+    width:33px !important;
+    height:31px !important;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    max-height:min(57dvh,575px) !important;
+
+    padding-left:11px !important;
+    padding-right:11px !important;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode h1{
+    font-size:22px !important;
+  }
+
+  .hero:has(#homeMap) .map-location{
+    bottom:min(57dvh,575px) !important;
+  }
+
+  .tracking-actions{
+    grid-template-columns:1fr 1fr !important;
+  }
+}
+
+
+/* Tablet portrait: keep the same approved mobile visual language. */
+@media (min-width:701px) and (max-width:1024px){
+
+  .hero:has(#homeMap) .app-topbar{
+    height:82px !important;
+    padding-left:24px !important;
+    padding-right:24px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand{
+    width:225px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand::before{
+    width:50px !important;
+    height:50px !important;
+
+    font-size:40px !important;
+  }
+
+  .hero:has(#homeMap) .app-brand::after{
+    font-size:20px !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts{
+    top:82px !important;
+    height:78px !important;
+    padding-left:18px !important;
+    padding-right:18px !important;
+  }
+
+  .hero:has(#homeMap) .app-shortcuts a{
+    height:73px !important;
+    font-size:10px !important;
+  }
+
+  .hero:has(#homeMap) .home-map,
+  .hero:has(#homeMap) .hero-bg{
+    top:160px !important;
+  }
+
+  .hero:has(#homeMap) .map-locate{
+    top:180px !important;
+  }
+
+  .hero:has(#homeMap) .bottom-sheet.route-mode{
+    left:50% !important;
+    right:auto !important;
+    bottom:18px !important;
+
+    width:min(620px,calc(100% - 36px)) !important;
+    max-height:66dvh !important;
+
+    transform:translateX(-50%) !important;
+
+    border:1px solid #e5e7e4 !important;
+    border-radius:26px !important;
+  }
+
+  .hero:has(#homeMap) .map-location{
+    bottom:28px !important;
+  }
+
+  .workflow-content{
+    width:min(calc(100% - 40px),680px) !important;
+  }
+
+  .tracking-sheet{
+    width:min(calc(100% - 36px),700px) !important;
+    margin:-24px auto 0 !important;
+  }
+}
+
