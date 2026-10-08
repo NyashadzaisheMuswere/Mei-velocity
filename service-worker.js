@@ -1,149 +1,36 @@
-/* =========================================================
-   MEI VELOCITY SERVICE WORKER
-   Handles phone push notifications
-========================================================= */
+const VERSION = "mei-velocity-pwa-v1";
 
-self.addEventListener("install", event => {
-  console.log("MEI Velocity service worker installed.");
-
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
-
 self.addEventListener("activate", event => {
-  console.log("MEI Velocity service worker activated.");
-
   event.waitUntil(
-    self.clients.claim()
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys
+          .filter(key => key.startsWith("mei-velocity-") && key !== VERSION)
+          .map(key => caches.delete(key))
+      );
+      await self.clients.claim();
+    })()
   );
 });
 
+self.addEventListener("fetch", event => {
+  const request = event.request;
 
-/* =========================================================
-   RECEIVE PUSH NOTIFICATION
-========================================================= */
+  if (request.method !== "GET") return;
 
-self.addEventListener("push", event => {
-  let payload = {
-    title: "MEI Velocity",
-    body: "You have a new ride update.",
-    url: "./index.html"
-  };
+  const url = new URL(request.url);
 
-  if (event.data) {
-    try {
-      payload = {
-        ...payload,
-        ...event.data.json()
-      };
-    } catch {
-      payload.body =
-        event.data.text();
-    }
-  }
+  // Do not intercept API calls, map tiles or third-party resources.
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.startsWith("/api/")) return;
 
-  const options = {
-    body: payload.body,
-
-    icon:
-      payload.icon ||
-      "./assets/mei_logo.jpg",
-
-    badge:
-      payload.badge ||
-      "./assets/mei_logo.jpg",
-
-    vibrate: [
-      200,
-      100,
-      200
-    ],
-
-    tag:
-      payload.tag ||
-      "mei-velocity-ride-update",
-
-    renotify: true,
-
-    data: {
-      url:
-        payload.url ||
-        "./index.html",
-
-      bookingId:
-        payload.bookingId ||
-        null
-    }
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(
-      payload.title ||
-      "MEI Velocity",
-      options
-    )
+  // Network-first so fresh deployments are always preferred.
+  event.respondWith(
+    fetch(request).catch(() => caches.match(request))
   );
 });
-
-
-/* =========================================================
-   USER TAPS NOTIFICATION
-========================================================= */
-
-self.addEventListener(
-  "notificationclick",
-  event => {
-    event.notification.close();
-
-    const notificationData =
-      event.notification.data || {};
-
-    let targetUrl =
-      notificationData.url ||
-      "./index.html";
-
-    if (
-      notificationData.bookingId &&
-      !targetUrl.includes(
-        "bookingId="
-      )
-    ) {
-      targetUrl =
-        `./index.html?view=ride&bookingId=${encodeURIComponent(
-          notificationData.bookingId
-        )}`;
-    }
-
-    event.waitUntil(
-      clients
-        .matchAll({
-          type: "window",
-          includeUncontrolled: true
-        })
-        .then(clientList => {
-          for (
-            const client of
-            clientList
-          ) {
-            if (
-              "focus" in client
-            ) {
-              client.navigate(
-                targetUrl
-              );
-
-              return client.focus();
-            }
-          }
-
-          if (
-            clients.openWindow
-          ) {
-            return clients.openWindow(
-              targetUrl
-            );
-          }
-        })
-    );
-  }
-);

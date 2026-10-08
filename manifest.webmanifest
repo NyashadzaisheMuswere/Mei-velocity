@@ -1,0 +1,64 @@
+{
+  "name": "MEI Velocity",
+  "short_name": "MEI",
+  "description": "Book and track MEI Velocity rides from your phone.",
+  "id": "./index.html",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#ff7900",
+  "categories": [
+    "travel",
+    "navigation"
+  ],
+  "icons": [
+    {
+      "src": "icons/mei-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/mei-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/mei-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a ride",
+      "short_name": "Ride",
+      "url": "./index.html#home",
+      "icons": [
+        {
+          "src": "icons/mei-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Deliveries",
+      "short_name": "Deliver",
+      "url": "./services.html#package-delivery",
+      "icons": [
+        {
+          "src": "icons/mei-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

@@ -362,6 +362,48 @@
 }
 </style>
 
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#ff7900">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MEI Velocity">
+<link rel="apple-touch-icon" href="icons/mei-apple-touch.png">
+
+<style id="mei-pwa-install-style">
+  #installAppButton{
+    width:100%;
+    padding:10px 12px;
+    border:0;
+    background:transparent;
+    color:inherit;
+    text-align:left;
+    font:inherit;
+    cursor:pointer;
+  }
+
+  #installAppButton:hover{
+    background:#f5f6f4;
+  }
+
+  .mei-install-toast{
+    position:fixed;
+    z-index:10000;
+    left:50%;
+    bottom:max(18px,env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    width:min(92vw,420px);
+    padding:12px 14px;
+    border-radius:14px;
+    background:#111827;
+    color:#fff;
+    box-shadow:0 12px 34px rgba(0,0,0,.25);
+    font-size:13px;
+    line-height:1.4;
+  }
+</style>
+
 </head>
 <body>
 <section class="hero" id="home">
@@ -384,6 +426,7 @@
             <a href="fares.html">Fares &amp; Areas</a>
             <a href="about.html">About</a>
             <a href="contact.html">Contact &amp; Help</a>
+            <button id="installAppButton" type="button">Install app</button>
           </nav>
         </details>
       </div>
@@ -882,6 +925,129 @@
 })();
 </script>
 
+
+
+<script id="mei-pwa-install">
+(function () {
+  let deferredInstallPrompt = null;
+
+  const installButton =
+    document.getElementById("installAppButton");
+
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  if (isStandalone && installButton) {
+    installButton.hidden = true;
+  }
+
+  function showInstallMessage(message) {
+    document
+      .querySelector(".mei-install-toast")
+      ?.remove();
+
+    const toast =
+      document.createElement("div");
+
+    toast.className =
+      "mei-install-toast";
+
+    toast.textContent =
+      message;
+
+    document.body.appendChild(
+      toast
+    );
+
+    setTimeout(
+      () => toast.remove(),
+      6500
+    );
+  }
+
+  window.addEventListener(
+    "beforeinstallprompt",
+    event => {
+      event.preventDefault();
+      deferredInstallPrompt =
+        event;
+
+      if (installButton) {
+        installButton.hidden =
+          false;
+      }
+    }
+  );
+
+  window.addEventListener(
+    "appinstalled",
+    () => {
+      deferredInstallPrompt =
+        null;
+
+      if (installButton) {
+        installButton.hidden =
+          true;
+      }
+
+      showInstallMessage(
+        "MEI Velocity was installed."
+      );
+    }
+  );
+
+  installButton?.addEventListener(
+    "click",
+    async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+
+        await deferredInstallPrompt
+          .userChoice;
+
+        deferredInstallPrompt =
+          null;
+
+        return;
+      }
+
+      const isiPhone =
+        /iphone|ipad|ipod/i.test(
+          navigator.userAgent
+        );
+
+      if (isiPhone) {
+        showInstallMessage(
+          "On iPhone/iPad: tap Share, then choose Add to Home Screen."
+        );
+      } else {
+        showInstallMessage(
+          "Open your browser menu and choose Install app or Add to Home screen."
+        );
+      }
+    }
+  );
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener(
+      "load",
+      () => {
+        navigator.serviceWorker
+          .register(
+            "./service-worker.js"
+          )
+          .catch(error => {
+            console.warn(
+              "MEI Velocity service worker:",
+              error
+            );
+          });
+      }
+    );
+  }
+})();
+</script>
 
 </body>
 </html>
