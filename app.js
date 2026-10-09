@@ -58,6 +58,13 @@ let currentPickupAddress = "";
 let currentPickupAccuracy = null;
 let usingCurrentPickup = false;
 
+/* High-accuracy pickup tracking on the booking map. */
+let homeLocationWatchId = null;
+let homeLocationStopTimer = null;
+let homeLocationRequestId = 0;
+let homeAccuracyCircle = null;
+let currentPickupManuallyAdjusted = false;
+
 let homeWhen = "now";
 let appliedPromotion = null;
 let customerSession = null;
@@ -113,23 +120,289 @@ async function reverseGeocode(lat, lon) {
     `${Number(lat).toFixed(6)}, ${Number(lon).toFixed(6)}`;
 }
 
-function showHomeRiderLocation(lat, lon) {
-  if (!homeMap) return;
+function stopHomeLocationWatch() {
+  if (
+    homeLocationWatchId !== null &&
+    navigator.geolocation
+  ) {
+    navigator.geolocation.clearWatch(
+      homeLocationWatchId
+    );
 
-  const point = [lat, lon];
-
-  if (!homePickupMarker) {
-    homePickupMarker = L.marker(point, {
-      icon: riderLocationIcon(),
-      zIndexOffset: 1000
-    })
-      .addTo(homeMap)
-      .bindPopup("Your current location");
-  } else {
-    homePickupMarker.setLatLng(point);
+    homeLocationWatchId = null;
   }
 
-  homeMap.setView(point, 17);
+  if (homeLocationStopTimer) {
+    clearTimeout(
+      homeLocationStopTimer
+    );
+
+    homeLocationStopTimer = null;
+  }
+}
+
+
+function updatePickupInputs(
+  address
+) {
+  const homePickup =
+    document.getElementById(
+      "homePickup"
+    );
+
+  const bookingPickup =
+    document.getElementById(
+      "pickup"
+    );
+
+  if (homePickup) {
+    homePickup.value =
+      address;
+  }
+
+  if (bookingPickup) {
+    bookingPickup.value =
+      address;
+  }
+}
+
+
+async function updatePickupAddress(
+  lat,
+  lon,
+  requestId
+) {
+  try {
+    const address =
+      await reverseGeocode(
+        lat,
+        lon
+      );
+
+    if (
+      requestId !==
+        homeLocationRequestId ||
+      !usingCurrentPickup ||
+      currentPickupManuallyAdjusted
+    ) {
+      return;
+    }
+
+    currentPickupAddress =
+      address;
+
+    updatePickupInputs(
+      address
+    );
+
+  } catch (error) {
+    console.warn(
+      "Reverse geocoding unavailable:",
+      error
+    );
+  }
+}
+
+
+function showHomeRiderLocation(
+  lat,
+  lon,
+  accuracy = null
+) {
+  if (!homeMap) return;
+
+  const point =
+    [lat, lon];
+
+  if (!homePickupMarker) {
+    homePickupMarker =
+      L.marker(
+        point,
+        {
+          icon:
+            riderLocationIcon(),
+
+          zIndexOffset:
+            1000,
+
+          draggable:
+            true
+        }
+      )
+        .addTo(
+          homeMap
+        )
+        .bindPopup(
+          "Your pickup · drag to adjust"
+        );
+
+    homePickupMarker.on(
+      "dragstart",
+      () => {
+        currentPickupManuallyAdjusted =
+          true;
+
+        stopHomeLocationWatch();
+      }
+    );
+
+    homePickupMarker.on(
+      "dragend",
+      async event => {
+        const point =
+          event.target.getLatLng();
+
+        currentPickupCoords = {
+          lat:
+            point.lat,
+
+          lon:
+            point.lng
+        };
+
+        currentPickupAccuracy =
+          null;
+
+        usingCurrentPickup =
+          true;
+
+        currentPickupManuallyAdjusted =
+          true;
+
+        if (
+          homeAccuracyCircle
+        ) {
+          homeMap.removeLayer(
+            homeAccuracyCircle
+          );
+
+          homeAccuracyCircle =
+            null;
+        }
+
+        const location =
+          document.getElementById(
+            "mapLocation"
+          );
+
+        if (
+          location?.lastElementChild
+        ) {
+          location.lastElementChild.textContent =
+            "Pickup pin selected";
+        }
+
+        const message =
+          document.getElementById(
+            "tripMessage"
+          );
+
+        message.textContent =
+          "Pickup pin adjusted. We will use this exact map point for the driver.";
+
+        const requestId =
+          ++homeLocationRequestId;
+
+        try {
+          const address =
+            await reverseGeocode(
+              point.lat,
+              point.lng
+            );
+
+          if (
+            requestId !==
+            homeLocationRequestId
+          ) {
+            return;
+          }
+
+          currentPickupAddress =
+            address;
+
+          updatePickupInputs(
+            address
+          );
+
+        } catch (error) {
+          currentPickupAddress =
+            `${point.lat.toFixed(6)}, ${point.lng.toFixed(6)}`;
+
+          updatePickupInputs(
+            currentPickupAddress
+          );
+        }
+      }
+    );
+
+  } else {
+    homePickupMarker.setLatLng(
+      point
+    );
+  }
+
+  if (
+    Number.isFinite(
+      Number(
+        accuracy
+      )
+    ) &&
+    Number(
+      accuracy
+    ) > 0
+  ) {
+    if (
+      !homeAccuracyCircle
+    ) {
+      homeAccuracyCircle =
+        L.circle(
+          point,
+          {
+            radius:
+              Number(
+                accuracy
+              ),
+
+            color:
+              "#2563eb",
+
+            weight:
+              1,
+
+            fillColor:
+              "#2563eb",
+
+            fillOpacity:
+              0.08,
+
+            interactive:
+              false
+          }
+        ).addTo(
+          homeMap
+        );
+
+    } else {
+      homeAccuracyCircle.setLatLng(
+        point
+      );
+
+      homeAccuracyCircle.setRadius(
+        Number(
+          accuracy
+        )
+      );
+    }
+  }
+
+  homeMap.setView(
+    point,
+    Number(
+      accuracy
+    ) <= 30
+      ? 18
+      : 17
+  );
 }
 
 
@@ -360,98 +633,305 @@ function initHomeMap() {
 
 function selectCurrentLocation({ automatic = false } = {}) {
   const message =
-    document.getElementById("tripMessage");
+    document.getElementById(
+      "tripMessage"
+    );
 
   if (!navigator.geolocation) {
     message.textContent =
       "Your browser does not support location services. Enter your pickup location instead.";
+
     return;
   }
 
+  stopHomeLocationWatch();
+
+  const requestId =
+    ++homeLocationRequestId;
+
+  currentPickupManuallyAdjusted =
+    false;
+
+  usingCurrentPickup =
+    true;
+
+  currentPickupAccuracy =
+    null;
+
   message.textContent =
     automatic
-      ? "Detecting your current location…"
-      : "Getting your precise location…";
+      ? "Finding your precise pickup location…"
+      : "Finding your precise pickup location… Keep location services on.";
 
-  navigator.geolocation.getCurrentPosition(
-    async position => {
+  const location =
+    document.getElementById(
+      "mapLocation"
+    );
+
+  if (
+    location?.lastElementChild
+  ) {
+    location.lastElementChild.textContent =
+      "Locating you…";
+  }
+
+  let firstAcceptedReading =
+    true;
+
+  let bestAccuracy =
+    Infinity;
+
+  const applyReading =
+    position => {
+      if (
+        requestId !==
+          homeLocationRequestId ||
+        currentPickupManuallyAdjusted
+      ) {
+        return;
+      }
+
+      const lat =
+        Number(
+          position.coords.latitude
+        );
+
+      const lon =
+        Number(
+          position.coords.longitude
+        );
+
+      const accuracy =
+        Number.isFinite(
+          position.coords.accuracy
+        )
+          ? Math.max(
+              1,
+              Math.round(
+                position.coords.accuracy
+              )
+            )
+          : null;
+
+      if (
+        !Number.isFinite(
+          lat
+        ) ||
+        !Number.isFinite(
+          lon
+        )
+      ) {
+        return;
+      }
+
+      /*
+       * Keep the best GPS reading rather than allowing a later,
+       * less-accurate reading to move the pickup backwards.
+       */
+      if (
+        accuracy !== null &&
+        accuracy >=
+          bestAccuracy &&
+        currentPickupCoords
+      ) {
+        return;
+      }
+
+      if (
+        accuracy !== null
+      ) {
+        bestAccuracy =
+          accuracy;
+      }
+
       currentPickupCoords = {
-        lat: position.coords.latitude,
-        lon: position.coords.longitude
+        lat,
+        lon
       };
 
       currentPickupAccuracy =
-        Number.isFinite(position.coords.accuracy)
-          ? Math.round(position.coords.accuracy)
-          : null;
+        accuracy;
 
-      usingCurrentPickup = true;
+      usingCurrentPickup =
+        true;
 
       showHomeRiderLocation(
-        currentPickupCoords.lat,
-        currentPickupCoords.lon
+        lat,
+        lon,
+        accuracy
       );
 
-      let address = "Current location";
-
-      try {
-        address = await reverseGeocode(
-          currentPickupCoords.lat,
-          currentPickupCoords.lon
-        );
-      } catch (error) {
-        console.warn("Reverse geocoding unavailable:", error);
-      }
-
-      currentPickupAddress = address;
-
-      const homePickup =
-        document.getElementById("homePickup");
-
-      const bookingPickup =
-        document.getElementById("pickup");
-
-      if (homePickup) {
-        homePickup.value = address;
-      }
-
-      if (bookingPickup) {
-        bookingPickup.value = address;
-      }
-
-      const location =
-        document.getElementById("mapLocation");
-
-      if (location?.lastElementChild) {
+      if (
+        location?.lastElementChild
+      ) {
         location.lastElementChild.textContent =
-          currentPickupAccuracy
-            ? `Your location · ±${currentPickupAccuracy} m`
-            : "Your current location";
+          accuracy
+            ? `Your pickup · ±${accuracy} m`
+            : "Your pickup";
       }
 
-      message.textContent =
-        currentPickupAccuracy
-          ? `Current location selected (about ±${currentPickupAccuracy} m accuracy). You can still type a different pickup.`
-          : "Current location selected. You can still type a different pickup.";
-    },
+      if (
+        accuracy !== null &&
+        accuracy <= 20
+      ) {
+        message.textContent =
+          `Precise pickup found · ±${accuracy} m. You can drag the blue pickup pin if needed.`;
 
+      } else if (
+        accuracy !== null &&
+        accuracy <= 35
+      ) {
+        message.textContent =
+          `Good pickup accuracy · ±${accuracy} m. Still refining GPS…`;
+
+      } else if (
+        accuracy !== null
+      ) {
+        message.textContent =
+          `Improving your pickup location… currently ±${accuracy} m.`;
+
+      } else {
+        message.textContent =
+          "Improving your pickup location…";
+      }
+
+      /*
+       * The raw GPS coordinates above remain the actual pickup point.
+       * Reverse geocoding is only used for the text label.
+       */
+      if (
+        firstAcceptedReading
+      ) {
+        firstAcceptedReading =
+          false;
+
+        currentPickupAddress =
+          "Current location";
+
+        updatePickupInputs(
+          currentPickupAddress
+        );
+
+        updatePickupAddress(
+          lat,
+          lon,
+          requestId
+        );
+      }
+
+      /*
+       * Once the phone reaches a strong GPS fix, accept it and stop
+       * the booking-screen watcher. The live ride screen continues
+       * sending rider coordinates after the ride is accepted.
+       */
+      if (
+        accuracy !== null &&
+        accuracy <= 20
+      ) {
+        stopHomeLocationWatch();
+
+        updatePickupAddress(
+          lat,
+          lon,
+          requestId
+        );
+      }
+    };
+
+  const locationError =
     error => {
-      usingCurrentPickup = false;
-      currentPickupCoords = null;
-      currentPickupAddress = "";
+      if (
+        requestId !==
+        homeLocationRequestId
+      ) {
+        return;
+      }
+
+      if (
+        currentPickupCoords
+      ) {
+        message.textContent =
+          currentPickupAccuracy
+            ? `Best location found is ±${currentPickupAccuracy} m. Drag the blue pickup pin to your exact pickup point if needed.`
+            : "Location found. Drag the blue pickup pin if you need to adjust the pickup point.";
+
+        return;
+      }
+
+      usingCurrentPickup =
+        false;
+
+      currentPickupCoords =
+        null;
+
+      currentPickupAddress =
+        "";
+
+      currentPickupAccuracy =
+        null;
 
       message.textContent =
         error.code === 1
-          ? "Location access was not allowed. Enter your pickup location manually instead."
-          : "We could not detect your current location. Enter your pickup location manually instead.";
-    },
+          ? "Location access was not allowed. Turn on Precise Location for this site or enter your pickup manually."
+          : "We could not get a GPS location. Check location services or enter your pickup manually.";
+    };
 
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0
-    }
-  );
+  homeLocationWatchId =
+    navigator.geolocation.watchPosition(
+      applyReading,
+      locationError,
+      {
+        enableHighAccuracy:
+          true,
+
+        timeout:
+          12000,
+
+        maximumAge:
+          0
+      }
+    );
+
+  /*
+   * Do not keep the booking page GPS watcher alive forever.
+   * We retain the most accurate reading obtained during this window.
+   */
+  homeLocationStopTimer =
+    setTimeout(
+      () => {
+        if (
+          requestId !==
+            homeLocationRequestId ||
+          currentPickupManuallyAdjusted
+        ) {
+          return;
+        }
+
+        stopHomeLocationWatch();
+
+        if (
+          currentPickupCoords
+        ) {
+          if (
+            currentPickupAccuracy !==
+              null &&
+            currentPickupAccuracy >
+              35
+          ) {
+            message.textContent =
+              `Best GPS accuracy is ±${currentPickupAccuracy} m. Drag the blue pickup pin to your exact pickup point.`;
+
+          } else if (
+            currentPickupAccuracy !==
+              null
+          ) {
+            message.textContent =
+              `Pickup location confirmed · ±${currentPickupAccuracy} m. You can drag the blue pin to adjust it.`;
+          }
+        }
+      },
+      20000
+    );
 }
 
 
@@ -1156,10 +1636,27 @@ document
         !usingCurrentPickup ||
         this.value.trim() !== currentPickupAddress
       ) {
+        stopHomeLocationWatch();
+
+        homeLocationRequestId++;
+
+        currentPickupManuallyAdjusted = false;
         usingCurrentPickup = false;
         currentPickupCoords = null;
         currentPickupAddress = "";
         currentPickupAccuracy = null;
+
+        if (
+          homeAccuracyCircle &&
+          homeMap
+        ) {
+          homeMap.removeLayer(
+            homeAccuracyCircle
+          );
+
+          homeAccuracyCircle =
+            null;
+        }
       }
 
       lookupTripSuggestions(
@@ -2608,10 +3105,27 @@ document
         "homeDropoff"
       ).value = "";
 
+      stopHomeLocationWatch();
+
+      homeLocationRequestId++;
+
+      currentPickupManuallyAdjusted = false;
       currentPickupCoords = null;
       currentPickupAddress = "";
       currentPickupAccuracy = null;
       usingCurrentPickup = false;
+
+      if (
+        homeAccuracyCircle &&
+        homeMap
+      ) {
+        homeMap.removeLayer(
+          homeAccuracyCircle
+        );
+
+        homeAccuracyCircle =
+          null;
+      }
 
       document.querySelector(
         "#mapLocation span:last-child"
