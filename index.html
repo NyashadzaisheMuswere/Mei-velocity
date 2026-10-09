@@ -1021,59 +1021,184 @@
 
 
 <style id="mei-mobile-map-touch-fix">
-@media (max-width:700px){
-  /* Let finger gestures reach the Leaflet map instead of the visual overlays. */
-  #home{
-    touch-action:auto;
+@media(max-width:700px){
+
+  .mei-auth-dialog{
+    width:100vw!important;
+    max-width:none!important;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    margin:0!important;
+    border-radius:0!important;
+    overflow-y:auto!important;
+    background:#0d141a!important;
+    box-shadow:none!important;
   }
 
-  #homeMap.home-map,
-  #homeMap.leaflet-container{
-    pointer-events:auto !important;
-    touch-action:none !important;
-    -ms-touch-action:none !important;
-    user-select:none !important;
-    -webkit-user-select:none !important;
-    z-index:1 !important;
+  .mei-auth-shell{
+    position:relative;
+    min-height:100dvh;
+    padding:max(24px,env(safe-area-inset-top))
+            18px
+            max(26px,env(safe-area-inset-bottom));
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:20px;
+
+    background:
+      radial-gradient(
+        circle at 12% 8%,
+        rgba(255,121,0,.34),
+        transparent 24%
+      ),
+
+      radial-gradient(
+        circle at 88% 86%,
+        rgba(255,121,0,.18),
+        transparent 26%
+      ),
+
+      linear-gradient(
+        145deg,
+        #0b1116 0%,
+        #16222a 52%,
+        #090d11 100%
+      );
   }
 
-  #home .hero-bg,
-  #home .hero-shade,
-  #home .map-label{
-    pointer-events:none !important;
+  .mei-auth-shell::before,
+  .mei-auth-shell::after{
+    content:"";
+    position:absolute;
+    pointer-events:none;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:999px;
+    transform:rotate(-28deg);
   }
 
-  /*
-   * hero-content spans the map. Make its empty areas transparent to touch,
-   * then explicitly restore touch to the real buttons/sheet.
-   */
-  #home .hero-content{
-    pointer-events:none !important;
+  .mei-auth-shell::before{
+    width:330px;
+    height:74px;
+    left:-170px;
+    top:23%;
   }
 
-  #home .app-topbar,
-  #home .app-topbar *,
-  #home .app-shortcuts,
-  #home .app-shortcuts *,
-  #home .map-locate,
-  #home .map-location,
-  #home .bottom-sheet,
-  #home .bottom-sheet *,
-  #home button,
-  #home input,
-  #home select,
-  #home textarea,
-  #home a{
-    pointer-events:auto !important;
+  .mei-auth-shell::after{
+    width:300px;
+    height:66px;
+    right:-155px;
+    bottom:16%;
   }
 
-  /* Leaflet's own controls/markers must remain touchable. */
-  #homeMap .leaflet-control-container,
-  #homeMap .leaflet-control,
-  #homeMap .leaflet-marker-icon,
-  #homeMap .leaflet-marker-shadow,
-  #homeMap .leaflet-popup{
-    pointer-events:auto !important;
+  .mei-auth-scene{
+    position:relative;
+    z-index:2;
+
+    width:min(100%,430px);
+    min-height:0;
+
+    margin:0 auto;
+    padding:0 4px;
+
+    display:block;
+    overflow:visible;
+
+    background:transparent;
+  }
+
+  .mei-auth-scene::before,
+  .mei-auth-scene::after{
+    display:none;
+  }
+
+  .mei-auth-scene-brand{
+    margin-bottom:18px;
+  }
+
+  .mei-auth-scene-brand img{
+    width:56px;
+    height:40px;
+    border-radius:10px;
+  }
+
+  .mei-auth-scene-brand strong{
+    font-size:14px;
+  }
+
+  .mei-auth-kicker{
+    margin-bottom:7px;
+    font-size:9px;
+  }
+
+  .mei-auth-scene-copy h2{
+    max-width:320px;
+    font-size:29px;
+    line-height:1.02;
+  }
+
+  .mei-auth-road{
+    width:145px;
+    margin-top:15px;
+  }
+
+  .mei-auth-card{
+    position:relative;
+    z-index:3;
+
+    width:min(100%,430px);
+    margin:0 auto;
+
+    padding:20px 20px 22px;
+
+    overflow:visible;
+
+    border-radius:24px;
+
+    background:rgba(255,255,255,.985);
+
+    box-shadow:
+      0 22px 55px rgba(0,0,0,.30);
+  }
+
+  .mei-auth-close{
+    top:12px;
+    right:12px;
+    z-index:5;
+  }
+
+  .mei-auth-close button{
+    width:38px!important;
+    height:38px!important;
+
+    background:#f4f6f3!important;
+
+    border-color:#e1e5df!important;
+  }
+
+  .mei-auth-tabs{
+    margin:0 46px 20px 0!important;
+  }
+
+  .mei-auth-panel h2{
+    font-size:23px!important;
+  }
+
+  .mei-auth-panel>p{
+    margin-bottom:20px!important;
+  }
+
+  .mei-auth-panel label{
+    margin-bottom:13px!important;
+  }
+
+  .mei-auth-panel input{
+    min-height:48px!important;
+  }
+
+  .mei-auth-primary{
+    min-height:49px!important;
   }
 }
 </style>
