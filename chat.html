@@ -1,42 +1,82 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f4f6f0">
-  <title>Message your driver · MEI Velocity</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Message Driver | MEI Velocity</title>
   <style>
-    body{min-height:100vh;background:#f4f6f0;color:#202521;font-family:Arial,sans-serif}
-    .chat-page{width:min(100% - 28px,680px);min-height:100svh;margin:auto;display:flex;flex-direction:column;padding:18px 0 max(18px,env(safe-area-inset-bottom))}
-    .chat-top{display:flex;align-items:center;gap:12px;padding:12px 0}
-    .chat-back{color:#283027;text-decoration:none;font-weight:700}
-    .chat-card{display:flex;flex:1;flex-direction:column;min-height:0;margin:10px 0;padding:20px;border:1px solid #e1e7da;border-radius:18px;background:#fff;box-shadow:0 8px 30px #17201610}
-    .chat-card h1{margin:0;font-size:23px}.chat-intro{margin:6px 0 16px;color:#65705f;font-size:14px}
-    #conversation{display:flex;flex:1;flex-direction:column;gap:10px;min-height:220px;max-height:60vh;overflow:auto;padding:10px 2px}
-    .chat-message{max-width:84%;padding:10px 13px;border-radius:14px;background:#f1f3ee;overflow-wrap:anywhere;font-size:14px}
-    .chat-message.mine{align-self:flex-end;background:#eaf4c9}.chat-message small{display:block;margin-bottom:4px;color:#697164;font-size:11px}
-    .chat-compose{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;margin-top:14px}.chat-compose[hidden]{display:none}
-    .chat-compose input{min-width:0;min-height:48px;padding:10px 13px;border:1px solid #dce2d7;border-radius:10px;font:inherit}
-    .chat-compose button{min-height:48px;padding:0 20px;border:0;border-radius:10px;background:#b3d735;color:#1d2510;font:inherit;font-weight:800;cursor:pointer}
-    .chat-compose button:disabled{opacity:.55;cursor:wait}#chatStatus{min-height:20px;margin:10px 0 0;color:#65705f;font-size:13px}
-    @media(max-width:460px){.chat-card{padding:16px}.chat-compose{grid-template-columns:1fr}.chat-compose button{width:100%}}
+    *{box-sizing:border-box}
+    :root{--orange:#ff7900;--orange-soft:#fff1e6;--ink:#161a17;--muted:#6d746e;--line:#e6e9e5;--surface:#f5f7f4;--driver:#f0f2ef}
+    html,body{margin:0;width:100%;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#f4f6f3;color:var(--ink)}
+    body{min-height:100dvh;overflow:hidden}
+    .chat-app{width:min(100%,720px);height:100dvh;margin:0 auto;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;background:#fff;box-shadow:0 0 34px rgba(20,28,21,.08)}
+    .chat-header{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:10px;padding:max(10px,env(safe-area-inset-top)) 12px 10px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.98)}
+    .icon-button{width:42px;height:42px;border:0;border-radius:50%;display:grid;place-items:center;background:#f3f5f2;color:#1e231f;font-size:20px;cursor:pointer}
+    .driver-heading{min-width:0;text-align:center}.driver-heading strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}.driver-heading small{display:block;margin-top:2px;color:var(--muted);font-size:10px;font-weight:700}
+    .brand-mark{width:42px;height:42px;display:grid;place-items:center;border-radius:13px;background:var(--orange);color:#fff;font-weight:1000;font-size:20px}
+    .ride-strip{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:9px 13px;border-bottom:1px solid var(--line);background:#fafbf9;font-size:10px}.ride-strip div{min-width:0}.ride-strip small{display:block;margin-bottom:2px;color:#7b827c;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}.ride-strip strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:800}
+    .route-arrow{width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:var(--orange-soft);color:#be5300;font-weight:900}
+    .messages{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 13px 24px;display:flex;flex-direction:column;gap:9px;background:radial-gradient(circle at 20% 20%,rgba(255,121,0,.035),transparent 30%),#fff}
+    .empty-state{margin:auto;max-width:280px;padding:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.45}.empty-state span{width:46px;height:46px;margin:0 auto 9px;display:grid;place-items:center;border-radius:50%;background:var(--orange-soft);font-size:21px}
+    .message{max-width:82%;padding:9px 11px 7px;border-radius:15px 15px 15px 4px;background:var(--driver);color:#222722;box-shadow:0 1px 4px rgba(20,28,21,.04);overflow-wrap:anywhere}.message.mine{align-self:flex-end;border-radius:15px 15px 4px 15px;background:var(--orange);color:#fff}.message .sender{display:block;margin-bottom:3px;color:#68706a;font-size:8px;font-weight:800}.message.mine .sender{color:rgba(255,255,255,.8)}.message .body{font-size:13px;line-height:1.38}.message .time{display:block;margin-top:4px;text-align:right;color:#8a918b;font-size:8px}.message.mine .time{color:rgba(255,255,255,.76)}
+    .status{min-height:0;padding:0 13px;background:#fff;color:#9a4900;font-size:9px}.status:empty{display:none}
+    .composer-wrap{padding:9px 10px max(10px,env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff}.composer{display:grid;grid-template-columns:minmax(0,1fr) 46px;align-items:end;gap:7px}.composer textarea{width:100%;min-height:46px;max-height:120px;resize:none;padding:13px 14px;border:1px solid #dfe3de;border-radius:20px;outline:none;background:#f7f8f6;color:#1c211d;font:inherit;font-size:16px;line-height:1.25}.composer textarea:focus{border-color:#ffb477;box-shadow:0 0 0 3px rgba(255,121,0,.10)}.send-button{width:46px;height:46px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--orange);color:#fff;font-size:19px;font-weight:900;cursor:pointer}.send-button:disabled{opacity:.55;cursor:not-allowed}
+    .signin-card{margin:auto;width:min(90%,340px);padding:22px 18px;border:1px solid var(--line);border-radius:18px;background:#fff;text-align:center;box-shadow:0 8px 30px rgba(20,28,21,.08)}.signin-card .brand-mark{margin:0 auto 10px}.signin-card h2{margin:0 0 7px;font-size:20px}.signin-card p{margin:0 0 14px;color:var(--muted);font-size:12px;line-height:1.45}.signin-card a{display:block;padding:12px 14px;border-radius:12px;background:var(--orange);color:#fff;text-decoration:none;font-size:13px;font-weight:900}
+    @media(min-width:701px){body{display:grid;place-items:center;padding:22px;background:#eef1ed}.chat-app{height:min(850px,calc(100dvh - 44px));border:1px solid var(--line);border-radius:24px;overflow:hidden}}
   </style>
 </head>
 <body>
-  <main class="chat-page">
-    <header class="chat-top"><a id="backToRide" class="chat-back" href="index.html">← Back to your ride</a></header>
-    <section class="chat-card" aria-label="Conversation with your driver">
-      <h1>Message your driver</h1>
-      <p class="chat-intro">Send a message about your ride. The conversation stays available after the trip ends.</p>
-      <div id="conversation" class="chat-messages" aria-live="polite" aria-relevant="additions text"></div>
-      <form id="chatForm" class="chat-compose">
-        <input id="chatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required>
-        <button type="submit">Send</button>
-      </form>
-      <p id="chatStatus" role="status">Connecting to your ride…</p>
+  <main class="chat-app" id="chatApp">
+    <header class="chat-header">
+      <button class="icon-button" id="backButton" type="button" aria-label="Back to ride">←</button>
+      <div class="driver-heading"><strong id="chatTitle">Message your driver</strong><small id="chatSubtitle">MEI Velocity ride chat</small></div>
+      <div class="brand-mark" aria-label="MEI Velocity">M</div>
+    </header>
+    <section class="ride-strip" id="rideStrip">
+      <div><small>Pickup</small><strong id="chatPickup">Your pickup</strong></div>
+      <span class="route-arrow">→</span>
+      <div><small>Destination</small><strong id="chatDropoff">Your destination</strong></div>
     </section>
+    <section class="messages" id="messages" aria-live="polite"><div class="empty-state"><span>💬</span>You can message your driver here after they accept your ride.</div></section>
+    <div>
+      <p class="status" id="chatStatus" role="status"></p>
+      <div class="composer-wrap" id="composerWrap">
+        <form class="composer" id="chatForm">
+          <textarea id="chatInput" maxlength="1000" rows="1" placeholder="Message your driver…" autocomplete="off" required></textarea>
+          <button class="send-button" id="sendButton" type="submit" aria-label="Send message">➤</button>
+        </form>
+      </div>
+    </div>
   </main>
-  <script defer src="chat.js"></script>
+  <script>
+  (()=>{
+    "use strict";
+    const API="https://mei-velocity1.onrender.com";
+    const params=new URLSearchParams(location.search);
+    const bookingId=params.get("bookingId")||"";
+    const messagesEl=document.getElementById("messages");
+    const statusEl=document.getElementById("chatStatus");
+    const form=document.getElementById("chatForm");
+    const input=document.getElementById("chatInput");
+    const sendButton=document.getElementById("sendButton");
+    const composerWrap=document.getElementById("composerWrap");
+    let session=null,currentMessageSignature="",pollTimer=null;
+    try{session=JSON.parse(localStorage.getItem("meiVelocityCustomerSession")||"null")}catch{}
+    const setStatus=(m="")=>statusEl.textContent=m;
+    const formatTime=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?"":d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})};
+    function backToRide(){location.href=bookingId?`index.html?view=ride&bookingId=${encodeURIComponent(bookingId)}`:"index.html"}
+    document.getElementById("backButton").addEventListener("click",backToRide);
+    function showSignInRequired(){messagesEl.innerHTML=`<div class="signin-card"><div class="brand-mark">M</div><h2>Sign in to chat</h2><p>Your ride messages are connected to your MEI Velocity customer account.</p><a href="index.html">Go to customer account</a></div>`;composerWrap.hidden=true;document.getElementById("rideStrip").hidden=true;document.getElementById("chatTitle").textContent="MEI Velocity";document.getElementById("chatSubtitle").textContent="Customer account required"}
+    function loadRideSummary(){try{const history=JSON.parse(localStorage.getItem("meiVelocityRideHistory")||"[]");const ride=history.find(x=>String(x.id)===String(bookingId));if(!ride)return;document.getElementById("chatPickup").textContent=ride.pickup||"Pickup";document.getElementById("chatDropoff").textContent=ride.dropoff||"Destination"}catch{}}
+    function renderMessages(messages){const signature=messages.map(x=>`${x.id}:${x.body}`).join("|");if(signature===currentMessageSignature)return;currentMessageSignature=signature;messagesEl.replaceChildren();if(!messages.length){const e=document.createElement("div");e.className="empty-state";e.innerHTML="<span>💬</span>No messages yet. Say hello to your driver.";messagesEl.appendChild(e);return}messages.forEach(message=>{const item=document.createElement("article");item.className="message"+(message.senderType==="customer"?" mine":"");const sender=document.createElement("span");sender.className="sender";sender.textContent=message.senderType==="customer"?"You":(message.senderName||"Driver");const body=document.createElement("div");body.className="body";body.textContent=String(message.body??"");const time=document.createElement("span");time.className="time";time.textContent=formatTime(message.createdAt);item.append(sender,body,time);messagesEl.appendChild(item)});const newest=messages[messages.length-1];if(newest?.id)localStorage.setItem(`meiVelocityChatRead:${bookingId}`,String(newest.id));messagesEl.scrollTop=messagesEl.scrollHeight}
+    async function loadMessages(showErrors=false){if(!bookingId||!session?.token)return;try{const response=await fetch(`${API}/api/customer/bookings/${encodeURIComponent(bookingId)}/messages`,{headers:{Authorization:`Bearer ${session.token}`}});const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to load messages.");renderMessages(data.messages||[]);setStatus("")}catch(error){if(showErrors)setStatus(error.message)}}
+    form.addEventListener("submit",async event=>{event.preventDefault();const body=input.value.trim();if(!body||!bookingId||!session?.token)return;sendButton.disabled=true;setStatus("Sending…");try{const response=await fetch(`${API}/api/customer/bookings/${encodeURIComponent(bookingId)}/messages`,{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${session.token}`},body:JSON.stringify({body})});const data=await response.json();if(!response.ok)throw new Error(data.message||"Unable to send your message.");input.value="";input.style.height="";currentMessageSignature="";await loadMessages(true);setStatus("")}catch(error){setStatus(error.message)}finally{sendButton.disabled=false;input.focus()}});
+    input.addEventListener("input",()=>{input.style.height="auto";input.style.height=Math.min(input.scrollHeight,120)+"px"});
+    if(!bookingId){composerWrap.hidden=true;setStatus("Ride number is missing. Return to your active ride and open chat again.");return}
+    if(!session?.token){showSignInRequired();return}
+    loadRideSummary();loadMessages(true);pollTimer=setInterval(()=>loadMessages(false),3000);window.addEventListener("pagehide",()=>{if(pollTimer)clearInterval(pollTimer)});
+  })();
+  </script>
 </body>
 </html>

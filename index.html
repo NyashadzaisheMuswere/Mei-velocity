@@ -404,6 +404,110 @@
   }
 </style>
 
+
+<style id="mei-customer-two-way-chat">
+.customer-chat-panel{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid #e4e8e2;
+  border-radius:14px;
+  background:#fff;
+}
+.customer-chat-panel[hidden]{display:none!important}
+.customer-chat-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:9px;
+}
+.customer-chat-heading strong{font-size:14px}
+.customer-chat-heading small{font-size:9px;color:#7a817b}
+.customer-chat-messages{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  max-height:220px;
+  min-height:44px;
+  overflow-y:auto;
+  padding:2px 0 7px;
+}
+.customer-chat-empty{
+  margin:0;
+  padding:10px 4px;
+  text-align:center;
+  color:#7a817b;
+  font-size:10px;
+}
+.customer-chat-bubble{
+  max-width:82%;
+  padding:8px 10px;
+  border-radius:12px 12px 12px 4px;
+  background:#f0f2ef;
+  color:#222722;
+  font-size:12px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.customer-chat-bubble.mine{
+  align-self:flex-end;
+  border-radius:12px 12px 4px 12px;
+  background:#ff7900;
+  color:#fff;
+}
+.customer-chat-bubble small{
+  display:block;
+  margin-bottom:2px;
+  color:#727973;
+  font-size:8px;
+  font-weight:700;
+}
+.customer-chat-bubble.mine small{color:rgba(255,255,255,.8)}
+.customer-chat-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+  margin-top:7px;
+}
+.customer-chat-form input{
+  min-width:0;
+  min-height:42px;
+  padding:10px 12px;
+  border:1px solid #dce1da;
+  border-radius:11px;
+  background:#f8f9f7;
+  color:#202520;
+  font:inherit;
+  font-size:16px;
+  outline:none;
+}
+.customer-chat-form input:focus{
+  border-color:#ffaf6d;
+  box-shadow:0 0 0 3px rgba(255,121,0,.10);
+}
+.customer-chat-form button{
+  min-width:66px;
+  min-height:42px;
+  padding:0 12px;
+  border:0;
+  border-radius:11px;
+  background:#ff7900;
+  color:#fff;
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  cursor:pointer;
+}
+.customer-chat-form button:disabled{opacity:.55}
+.customer-chat-status{
+  min-height:0;
+  margin:6px 1px 0;
+  color:#a54d00;
+  font-size:9px;
+}
+.customer-chat-status:empty{display:none}
+</style>
+
 </head>
 <body>
 <section class="hero" id="home">
@@ -840,15 +944,34 @@
     <div class="tracking-route"><div><span class="route-dot"></span><span><small>Pickup</small><strong id="ridePickup"></strong></span></div><div><span class="route-dot destination"></span><span><small>Destination</small><strong id="rideDropoff"></strong></span></div></div>
     <p id="locationMessage" class="help">The driver’s live location appears here when they share it.</p>
     <section id="ratingArea" class="rating-area" hidden><strong>How was your ride?</strong><p><select id="rideRatingSelect" aria-label="Ride rating"><option value="5">5 · Excellent</option><option value="4">4 · Good</option><option value="3">3 · Okay</option><option value="2">2 · Poor</option><option value="1">1 · Very poor</option></select><button id="rideRatingSubmit" type="button">Send rating</button></p><small id="rideRatingFeedback"></small></section>
-    <div class="tracking-actions"><button id="cancelRide" class="secondary-button" type="button" hidden>Cancel request</button><a id="messageDriverLink" href="chat.html" target="_blank" rel="noopener" hidden>Message driver</a><a href="index.html">Book another ride</a></div>
+    <div class="tracking-actions"><button id="cancelRide" class="secondary-button" type="button" hidden>Cancel request</button><a id="messageDriverLink" href="#customerChatPanel" hidden>Message driver</a><a href="index.html">Book another ride</a></div>
     <p id="driverMessageNotice" class="driver-message-notice" role="status" aria-live="polite" hidden></p>
+
+    <section id="customerChatPanel" class="customer-chat-panel" hidden>
+      <div class="customer-chat-heading">
+        <strong>Message driver</strong>
+        <small>Two-way ride chat</small>
+      </div>
+
+      <div id="customerChatMessages" class="customer-chat-messages" aria-live="polite">
+        <p class="customer-chat-empty">No messages yet.</p>
+      </div>
+
+      <form id="customerChatForm" class="customer-chat-form">
+        <input id="customerChatInput" maxlength="1000" placeholder="Write a message…" autocomplete="off" required>
+        <button id="customerChatSend" type="submit">Send</button>
+      </form>
+
+      <p id="customerChatStatus" class="customer-chat-status" role="status"></p>
+    </section>
+
     <p id="trackingError" class="message" role="status"></p>
   </section>
 </main>
 
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script defer src="map-config.js"></script>
-<script defer src="app.js?v=live-location-20261005"></script>
+<script defer src="app.js?v=two-way-chat-20261009"></script>
 
 <script>
 (function () {

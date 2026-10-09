@@ -5872,6 +5872,9 @@ if (
   let lastState =
     "";
 
+  let customerChatSignature =
+    "";
+
 
   const queryId =
     new URLSearchParams(
@@ -6551,9 +6554,17 @@ function startRiderLocationTracking() {
         : "Message driver";
 
     messageLink.href =
-      `chat.html?bookingId=${encodeURIComponent(
-        booking.id
-      )}`;
+      "#customerChatPanel";
+
+    const customerChatPanel =
+      document.getElementById(
+        "customerChatPanel"
+      );
+
+    if (customerChatPanel) {
+      customerChatPanel.hidden =
+        !chatAvailable;
+    }
 
     if (assigned) {
       text(
@@ -6796,6 +6807,178 @@ function startRiderLocationTracking() {
   }
 
 
+  function customerChatTime(
+    value
+  ) {
+    const date =
+      new Date(
+        value
+      );
+
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    return date.toLocaleTimeString(
+      [],
+      {
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit"
+      }
+    );
+  }
+
+
+  function renderCustomerChatMessages(
+    messages
+  ) {
+    const list =
+      document.getElementById(
+        "customerChatMessages"
+      );
+
+    if (!list) {
+      return;
+    }
+
+    const signature =
+      messages
+        .map(
+          message =>
+            `${message.id}:${message.senderType}:${message.body}`
+        )
+        .join("|");
+
+    if (
+      signature ===
+      customerChatSignature
+    ) {
+      return;
+    }
+
+    customerChatSignature =
+      signature;
+
+    list.replaceChildren();
+
+    if (
+      !messages.length
+    ) {
+      const empty =
+        document.createElement(
+          "p"
+        );
+
+      empty.className =
+        "customer-chat-empty";
+
+      empty.textContent =
+        "No messages yet. You can message your driver here.";
+
+      list.appendChild(
+        empty
+      );
+
+      return;
+    }
+
+    messages.forEach(
+      message => {
+        const bubble =
+          document.createElement(
+            "article"
+          );
+
+        bubble.className =
+          "customer-chat-bubble" +
+          (
+            message.senderType ===
+              "customer"
+              ? " mine"
+              : ""
+          );
+
+        const sender =
+          document.createElement(
+            "small"
+          );
+
+        sender.textContent =
+          message.senderType ===
+            "customer"
+            ? `You · ${customerChatTime(
+                message.createdAt
+              )}`
+            : `${message.senderName || "Driver"} · ${customerChatTime(
+                message.createdAt
+              )}`;
+
+        const body =
+          document.createElement(
+            "div"
+          );
+
+        body.textContent =
+          String(
+            message.body ||
+            ""
+          );
+
+        bubble.append(
+          sender,
+          body
+        );
+
+        list.appendChild(
+          bubble
+        );
+      }
+    );
+
+    const newest =
+      messages[
+        messages.length - 1
+      ];
+
+    if (
+      newest?.id &&
+      activeRide?.id
+    ) {
+      localStorage.setItem(
+        `meiVelocityChatRead:${activeRide.id}`,
+        String(
+          newest.id
+        )
+      );
+    }
+
+    list.scrollTop =
+      list.scrollHeight;
+  }
+
+
+  function customerChatStatus(
+    value = ""
+  ) {
+    const status =
+      document.getElementById(
+        "customerChatStatus"
+      );
+
+    if (status) {
+      status.textContent =
+        value;
+    }
+  }
+
+
   async function refreshDriverMessageNotice(
     booking
   ) {
@@ -6867,6 +7050,21 @@ function startRiderLocationTracking() {
       const data =
         await response.json();
 
+      const messages =
+        Array.isArray(
+          data.messages
+        )
+          ? data.messages
+          : [];
+
+      renderCustomerChatMessages(
+        messages
+      );
+
+      customerChatStatus(
+        ""
+      );
+
       const latestDriverMessage =
         (
           data.messages ||
@@ -6925,6 +7123,157 @@ function startRiderLocationTracking() {
       // Keep ride tracking working if chat is temporarily unavailable.
     }
   }
+
+
+  const customerChatForm =
+    document.getElementById(
+      "customerChatForm"
+    );
+
+  const customerChatInput =
+    document.getElementById(
+      "customerChatInput"
+    );
+
+  const customerChatSend =
+    document.getElementById(
+      "customerChatSend"
+    );
+
+
+  document
+    .getElementById(
+      "messageDriverLink"
+    )
+    ?.addEventListener(
+      "click",
+      event => {
+        event.preventDefault();
+
+        const panel =
+          document.getElementById(
+            "customerChatPanel"
+          );
+
+        if (
+          panel &&
+          !panel.hidden
+        ) {
+          panel.scrollIntoView({
+            behavior:
+              "smooth",
+
+            block:
+              "nearest"
+          });
+
+          customerChatInput?.focus();
+        }
+      }
+    );
+
+
+  customerChatForm
+    ?.addEventListener(
+      "submit",
+      async event => {
+        event.preventDefault();
+
+        const body =
+          customerChatInput
+            ?.value
+            .trim() ||
+          "";
+
+        if (
+          !body ||
+          !activeRide?.id
+        ) {
+          return;
+        }
+
+        if (
+          !customerSession?.token
+        ) {
+          customerChatStatus(
+            "Sign in again to message your driver."
+          );
+
+          return;
+        }
+
+        customerChatSend.disabled =
+          true;
+
+        customerChatStatus(
+          "Sending…"
+        );
+
+        try {
+          const response =
+            await fetch(
+              `${API_BASE}/api/customer/bookings/${encodeURIComponent(
+                activeRide.id
+              )}/messages`,
+              {
+                method:
+                  "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json",
+
+                  Authorization:
+                    `Bearer ${customerSession.token}`
+                },
+
+                body:
+                  JSON.stringify({
+                    body
+                  })
+              }
+            );
+
+          const data =
+            await response.json();
+
+          if (
+            !response.ok
+          ) {
+            throw new Error(
+              data.message ||
+                "Unable to send your message."
+            );
+          }
+
+          customerChatInput.value =
+            "";
+
+          customerChatSignature =
+            "";
+
+          await refreshDriverMessageNotice(
+            activeRide
+          );
+
+          customerChatStatus(
+            ""
+          );
+
+        } catch (error) {
+          customerChatStatus(
+            error.message ||
+              "Unable to send your message."
+          );
+
+        } finally {
+          customerChatSend.disabled =
+            false;
+
+          customerChatInput?.focus();
+        }
+      }
+    );
 
 
   async function poll() {

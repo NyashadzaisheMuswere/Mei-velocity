@@ -905,7 +905,7 @@ app.post("/api/customer/bookings/:id/messages", customerAuth, async (req, res) =
   const body = String(req.body.body || "").trim();
   if (!body || body.length > 1000) return res.status(400).json({ success: false, message: "Write a message up to 1,000 characters." });
   try {
-    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "customerId"=$2 AND ${CHAT_WRITABLE_RIDE_SQL} AND "assignedDriverId" IS NOT NULL`, [req.params.id, req.customerId]);
+    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "customerId"=$2 AND ${CHAT_AVAILABLE_RIDE_SQL} AND "assignedDriverId" IS NOT NULL`, [req.params.id, req.customerId]);
     if (!ride.rows.length) return res.status(404).json({ success: false, message: "Chat is available after a driver accepts your ride." });
     const customer = await pool.query(`SELECT username FROM customers WHERE id=$1`, [req.customerId]);
     const message = await saveRideMessage({ bookingId: req.params.id, senderType: "customer", senderId: req.customerId, senderName: customer.rows[0]?.username || "Customer", body });
@@ -918,7 +918,7 @@ app.post("/api/customer/bookings/:id/messages", customerAuth, async (req, res) =
 
 app.get("/api/driver/bookings/:id/messages", driverAuth, async (req, res) => {
   try {
-    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "assignedDriverId"=$2 AND ${CHAT_WRITABLE_RIDE_SQL}`, [req.params.id, req.driverId]);
+    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "assignedDriverId"=$2 AND ${CHAT_AVAILABLE_RIDE_SQL}`, [req.params.id, req.driverId]);
     if (!ride.rows.length) return res.status(404).json({ success: false, message: "This ride chat is no longer available." });
     res.json({ success: true, messages: await readRideMessages(req.params.id) });
   } catch (error) {
