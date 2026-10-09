@@ -6412,7 +6412,7 @@ function startRiderLocationTracking() {
             "Your trip has started.",
 
           step:
-            4
+            3
         };
 
       case "Arrived":
@@ -6424,7 +6424,7 @@ function startRiderLocationTracking() {
             "Your driver is at the pickup point.",
 
           step:
-            3
+            2
         };
 
       case "On the Way":
@@ -6436,7 +6436,7 @@ function startRiderLocationTracking() {
             "Your driver is coming to your pickup.",
 
           step:
-            2
+            1
         };
 
       case "Accepted":
@@ -6448,7 +6448,7 @@ function startRiderLocationTracking() {
             "Your driver is heading to the pickup.",
 
           step:
-            1
+            0
         };
 
       default:
@@ -6460,7 +6460,7 @@ function startRiderLocationTracking() {
             "Your request is with MEI Velocity drivers. We’ll update this page as soon as someone accepts.",
 
           step:
-            0
+            -1
         };
     }
   }
@@ -6739,6 +6739,16 @@ function startRiderLocationTracking() {
         "Completed" ||
       booking.driverStatus ===
         "Completed";
+
+    const bookAnotherRideLink =
+      document.getElementById(
+        "bookAnotherRideLink"
+      );
+
+    if (bookAnotherRideLink) {
+      bookAnotherRideLink.hidden =
+        !completed;
+    }
 
     const ratingArea =
       document.getElementById(

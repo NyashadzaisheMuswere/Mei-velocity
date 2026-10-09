@@ -508,6 +508,517 @@
 .customer-chat-status:empty{display:none}
 </style>
 
+
+<style id="mei-mobile-live-ride-redesign">
+@media (max-width:700px){
+
+  html[data-workflow="ride"] body{
+    min-height:100dvh !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+    background:#fff !important;
+    color:#171a17 !important;
+  }
+
+  html[data-workflow="ride"] #ridePage{
+    display:block !important;
+    min-height:100dvh !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:#fff !important;
+  }
+
+  /* ---------- TOP BAR ---------- */
+
+  html[data-workflow="ride"] .tracking-header{
+    position:relative !important;
+    z-index:1100 !important;
+    height:62px !important;
+    padding:max(8px,env(safe-area-inset-top)) 14px 8px !important;
+    display:grid !important;
+    grid-template-columns:42px minmax(0,1fr) 42px !important;
+    align-items:center !important;
+    gap:8px !important;
+    border:0 !important;
+    border-bottom:1px solid #edf0ec !important;
+    background:#fff !important;
+  }
+
+  html[data-workflow="ride"] .tracking-home{
+    width:40px !important;
+    height:40px !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    border:1px solid #e5e9e3 !important;
+    border-radius:50% !important;
+    background:#fff !important;
+    color:#181c18 !important;
+    font-size:22px !important;
+    font-weight:700 !important;
+    line-height:1 !important;
+    text-decoration:none !important;
+  }
+
+  html[data-workflow="ride"] .tracking-header-title{
+    min-width:0 !important;
+    text-align:center !important;
+    font-size:17px !important;
+    font-weight:900 !important;
+    letter-spacing:-.02em !important;
+  }
+
+  html[data-workflow="ride"] .tracking-header-spacer{
+    width:40px !important;
+    height:40px !important;
+  }
+
+  /* ---------- MAP ---------- */
+
+  html[data-workflow="ride"] .tracking-map{
+    position:relative !important;
+    width:100% !important;
+    height:42dvh !important;
+    min-height:285px !important;
+    max-height:410px !important;
+    margin:0 !important;
+    border:0 !important;
+    border-radius:0 !important;
+    overflow:hidden !important;
+    background:#eef1ec !important;
+  }
+
+  html[data-workflow="ride"] #rideMap{
+    width:100% !important;
+    height:100% !important;
+    min-height:100% !important;
+  }
+
+  html[data-workflow="ride"] .map-status-pill{
+    position:absolute !important;
+    z-index:650 !important;
+    left:14px !important;
+    right:auto !important;
+    top:auto !important;
+    bottom:16px !important;
+    max-width:calc(100% - 78px) !important;
+    min-height:42px !important;
+    margin:0 !important;
+    padding:9px 14px 9px 11px !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    border:1px solid rgba(229,233,227,.95) !important;
+    border-radius:22px !important;
+    background:rgba(255,255,255,.96) !important;
+    color:#161a17 !important;
+    box-shadow:0 7px 20px rgba(24,30,25,.16) !important;
+    font-size:11px !important;
+    font-weight:850 !important;
+    line-height:1.15 !important;
+  }
+
+  html[data-workflow="ride"] .map-status-pill::before{
+    content:"🚗";
+    width:28px;
+    height:28px;
+    flex:none;
+    display:grid;
+    place-items:center;
+    border-radius:50%;
+    background:#ff7900;
+    font-size:14px;
+  }
+
+  /* ---------- SHEET / STATUS ---------- */
+
+  html[data-workflow="ride"] .tracking-sheet{
+    position:relative !important;
+    z-index:10 !important;
+    width:100% !important;
+    margin:0 !important;
+    padding:0 14px max(18px,env(safe-area-inset-bottom)) !important;
+    border:0 !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    box-shadow:none !important;
+  }
+
+  /* The map pill already communicates the status. */
+  html[data-workflow="ride"] .tracking-sheet > h1,
+  html[data-workflow="ride"] .tracking-sheet > .tracking-subtitle{
+    display:none !important;
+  }
+
+  /* The old route/status copy was causing the cut-off text below the map. */
+  html[data-workflow="ride"] .tracking-route,
+  html[data-workflow="ride"] #locationMessage{
+    display:none !important;
+  }
+
+  /* ---------- DRIVER PROGRESS ---------- */
+
+  html[data-workflow="ride"] .tracking-progress{
+    width:100% !important;
+    margin:0 !important;
+    padding:20px 2px 32px !important;
+    display:grid !important;
+    grid-template-columns:repeat(5,minmax(0,1fr)) !important;
+    gap:5px !important;
+    overflow:visible !important;
+  }
+
+  html[data-workflow="ride"] .tracking-progress span{
+    position:relative !important;
+    display:block !important;
+    width:auto !important;
+    height:4px !important;
+    min-width:0 !important;
+    margin:0 !important;
+    padding:0 !important;
+    border:0 !important;
+    border-radius:999px !important;
+    background:#e3e6e2 !important;
+    opacity:1 !important;
+  }
+
+  html[data-workflow="ride"] .tracking-progress span.active{
+    background:#ff7900 !important;
+  }
+
+  html[data-workflow="ride"] .tracking-progress span::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:50%;
+    width:17px;
+    height:17px;
+    transform:translate(-1px,-50%);
+    border:3px solid #fff;
+    border-radius:50%;
+    background:#dfe3de;
+    box-shadow:0 0 0 1px #dfe3de;
+  }
+
+  html[data-workflow="ride"] .tracking-progress span.active::before{
+    background:#ff7900;
+    box-shadow:0 0 0 1px #ff7900;
+  }
+
+  html[data-workflow="ride"] .tracking-progress span::after{
+    content:attr(data-label);
+    position:absolute;
+    top:15px;
+    left:50%;
+    width:68px;
+    transform:translateX(-50%);
+    color:#666e67;
+    text-align:center;
+    font-size:8px;
+    line-height:1.05;
+    font-weight:750;
+    white-space:normal;
+  }
+
+  html[data-workflow="ride"] .tracking-progress span.active::after{
+    color:#252925;
+  }
+
+  /* ---------- DRIVER CARD ---------- */
+
+  html[data-workflow="ride"] .driver-panel{
+    width:100% !important;
+    min-height:72px !important;
+    margin:8px 0 12px !important;
+    padding:11px 12px !important;
+    display:grid !important;
+    grid-template-columns:46px minmax(0,1fr) auto !important;
+    align-items:center !important;
+    gap:10px !important;
+    border:1px solid #e7ebe5 !important;
+    border-radius:17px !important;
+    background:#fff !important;
+    box-shadow:none !important;
+  }
+
+  html[data-workflow="ride"] .driver-panel[hidden]{
+    display:none !important;
+  }
+
+  html[data-workflow="ride"] .driver-avatar{
+    width:46px !important;
+    height:46px !important;
+    margin:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    border-radius:50% !important;
+    background:#fff0e4 !important;
+    font-size:22px !important;
+  }
+
+  html[data-workflow="ride"] .driver-detail{
+    min-width:0 !important;
+  }
+
+  html[data-workflow="ride"] .driver-detail small:first-child{
+    display:none !important;
+  }
+
+  html[data-workflow="ride"] .driver-detail strong{
+    display:block !important;
+    margin:0 !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    color:#171a17 !important;
+    font-size:14px !important;
+    line-height:1.2 !important;
+    font-weight:900 !important;
+  }
+
+  html[data-workflow="ride"] .driver-detail small:last-child{
+    display:block !important;
+    margin-top:3px !important;
+    color:#737a73 !important;
+    font-size:10px !important;
+    line-height:1.15 !important;
+  }
+
+  html[data-workflow="ride"] .plate-chip{
+    max-width:94px !important;
+    padding:8px 9px !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+    white-space:nowrap !important;
+    border:1px solid #e1e5df !important;
+    border-radius:11px !important;
+    background:#fff !important;
+    color:#222622 !important;
+    font-size:10px !important;
+    font-weight:900 !important;
+    letter-spacing:.02em !important;
+  }
+
+  /* ---------- ACTIONS ---------- */
+
+  html[data-workflow="ride"] .tracking-actions{
+    margin:0 !important;
+    padding:0 !important;
+    display:block !important;
+  }
+
+  /* Chat is already on-screen, so no duplicate Message driver button. */
+  html[data-workflow="ride"] #messageDriverLink{
+    display:none !important;
+  }
+
+  html[data-workflow="ride"] #bookAnotherRideLink[hidden]{
+    display:none !important;
+  }
+
+  html[data-workflow="ride"] #bookAnotherRideLink:not([hidden]),
+  html[data-workflow="ride"] #cancelRide:not([hidden]){
+    width:100% !important;
+    min-height:44px !important;
+    margin:0 0 10px !important;
+    display:grid !important;
+    place-items:center !important;
+    border:1px solid #ffd3b0 !important;
+    border-radius:13px !important;
+    background:#fff5ed !important;
+    color:#a14400 !important;
+    text-decoration:none !important;
+    font-size:11px !important;
+    font-weight:850 !important;
+  }
+
+  html[data-workflow="ride"] #driverMessageNotice{
+    display:none !important;
+  }
+
+  /* ---------- CHAT ---------- */
+
+  html[data-workflow="ride"] .customer-chat-panel{
+    width:100% !important;
+    margin:0 !important;
+    padding:13px 0 0 !important;
+    border:0 !important;
+    border-top:1px solid #edf0ec !important;
+    border-radius:0 !important;
+    background:#fff !important;
+    box-shadow:none !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-panel[hidden]{
+    display:none !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-heading{
+    margin:0 0 10px !important;
+    padding:0 !important;
+    display:block !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-heading strong{
+    color:#171a17 !important;
+    font-size:17px !important;
+    line-height:1.15 !important;
+    font-weight:900 !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-messages{
+    width:100% !important;
+    min-height:120px !important;
+    max-height:245px !important;
+    margin:0 !important;
+    padding:3px 0 10px !important;
+    display:flex !important;
+    flex-direction:column !important;
+    gap:8px !important;
+    overflow-y:auto !important;
+    background:#fff !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-empty{
+    margin:auto !important;
+    padding:18px 6px !important;
+    color:#7a817b !important;
+    text-align:center !important;
+    font-size:10px !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-bubble{
+    max-width:78% !important;
+    padding:9px 10px 8px !important;
+    border-radius:14px 14px 14px 5px !important;
+    background:#f0f2ef !important;
+    color:#202420 !important;
+    box-shadow:none !important;
+    font-size:12px !important;
+    line-height:1.35 !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-bubble.mine{
+    align-self:flex-end !important;
+    border-radius:14px 14px 5px 14px !important;
+    background:#ff7900 !important;
+    color:#fff !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-bubble small{
+    margin:0 0 3px !important;
+    color:#757c76 !important;
+    font-size:8px !important;
+    font-weight:750 !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-bubble.mine small{
+    color:rgba(255,255,255,.82) !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-form{
+    width:100% !important;
+    margin:4px 0 0 !important;
+    padding:8px 0 0 !important;
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 46px !important;
+    align-items:center !important;
+    gap:8px !important;
+    border-top:1px solid #f0f2ef !important;
+    background:#fff !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-form input{
+    width:100% !important;
+    min-width:0 !important;
+    min-height:46px !important;
+    margin:0 !important;
+    padding:11px 14px !important;
+    border:1px solid #dfe4dd !important;
+    border-radius:18px !important;
+    background:#fafbf9 !important;
+    color:#202420 !important;
+    box-shadow:none !important;
+    font-size:16px !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-form input:focus{
+    border-color:#ffad69 !important;
+    box-shadow:0 0 0 3px rgba(255,121,0,.10) !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-form button{
+    width:46px !important;
+    min-width:46px !important;
+    height:46px !important;
+    min-height:46px !important;
+    margin:0 !important;
+    padding:0 !important;
+    display:grid !important;
+    place-items:center !important;
+    border:0 !important;
+    border-radius:50% !important;
+    background:#ff7900 !important;
+    color:#fff !important;
+    font-size:0 !important;
+    font-weight:900 !important;
+    box-shadow:none !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-form button::before{
+    content:"➤";
+    transform:translateX(1px);
+    font-size:17px;
+  }
+
+  html[data-workflow="ride"] .customer-chat-status{
+    min-height:0 !important;
+    margin:5px 0 0 !important;
+    color:#9a4900 !important;
+    font-size:9px !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-status:empty{
+    display:none !important;
+  }
+
+  html[data-workflow="ride"] #trackingError{
+    margin:5px 0 0 !important;
+    min-height:0 !important;
+    font-size:9px !important;
+  }
+
+  /* Completion-only rating remains available but compact. */
+  html[data-workflow="ride"] .rating-area:not([hidden]){
+    margin:10px 0 !important;
+    padding:11px !important;
+    border:1px solid #e6eae4 !important;
+    border-radius:14px !important;
+    background:#fafbf9 !important;
+  }
+}
+
+@media (max-width:380px){
+  html[data-workflow="ride"] .tracking-map{
+    height:39dvh !important;
+    min-height:260px !important;
+  }
+
+  html[data-workflow="ride"] .tracking-progress span::after{
+    width:58px;
+    font-size:7px;
+  }
+
+  html[data-workflow="ride"] .driver-detail strong{
+    font-size:13px !important;
+  }
+
+  html[data-workflow="ride"] .customer-chat-messages{
+    max-height:215px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <section class="hero" id="home">
@@ -935,22 +1446,35 @@
 </dialog>
 
 <main id="ridePage" class="tracking-page" hidden>
-  <header class="tracking-header"><a class="tracking-home" href="index.html">← Home</a></header>
+  <header class="tracking-header">
+    <a class="tracking-home" href="index.html" aria-label="Back to home">←</a>
+    <strong class="tracking-header-title">Your ride</strong>
+    <span class="tracking-header-spacer" aria-hidden="true"></span>
+  </header>
   <div class="tracking-map"><div id="rideMap" aria-label="Live rider and driver location map"></div><div id="rideStatusPill" class="map-status-pill">Looking for your driver…</div></div>
   <section class="tracking-sheet">
     <h1 id="rideTitle">Finding your driver</h1><p id="rideMessage" class="tracking-subtitle">Your request has been sent to MEI Velocity drivers.</p>
-    <div id="rideProgress" class="tracking-progress" aria-label="Ride progress"><span></span><span></span><span></span><span></span><span></span></div>
+    <div id="rideProgress" class="tracking-progress" aria-label="Ride progress">
+      <span data-label="Accepted"></span>
+      <span data-label="On the way"></span>
+      <span data-label="Arrived"></span>
+      <span data-label="Pickup"></span>
+      <span data-label="Completed"></span>
+    </div>
     <section id="driverPanel" class="driver-panel" hidden><div class="driver-avatar">🚘</div><div class="driver-detail"><small>YOUR DRIVER</small><strong id="trackingDriverName">—</strong><small id="trackingDriverVehicle">Vehicle details</small></div><span id="trackingDriverPlate" class="plate-chip">—</span></section>
     <div class="tracking-route"><div><span class="route-dot"></span><span><small>Pickup</small><strong id="ridePickup"></strong></span></div><div><span class="route-dot destination"></span><span><small>Destination</small><strong id="rideDropoff"></strong></span></div></div>
     <p id="locationMessage" class="help">The driver’s live location appears here when they share it.</p>
     <section id="ratingArea" class="rating-area" hidden><strong>How was your ride?</strong><p><select id="rideRatingSelect" aria-label="Ride rating"><option value="5">5 · Excellent</option><option value="4">4 · Good</option><option value="3">3 · Okay</option><option value="2">2 · Poor</option><option value="1">1 · Very poor</option></select><button id="rideRatingSubmit" type="button">Send rating</button></p><small id="rideRatingFeedback"></small></section>
-    <div class="tracking-actions"><button id="cancelRide" class="secondary-button" type="button" hidden>Cancel request</button><a id="messageDriverLink" href="#customerChatPanel" hidden>Message driver</a><a href="index.html">Book another ride</a></div>
+    <div class="tracking-actions">
+      <button id="cancelRide" class="secondary-button" type="button" hidden>Cancel request</button>
+      <a id="messageDriverLink" href="#customerChatPanel" hidden>Message driver</a>
+      <a id="bookAnotherRideLink" href="index.html" hidden>Book another ride</a>
+    </div>
     <p id="driverMessageNotice" class="driver-message-notice" role="status" aria-live="polite" hidden></p>
 
     <section id="customerChatPanel" class="customer-chat-panel" hidden>
       <div class="customer-chat-heading">
         <strong>Message driver</strong>
-        <small>Two-way ride chat</small>
       </div>
 
       <div id="customerChatMessages" class="customer-chat-messages" aria-live="polite">
@@ -971,7 +1495,7 @@
 
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script defer src="map-config.js"></script>
-<script defer src="app.js?v=two-way-chat-20261009"></script>
+<script defer src="app.js?v=mobile-ride-redesign-20261009"></script>
 
 <script>
 (function () {
