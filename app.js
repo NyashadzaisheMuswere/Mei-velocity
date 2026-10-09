@@ -613,11 +613,31 @@ function initHomeMap() {
   homeMap =
     L.map(element, {
       zoomControl: false,
-      attributionControl: true
+      attributionControl: true,
+      dragging: true,
+      touchZoom: true,
+      doubleClickZoom: true,
+      scrollWheelZoom: true,
+      boxZoom: true,
+      keyboard: true
     }).setView(
       [-17.8252, 31.0335],
       12
     );
+
+  /*
+   * Explicitly enable map gestures. This matters on phones where the
+   * homepage UI sits visually above the Leaflet map.
+   */
+  homeMap.dragging.enable();
+
+  if (homeMap.touchZoom) {
+    homeMap.touchZoom.enable();
+  }
+
+  if (homeMap.doubleClickZoom) {
+    homeMap.doubleClickZoom.enable();
+  }
 
   addMeiBasemap(homeMap);
 
@@ -4265,678 +4285,131 @@ document
   );
 
 
-document
-  .getElementById(
-    "openSmsLogin"
-  )
-  .addEventListener(
-    "click",
-    () => {
-      document.getElementById(
-        "smsPhone"
-      ).value =
-        document.getElementById(
-          "loginPhone"
-        ).value.trim();
+async function requestPhoneCode({ phone, username = "", message, reveal }) {
+  if (!phone) {
+    message.textContent = "Enter your phone number.";
+    return false;
+  }
 
-      setAccountMode(
-        "sms"
-      );
+  message.textContent = "Sending confirmation code…";
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/customer/request-code`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(username ? { username, phone } : { phone })
+      }
+    );
+
+    const data = await readApiResponse(response, "Could not send confirmation code.");
+    reveal();
+    message.textContent = data.message || "Confirmation code sent.";
+    return true;
+  } catch (error) {
+    message.textContent = apiErrorMessage(error);
+    return false;
+  }
+}
+
+
+async function verifyPhoneCode({ phone, code, message, successMessage }) {
+  if (!phone || !code) {
+    message.textContent = "Enter the confirmation code.";
+    return;
+  }
+
+  message.textContent = "Verifying…";
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/customer/verify-code`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code })
+      }
+    );
+
+    const data = await readApiResponse(response, "Could not verify the code.");
+    finishAccountSignIn(data, successMessage);
+  } catch (error) {
+    message.textContent = apiErrorMessage(error);
+  }
+}
+
+
+document.getElementById("accountLoginContinue").addEventListener("click", async () => {
+  const phone = document.getElementById("loginPhone").value.trim();
+  const message = document.getElementById("accountMessage");
+
+  await requestPhoneCode({
+    phone,
+    message,
+    reveal: () => {
+      document.getElementById("accountLoginCodeWrap").hidden = false;
+      document.getElementById("accountLoginCode").focus();
     }
-  );
+  });
+});
 
 
-document
-  .getElementById(
-    "createUseSms"
-  )
-  .addEventListener(
-    "click",
-    () => {
-      document.getElementById(
-        "smsUsername"
-      ).value =
-        document.getElementById(
-          "accountUsername"
-        ).value.trim();
+document.getElementById("accountLoginVerify").addEventListener("click", async () => {
+  await verifyPhoneCode({
+    phone: document.getElementById("loginPhone").value.trim(),
+    code: document.getElementById("accountLoginCode").value.trim(),
+    message: document.getElementById("accountMessage"),
+    successMessage: "Signed in successfully."
+  });
+});
 
-      document.getElementById(
-        "smsPhone"
-      ).value =
-        document.getElementById(
-          "accountPhone"
-        ).value.trim();
 
-      setAccountMode(
-        "sms"
-      );
+document.getElementById("createAccountButton").addEventListener("click", async () => {
+  const username = document.getElementById("accountUsername").value.trim();
+  const phone = document.getElementById("accountPhone").value.trim();
+  const message = document.getElementById("accountMessage");
+
+  if (!username || !phone) {
+    message.textContent = "Enter your name and phone number.";
+    return;
+  }
+
+  await requestPhoneCode({
+    phone,
+    username,
+    message,
+    reveal: () => {
+      document.getElementById("accountCreateCodeWrap").hidden = false;
+      document.getElementById("accountCreateCode").focus();
     }
-  );
+  });
+});
 
 
-document
-  .getElementById(
-    "backToPasswordSignIn"
-  )
-  .addEventListener(
-    "click",
-    () =>
-      setAccountMode(
-        "signin"
-      )
-  );
+document.getElementById("accountCreateVerify").addEventListener("click", async () => {
+  await verifyPhoneCode({
+    phone: document.getElementById("accountPhone").value.trim(),
+    code: document.getElementById("accountCreateCode").value.trim(),
+    message: document.getElementById("accountMessage"),
+    successMessage: "Account created successfully."
+  });
+});
 
 
-document
-  .getElementById(
-    "forgotPasswordButton"
-  )
-  .addEventListener(
-    "click",
-    () => {
-      document.getElementById(
-        "forgotPhone"
-      ).value =
-        document.getElementById(
-          "loginPhone"
-        ).value.trim();
+document.getElementById("loginPhone").addEventListener("keydown", event => {
+  if (event.key === "Enter") document.getElementById("accountLoginContinue").click();
+});
 
-      setAccountMode(
-        "forgot"
-      );
-    }
-  );
 
+document.getElementById("accountLoginCode").addEventListener("keydown", event => {
+  if (event.key === "Enter") document.getElementById("accountLoginVerify").click();
+});
 
-document
-  .getElementById(
-    "forgotBackToSignIn"
-  )
-  .addEventListener(
-    "click",
-    () =>
-      setAccountMode(
-        "signin"
-      )
-  );
 
-
-/* =========================================================
-   PHONE + PASSWORD LOGIN
-========================================================= */
-
-document
-  .getElementById(
-    "passwordLoginButton"
-  )
-  .addEventListener(
-    "click",
-    async () => {
-      const phone =
-        document.getElementById(
-          "loginPhone"
-        ).value.trim();
-
-      const password =
-        document.getElementById(
-          "loginPassword"
-        ).value;
-
-      const message =
-        document.getElementById(
-          "accountMessage"
-        );
-
-      if (
-        !phone ||
-        !password
-      ) {
-        message.textContent =
-          "Enter your phone number and password.";
-
-        return;
-      }
-
-      message.textContent =
-        "Signing in…";
-
-      try {
-        const response =
-          await fetch(
-            `${API_BASE}/api/customer/login`,
-            {
-              method:
-                "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  phone,
-                  password
-                })
-            }
-          );
-
-        const data =
-          await readPasswordAuthResponse(
-            response,
-            "Could not sign in.",
-            "Phone + password sign-in"
-          );
-
-        finishAccountSignIn(
-          data
-        );
-
-      } catch (error) {
-        message.textContent =
-          apiErrorMessage(
-            error
-          );
-      }
-    }
-  );
-
-
-/* =========================================================
-   CREATE ACCOUNT
-========================================================= */
-
-document
-  .getElementById(
-    "createAccountButton"
-  )
-  .addEventListener(
-    "click",
-    async () => {
-      const username =
-        document.getElementById(
-          "accountUsername"
-        ).value.trim();
-
-      const phone =
-        document.getElementById(
-          "accountPhone"
-        ).value.trim();
-
-      const password =
-        document.getElementById(
-          "accountPassword"
-        ).value;
-
-      const confirmPassword =
-        document.getElementById(
-          "accountPasswordConfirm"
-        ).value;
-
-      const message =
-        document.getElementById(
-          "accountMessage"
-        );
-
-      if (
-        !username ||
-        !phone ||
-        !password
-      ) {
-        message.textContent =
-          "Enter your name, phone number and password.";
-
-        return;
-      }
-
-      if (
-        password.length < 8
-      ) {
-        message.textContent =
-          "Use a password with at least 8 characters.";
-
-        return;
-      }
-
-      if (
-        password !==
-        confirmPassword
-      ) {
-        message.textContent =
-          "The passwords do not match.";
-
-        return;
-      }
-
-      message.textContent =
-        "Creating your account…";
-
-      try {
-        const response =
-          await fetch(
-            `${API_BASE}/api/customer/register`,
-            {
-              method:
-                "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  username,
-                  phone,
-                  password
-                })
-            }
-          );
-
-        const data =
-          await readPasswordAuthResponse(
-            response,
-            "Could not create the account.",
-            "Password account creation"
-          );
-
-        if (
-          data.token &&
-          data.customer
-        ) {
-          finishAccountSignIn(
-            data,
-            "Account created successfully."
-          );
-
-          return;
-        }
-
-        document.getElementById(
-          "smsUsername"
-        ).value =
-          username;
-
-        document.getElementById(
-          "smsPhone"
-        ).value =
-          phone;
-
-        setAccountMode(
-          "sms"
-        );
-
-        message.textContent =
-          data.message ||
-          "Enter the SMS verification code sent to your phone.";
-
-      } catch (error) {
-        message.textContent =
-          apiErrorMessage(
-            error
-          );
-      }
-    }
-  );
-
-
-/* =========================================================
-   EXISTING SMS LOGIN
-========================================================= */
-
-document
-  .getElementById(
-    "sendCode"
-  )
-  .addEventListener(
-    "click",
-    async () => {
-      const username =
-        document.getElementById(
-          "smsUsername"
-        ).value.trim();
-
-      const phone =
-        document.getElementById(
-          "smsPhone"
-        ).value.trim();
-
-      const message =
-        document.getElementById(
-          "accountMessage"
-        );
-
-      if (
-        !username ||
-        !phone
-      ) {
-        message.textContent =
-          "Enter your name and phone number.";
-
-        return;
-      }
-
-      message.textContent =
-        "Sending verification code…";
-
-      try {
-        const response =
-          await fetch(
-            `${API_BASE}/api/customer/request-code`,
-            {
-              method:
-                "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  username,
-                  phone
-                })
-            }
-          );
-
-        const data =
-          await readApiResponse(
-            response,
-            "Could not send code."
-          );
-
-        document.getElementById(
-          "codeField"
-        ).hidden =
-          false;
-
-        document.getElementById(
-          "verifyCode"
-        ).hidden =
-          false;
-
-        message.textContent =
-          data.message;
-
-      } catch (error) {
-        message.textContent =
-          apiErrorMessage(
-            error
-          );
-      }
-    }
-  );
-
-
-document
-  .getElementById(
-    "verifyCode"
-  )
-  .addEventListener(
-    "click",
-    async () => {
-      const message =
-        document.getElementById(
-          "accountMessage"
-        );
-
-      const phone =
-        document.getElementById(
-          "smsPhone"
-        ).value.trim();
-
-      const code =
-        document.getElementById(
-          "accountCode"
-        ).value.trim();
-
-      if (
-        !phone ||
-        !code
-      ) {
-        message.textContent =
-          "Enter the verification code.";
-
-        return;
-      }
-
-      message.textContent =
-        "Verifying…";
-
-      try {
-        const response =
-          await fetch(
-            `${API_BASE}/api/customer/verify-code`,
-            {
-              method:
-                "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  phone,
-                  code
-                })
-            }
-          );
-
-        const data =
-          await readApiResponse(
-            response,
-            "Could not verify code."
-          );
-
-        finishAccountSignIn(
-          data,
-          "Phone verified. Your account is ready."
-        );
-
-      } catch (error) {
-        message.textContent =
-          apiErrorMessage(
-            error
-          );
-      }
-    }
-  );
-
-
-  /* =========================================================
-   FORGOT PASSWORD
-========================================================= */
-
-document
-  .getElementById(
-    "requestPasswordReset"
-  )
-  .addEventListener(
-    "click",
-    async () => {
-      const phone =
-        document.getElementById(
-          "forgotPhone"
-        ).value.trim();
-
-      const message =
-        document.getElementById(
-          "accountMessage"
-        );
-
-      if (!phone) {
-        message.textContent =
-          "Enter your phone number.";
-
-        return;
-      }
-
-      message.textContent =
-        "Sending reset code…";
-
-      try {
-        const response =
-          await fetch(
-            `${API_BASE}/api/customer/password/request-reset`,
-            {
-              method:
-                "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  phone
-                })
-            }
-          );
-
-        const data =
-          await readPasswordAuthResponse(
-            response,
-            "Could not send a reset code.",
-            "Password reset"
-          );
-
-        document.getElementById(
-          "resetPasswordFields"
-        ).hidden =
-          false;
-
-        message.textContent =
-          data.message ||
-          "Enter the code sent to your phone and choose a new password.";
-
-      } catch (error) {
-        message.textContent =
-          apiErrorMessage(
-            error
-          );
-      }
-    }
-  );
-
-
-document
-  .getElementById(
-    "resetPasswordButton"
-  )
-  .addEventListener(
-    "click",
-    async () => {
-      const phone =
-        document.getElementById(
-          "forgotPhone"
-        ).value.trim();
-
-      const code =
-        document.getElementById(
-          "resetCode"
-        ).value.trim();
-
-      const password =
-        document.getElementById(
-          "newPassword"
-        ).value;
-
-      const confirmPassword =
-        document.getElementById(
-          "newPasswordConfirm"
-        ).value;
-
-      const message =
-        document.getElementById(
-          "accountMessage"
-        );
-
-      if (
-        !code ||
-        !password
-      ) {
-        message.textContent =
-          "Enter the code and your new password.";
-
-        return;
-      }
-
-      if (
-        password.length < 8
-      ) {
-        message.textContent =
-          "Use a password with at least 8 characters.";
-
-        return;
-      }
-
-      if (
-        password !==
-        confirmPassword
-      ) {
-        message.textContent =
-          "The passwords do not match.";
-
-        return;
-      }
-
-      message.textContent =
-        "Updating your password…";
-
-      try {
-        const response =
-          await fetch(
-            `${API_BASE}/api/customer/password/reset`,
-            {
-              method:
-                "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  phone,
-                  code,
-                  password
-                })
-            }
-          );
-
-        const data =
-          await readPasswordAuthResponse(
-            response,
-            "Could not reset the password.",
-            "Password reset"
-          );
-
-        document.getElementById(
-          "loginPhone"
-        ).value =
-          phone;
-
-        setAccountMode(
-          "signin"
-        );
-
-        message.textContent =
-          data.message ||
-          "Password updated. You can sign in now.";
-
-      } catch (error) {
-        message.textContent =
-          apiErrorMessage(
-            error
-          );
-      }
-    }
-  );
+document.getElementById("accountCreateCode").addEventListener("keydown", event => {
+  if (event.key === "Enter") document.getElementById("accountCreateVerify").click();
+});
 
 
 /* =========================================================
@@ -5492,11 +4965,6 @@ if (
         mode !== "create";
 
       document.getElementById(
-        "confirmSmsPanel"
-      ).hidden =
-        mode !== "sms";
-
-      document.getElementById(
         "confirmSignInTab"
       ).classList.toggle(
         "active",
@@ -5579,471 +5047,132 @@ if (
 
     document
       .getElementById(
-        "confirmOpenSms"
-      )
-      .addEventListener(
-        "click",
-        () => {
-          document.getElementById(
-            "confirmSmsPhone"
-          ).value =
-            document.getElementById(
-              "confirmLoginPhone"
-            ).value.trim();
-
-          setConfirmAuthMode(
-            "sms"
-          );
-        }
-      );
-
-
-    document
-      .getElementById(
-        "confirmBackToSignIn"
-      )
-      .addEventListener(
-        "click",
-        () =>
-          setConfirmAuthMode(
-            "signin"
-          )
-      );
-
-
-    document
-      .getElementById(
-        "confirmForgotPassword"
-      )
-      .addEventListener(
-        "click",
-        () => {
-          const phone =
-            document.getElementById(
-              "confirmLoginPhone"
-            ).value.trim();
-
-          dialog.close();
-
-          document.getElementById(
-            "forgotPhone"
-          ).value =
-            phone;
-
-          openAccountAuth(
-            "forgot"
-          );
-        }
-      );
-
-
-    document
-      .getElementById(
         "confirmAccountButton"
       )
       .addEventListener(
         "click",
         () => {
-          if (
-            customerSession?.token
-          ) {
-            customerSession =
-              null;
-
-            localStorage.removeItem(
-              "meiVelocityCustomerSession"
-            );
-
+          if (customerSession?.token) {
+            customerSession = null;
+            localStorage.removeItem("meiVelocityCustomerSession");
             accountLabel();
-
           } else {
-            setConfirmAuthMode(
-              "signin"
-            );
-
+            setConfirmAuthMode("signin");
             dialog.showModal();
           }
         }
       );
 
 
-    /* PASSWORD LOGIN ON CONFIRM PAGE */
-
-    document
-      .getElementById(
-        "confirmPasswordLogin"
-      )
-      .addEventListener(
-        "click",
-        async () => {
-          const phone =
-            document.getElementById(
-              "confirmLoginPhone"
-            ).value.trim();
-
-          const password =
-            document.getElementById(
-              "confirmLoginPassword"
-            ).value;
-
-          const message =
-            document.getElementById(
-              "confirmAuthMessage"
-            );
-
-          if (
-            !phone ||
-            !password
-          ) {
-            message.textContent =
-              "Enter your phone number and password.";
-
-            return;
-          }
-
-          message.textContent =
-            "Signing in…";
-
-          try {
-            const response =
-              await fetch(
-                `${API_BASE}/api/customer/login`,
-                {
-                  method:
-                    "POST",
-
-                  headers: {
-                    "Content-Type":
-                      "application/json"
-                  },
-
-                  body:
-                    JSON.stringify({
-                      phone,
-                      password
-                    })
-                }
-              );
-
-            const data =
-              await readPasswordAuthResponse(
-                response,
-                "Could not sign in.",
-                "Phone + password sign-in"
-              );
-
-            finishConfirmAuth(
-              data
-            );
-
-          } catch (error) {
-            message.textContent =
-              apiErrorMessage(
-                error
-              );
-          }
-        }
-      );
-
-
-    /* CREATE ACCOUNT ON CONFIRM PAGE */
-
-    document
-      .getElementById(
-        "confirmCreateAccount"
-      )
-      .addEventListener(
-        "click",
-        async () => {
-          const username =
-            document.getElementById(
-              "confirmUsername"
-            ).value.trim();
-
-          const phone =
-            document.getElementById(
-              "confirmPhone"
-            ).value.trim();
-
-          const password =
-            document.getElementById(
-              "confirmPassword"
-            ).value;
-
-          const passwordAgain =
-            document.getElementById(
-              "confirmPasswordAgain"
-            ).value;
-
-          const message =
-            document.getElementById(
-              "confirmAuthMessage"
-            );
-
-          if (
-            !username ||
-            !phone ||
-            !password
-          ) {
-            message.textContent =
-              "Enter your name, phone number and password.";
-
-            return;
-          }
-
-          if (
-            password.length < 8
-          ) {
-            message.textContent =
-              "Use a password with at least 8 characters.";
-
-            return;
-          }
-
-          if (
-            password !==
-            passwordAgain
-          ) {
-            message.textContent =
-              "The passwords do not match.";
-
-            return;
-          }
-
-          message.textContent =
-            "Creating your account…";
-
-          try {
-            const response =
-              await fetch(
-                `${API_BASE}/api/customer/register`,
-                {
-                  method:
-                    "POST",
-
-                  headers: {
-                    "Content-Type":
-                      "application/json"
-                  },
-
-                  body:
-                    JSON.stringify({
-                      username,
-                      phone,
-                      password
-                    })
-                }
-              );
-
-            const data =
-              await readPasswordAuthResponse(
-                response,
-                "Could not create the account.",
-                "Password account creation"
-              );
-
-            if (
-              data.token &&
-              data.customer
-            ) {
-              finishConfirmAuth(
-                data,
-                "Account created successfully."
-              );
-
-              return;
-            }
-
-            document.getElementById(
-              "confirmSmsUsername"
-            ).value =
-              username;
-
-            document.getElementById(
-              "confirmSmsPhone"
-            ).value =
-              phone;
-
-            setConfirmAuthMode(
-              "sms"
-            );
-
-            message.textContent =
-              data.message ||
-              "Enter the SMS verification code sent to your phone.";
-
-          } catch (error) {
-            message.textContent =
-              apiErrorMessage(
-                error
-              );
-          }
-        }
-      );
-
-
-    /* SMS CODE ON CONFIRM PAGE */
-
-    document
-      .getElementById(
-        "confirmSendCode"
-      )
-      .addEventListener(
-        "click",
-        async () => {
-          const username =
-            document.getElementById(
-              "confirmSmsUsername"
-            ).value.trim();
-
-          const phone =
-            document.getElementById(
-              "confirmSmsPhone"
-            ).value.trim();
-
-          const message =
-            document.getElementById(
-              "confirmAuthMessage"
-            );
-
-          if (
-            !username ||
-            !phone
-          ) {
-            message.textContent =
-              "Enter your name and phone number.";
-
-            return;
-          }
-
-          message.textContent =
-            "Sending verification code…";
-
-          try {
-            const response =
-              await fetch(
-                `${API_BASE}/api/customer/request-code`,
-                {
-                  method:
-                    "POST",
-
-                  headers: {
-                    "Content-Type":
-                      "application/json"
-                  },
-
-                  body:
-                    JSON.stringify({
-                      username,
-                      phone
-                    })
-                }
-              );
-
-            const data =
-              await readApiResponse(
-                response,
-                "Could not send code."
-              );
-
-            document.getElementById(
-              "confirmCodeRow"
-            ).hidden =
-              false;
-
-            document.getElementById(
-              "confirmVerify"
-            ).hidden =
-              false;
-
-            message.textContent =
-              data.message;
-
-          } catch (error) {
-            message.textContent =
-              apiErrorMessage(
-                error
-              );
-          }
-        }
-      );
-
-
-    document
-      .getElementById(
-        "confirmVerify"
-      )
-      .addEventListener(
-        "click",
-        async () => {
-          const message =
-            document.getElementById(
-              "confirmAuthMessage"
-            );
-
-          const phone =
-            document.getElementById(
-              "confirmSmsPhone"
-            ).value.trim();
-
-          const code =
-            document.getElementById(
-              "confirmCode"
-            ).value.trim();
-
-          if (
-            !phone ||
-            !code
-          ) {
-            message.textContent =
-              "Enter the verification code.";
-
-            return;
-          }
-
-          message.textContent =
-            "Verifying…";
-
-          try {
-            const response =
-              await fetch(
-                `${API_BASE}/api/customer/verify-code`,
-                {
-                  method:
-                    "POST",
-
-                  headers: {
-                    "Content-Type":
-                      "application/json"
-                  },
-
-                  body:
-                    JSON.stringify({
-                      phone,
-                      code
-                    })
-                }
-              );
-
-            const data =
-              await readApiResponse(
-                response,
-                "Could not verify code."
-              );
-
-            finishConfirmAuth(
-              data,
-              "Phone verified. Your account is ready."
-            );
-
-          } catch (error) {
-            message.textContent =
-              apiErrorMessage(
-                error
-              );
-          }
-        }
-      );
+    document.getElementById("confirmLoginContinue").addEventListener("click", async () => {
+      const phone = document.getElementById("confirmLoginPhone").value.trim();
+      const message = document.getElementById("confirmAuthMessage");
+
+      if (!phone) {
+        message.textContent = "Enter your phone number.";
+        return;
+      }
+
+      message.textContent = "Sending confirmation code…";
+
+      try {
+        const response = await fetch(`${API_BASE}/api/customer/request-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone })
+        });
+
+        const data = await readApiResponse(response, "Could not send confirmation code.");
+        document.getElementById("confirmLoginCodeRow").hidden = false;
+        document.getElementById("confirmLoginCode").focus();
+        message.textContent = data.message || "Confirmation code sent.";
+      } catch (error) {
+        message.textContent = apiErrorMessage(error);
+      }
+    });
+
+
+    document.getElementById("confirmLoginVerify").addEventListener("click", async () => {
+      const phone = document.getElementById("confirmLoginPhone").value.trim();
+      const code = document.getElementById("confirmLoginCode").value.trim();
+      const message = document.getElementById("confirmAuthMessage");
+
+      if (!phone || !code) {
+        message.textContent = "Enter the confirmation code.";
+        return;
+      }
+
+      message.textContent = "Verifying…";
+
+      try {
+        const response = await fetch(`${API_BASE}/api/customer/verify-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, code })
+        });
+
+        const data = await readApiResponse(response, "Could not verify the code.");
+        finishConfirmAuth(data, "Signed in successfully.");
+      } catch (error) {
+        message.textContent = apiErrorMessage(error);
+      }
+    });
+
+
+    document.getElementById("confirmCreateAccount").addEventListener("click", async () => {
+      const username = document.getElementById("confirmUsername").value.trim();
+      const phone = document.getElementById("confirmPhone").value.trim();
+      const message = document.getElementById("confirmAuthMessage");
+
+      if (!username || !phone) {
+        message.textContent = "Enter your name and phone number.";
+        return;
+      }
+
+      message.textContent = "Sending confirmation code…";
+
+      try {
+        const response = await fetch(`${API_BASE}/api/customer/request-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, phone })
+        });
+
+        const data = await readApiResponse(response, "Could not send confirmation code.");
+        document.getElementById("confirmCreateCodeRow").hidden = false;
+        document.getElementById("confirmCreateCode").focus();
+        message.textContent = data.message || "Confirmation code sent.";
+      } catch (error) {
+        message.textContent = apiErrorMessage(error);
+      }
+    });
+
+
+    document.getElementById("confirmCreateVerify").addEventListener("click", async () => {
+      const phone = document.getElementById("confirmPhone").value.trim();
+      const code = document.getElementById("confirmCreateCode").value.trim();
+      const message = document.getElementById("confirmAuthMessage");
+
+      if (!phone || !code) {
+        message.textContent = "Enter the confirmation code.";
+        return;
+      }
+
+      message.textContent = "Verifying…";
+
+      try {
+        const response = await fetch(`${API_BASE}/api/customer/verify-code`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, code })
+        });
+
+        const data = await readApiResponse(response, "Could not verify the code.");
+        finishConfirmAuth(data, "Phone verified. Your account is ready.");
+      } catch (error) {
+        message.textContent = apiErrorMessage(error);
+      }
+    });
 
 
     /* REQUEST RIDE */
