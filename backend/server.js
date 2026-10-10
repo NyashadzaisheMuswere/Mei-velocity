@@ -1218,8 +1218,13 @@ function isLocalCustomerOtpEnabled(req) {
 }
 
 app.post("/api/customer/request-code", async (req, res) => {
-  const username = String(req.body.username || req.body.name || "").trim();
-  const phone = normalizePhoneNumber(req.body.phone);
+const mode = req.body.mode === "signin"
+  ? "signin"
+  : "signup";
+
+let username = String(
+  req.body.username || req.body.name || ""
+).trim();  const phone = normalizePhoneNumber(req.body.phone);
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;
