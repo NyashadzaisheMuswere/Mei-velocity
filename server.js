@@ -1249,7 +1249,16 @@ app.post("/api/customer/request-code", async (req, res) => {
     );
 
     const accountExists = existingCustomer.rows.length > 0;
-    const creatingAccount = Boolean(requestedUsername);
+    const requestedMode = String(req.body.mode || "")
+  .trim()
+  .toLowerCase();
+
+const creatingAccount =
+  requestedMode === "signin"
+    ? false
+    : requestedMode === "signup"
+      ? true
+      : Boolean(requestedUsername);
     let username = requestedUsername;
 
     if (creatingAccount) {
@@ -1409,8 +1418,7 @@ app.post("/api/customer/verify-code", async (req, res) => {
     const customerId = `CUS-${crypto.randomUUID()}`;
     const customer = await pool.query(`
       INSERT INTO customers (id, username, phone) VALUES ($1,$2,$3)
-      ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "verifiedAt"=NOW()
-      RETURNING id, username, phone
+ON CONFLICT (phone) DO UPDATE SET "verifiedAt"=NOW()      RETURNING id, username, phone
     `, [customerId, challenge.username, phone]);
     await pool.query(`DELETE FROM customer_verification_codes WHERE phone=$1`, [phone]);
     res.json({ success: true, customer: customer.rows[0], token: makeCustomerToken(customer.rows[0].id) });
