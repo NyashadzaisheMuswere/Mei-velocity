@@ -1,4 +1,4 @@
-﻿require("dotenv").config();
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
@@ -196,6 +196,26 @@ async function initializeDatabase() {
       "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
   `);
+
+  // Passwords are added to existing customers without recreating their accounts.
+  await pool.query(`
+    ALTER TABLE customers ADD COLUMN IF NOT EXISTS "passwordHash" TEXT
+  `);
+  // Older passwordless users can have duplicate usernames; enforce uniqueness
+  // when they set a password, without breaking existing rows.
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS customers_login_username_unique
+    ON customers (LOWER(username))
+    WHERE "passwordHash" IS NOT NULL
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_login_attempts (
+      username TEXT PRIMARY KEY,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      "lastAttemptAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
   await pool.query(`
   CREATE TABLE IF NOT EXISTS customer_push_subscriptions (
     id BIGSERIAL PRIMARY KEY,
@@ -224,6 +244,11 @@ async function initializeDatabase() {
       "sentAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       attempts INTEGER NOT NULL DEFAULT 0
     )
+  `);
+  // Differentiate account verification from legacy OTP sign-in.
+  await pool.query(`
+    ALTER TABLE customer_verification_codes
+    ADD COLUMN IF NOT EXISTS purpose TEXT NOT NULL DEFAULT 'signin'
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS bookings (
@@ -1218,32 +1243,104 @@ function isLocalCustomerOtpEnabled(req) {
 }
 
 app.post("/api/customer/request-code", async (req, res) => {
-const mode = req.body.mode === "signin"
-  ? "signin"
-  : "signup";
-
-let username = String(
-  req.body.username || req.body.name || ""
-).trim();  const phone = normalizePhoneNumber(req.body.phone);
+  const requestedUsername = String(req.body.username || req.body.name || "").trim();
+  const phone = normalizePhoneNumber(req.body.phone);
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_FROM_NUMBER;
   const verifyServiceSid = process.env.TWILIO_VERIFY_SERVICE_SID;
   const localOtp = isLocalCustomerOtpEnabled(req);
-  if ((!localOtp && (!sid || !token || (!verifyServiceSid && !from))) || !customerAuthSecret()) return res.status(503).json({ success: false, message: localOtp ? "Customer sign-in is not configured yet." : "Phone verification is not configured yet. Add the Twilio Verify Service SID in the server settings." });
-  if (username.length < 2 || username.length > 40) {
-    return res.status(400).json({ success: false, message: "Enter a name between 2 and 40 characters." });
+
+  if ((!localOtp && (!sid || !token || (!verifyServiceSid && !from))) || !customerAuthSecret()) {
+    return res.status(503).json({
+      success: false,
+      message: localOtp
+        ? "Customer sign-in is not configured yet."
+        : "Phone verification is not configured yet. Add the Twilio Verify Service SID in the server settings."
+    });
   }
+
   if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
-    return res.status(400).json({ success: false, message: "Enter a valid phone number with its country code, such as +49… or +263…" });
+    return res.status(400).json({
+      success: false,
+      message: "Enter a valid phone number with its country code, such as +49… or +263…"
+    });
   }
+
   try {
-    const recent = await pool.query(`SELECT "sentAt" FROM customer_verification_codes WHERE phone=$1`, [phone]);
-    if (recent.rows.length && Date.now() - new Date(recent.rows[0].sentAt).getTime() < 60000) {
-      return res.status(429).json({ success: false, message: "Please wait one minute before requesting another code." });
+    const existingCustomer = await pool.query(
+      `SELECT id, username, phone, "passwordHash"
+       FROM customers WHERE phone=$1 LIMIT 1`,
+      [phone]
+    );
+
+    const accountExists = existingCustomer.rows.length > 0;
+    const requestedMode = String(req.body.mode || "").trim().toLowerCase();
+    // Keep older SMS sign-in clients compatible; the updated app uses
+    // username+password for sign-in and this SMS route only for registration.
+    const creatingAccount = requestedMode === "signup"
+      || (requestedMode !== "signin" && Boolean(requestedUsername));
+    // Older HTML clients send username + phone without a mode field. Keep
+    // their existing OTP flow working until the web UI is migrated too.
+    const legacySignup = creatingAccount && requestedMode === "";
+    let username = requestedUsername;
+
+    if (creatingAccount) {
+      if (legacySignup
+        ? username.length < 2 || username.length > 40
+        : !/^[A-Za-z0-9_]{3,24}$/.test(username)) {
+        return res.status(400).json({
+          success: false,
+          message: legacySignup
+            ? "Enter a name between 2 and 40 characters."
+            : "Use a username of 3–24 letters, numbers or underscores."
+        });
+      }
+      if (accountExists && (legacySignup || existingCustomer.rows[0].passwordHash)) {
+        return res.status(409).json({
+          success: false,
+          message: "This phone number already has an account. Sign in instead."
+        });
+      }
+      // A legacy verified account with no password may be upgraded after
+      // verifying ownership of the SAME phone number; its customer ID stays.
+      const reserved = await pool.query(
+        `SELECT 1 FROM customers
+         WHERE LOWER(username)=LOWER($1)
+           AND phone<>$2 AND "passwordHash" IS NOT NULL LIMIT 1`,
+        [username, phone]
+      );
+      if (reserved.rows.length) {
+        return res.status(409).json({
+          success: false,
+          message: "That username is taken. Please choose another."
+        });
+      }
+    } else {
+      if (!accountExists) {
+        return res.status(404).json({
+          success: false,
+          message: "No account uses that phone number. Create an account first."
+        });
+      }
+      username = existingCustomer.rows[0].username;
     }
+
+    const recent = await pool.query(
+      `SELECT "sentAt" FROM customer_verification_codes WHERE phone=$1`,
+      [phone]
+    );
+
+    if (recent.rows.length && Date.now() - new Date(recent.rows[0].sentAt).getTime() < 60000) {
+      return res.status(429).json({
+        success: false,
+        message: "Please wait one minute before requesting another code."
+      });
+    }
+
     const localCode = localOtp ? String(crypto.randomInt(100000, 1000000)) : null;
     let fallbackCode = null;
+
     if (localOtp) {
       console.log(`[LOCAL OTP] Verification code for ${phone}: ${localCode}`);
     } else {
@@ -1259,33 +1356,65 @@ let username = String(
             const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`, {
               method: "POST",
               headers: { Authorization: `Basic ${authorization}`, "Content-Type": "application/x-www-form-urlencoded" },
-              body: new URLSearchParams({ To: phone, From: from, Body: `Your MEI Velocity verification code is ${code}. It expires in 10 minutes.` })
+              body: new URLSearchParams({
+                To: phone,
+                From: from,
+                Body: `Your MEI Velocity confirmation code is ${code}. It expires in 10 minutes.`
+              })
             });
             return { response, code };
           })();
+
       const response = sent.response || sent;
       fallbackCode = sent.code || null;
+
       if (!response.ok) {
         const detail = await response.json().catch(() => ({}));
         console.error("Twilio code request rejected:", detail.code, detail.message);
-        return res.status(502).json({ success: false, message: detail.code ? `Twilio could not send the code (error ${detail.code}). Check the trial restrictions and verified recipient number.` : "Twilio could not send the code. Check the Twilio settings and verified recipient number." });
+        return res.status(502).json({
+          success: false,
+          message: detail.code
+            ? `Twilio could not send the code (error ${detail.code}). Check the trial restrictions and verified recipient number.`
+            : "Twilio could not send the code. Check the Twilio settings and verified recipient number."
+        });
       }
     }
+
     const codeHash = localOtp
       ? phoneCodeHash(phone, localCode)
       : verifyServiceSid
         ? phoneCodeHash(phone, `verify:${crypto.randomUUID()}`)
         : phoneCodeHash(phone, fallbackCode);
+
     await pool.query(`
-      INSERT INTO customer_verification_codes (phone, username, "codeHash", "expiresAt", "sentAt", attempts)
-      VALUES ($1,$2,$3,NOW() + INTERVAL '10 minutes',NOW(),0)
-      ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "codeHash"=EXCLUDED."codeHash",
-        "expiresAt"=EXCLUDED."expiresAt", "sentAt"=NOW(), attempts=0
-    `, [phone, username, codeHash]);
-    res.json({ success: true, message: localOtp ? "Local test code printed in the VS Code backend terminal. It expires in 10 minutes." : "Verification code sent. It expires in 10 minutes." });
+      INSERT INTO customer_verification_codes
+        (phone, username, "codeHash", "expiresAt", "sentAt", attempts, purpose)
+      VALUES ($1,$2,$3,NOW() + INTERVAL '10 minutes',NOW(),0,$4)
+      ON CONFLICT (phone) DO UPDATE SET
+        username=EXCLUDED.username,
+        "codeHash"=EXCLUDED."codeHash",
+        "expiresAt"=EXCLUDED."expiresAt",
+        "sentAt"=NOW(),
+        attempts=0,
+        purpose=EXCLUDED.purpose
+    `, [phone, username, codeHash,
+      legacySignup ? "legacy_signup" : creatingAccount ? "signup" : "signin"]);
+
+    res.json({
+      success: true,
+      mode: creatingAccount ? "create" : "login",
+      message: localOtp
+        ? "Local test code printed in the VS Code backend terminal. It expires in 10 minutes."
+        : creatingAccount
+          ? "Confirmation code sent. Enter it to create your account."
+          : "Confirmation code sent. Enter it to sign in."
+    });
   } catch (error) {
     console.error("Customer code request failed:", error.message);
-    res.status(500).json({ success: false, message: "Unable to send a verification code right now." });
+    res.status(500).json({
+      success: false,
+      message: "Unable to send a confirmation code right now."
+    });
   }
 });
 
@@ -1297,6 +1426,13 @@ app.post("/api/customer/verify-code", async (req, res) => {
     const challenge = result.rows[0];
     if (!challenge || new Date(challenge.expiresAt).getTime() <= Date.now() || challenge.attempts >= 5) {
       return res.status(400).json({ success: false, message: "That code has expired. Request a new one." });
+    }
+    if (challenge.purpose === "signup" &&
+        (typeof req.body.password !== "string" || req.body.password.length < 8 || req.body.password.length > 128)) {
+      return res.status(400).json({
+        success: false,
+        message: "Choose a password containing 8–128 characters."
+      });
     }
     await pool.query(`UPDATE customer_verification_codes SET attempts=attempts+1 WHERE phone=$1`, [phone]);
     if (!/^\d{4,10}$/.test(code)) {
@@ -1329,17 +1465,145 @@ app.post("/api/customer/verify-code", async (req, res) => {
         return res.status(400).json({ success: false, message: "The verification code is not correct." });
       }
     }
-    const customerId = `CUS-${crypto.randomUUID()}`;
-    const customer = await pool.query(`
-      INSERT INTO customers (id, username, phone) VALUES ($1,$2,$3)
-      ON CONFLICT (phone) DO UPDATE SET username=EXCLUDED.username, "verifiedAt"=NOW()
-      RETURNING id, username, phone
-    `, [customerId, challenge.username, phone]);
+    let customer;
+    if (challenge.purpose === "legacy_signup") {
+      // Temporary compatibility for the separate HTML client: it still uses
+      // SMS-only registration. The new mobile client always uses "signup".
+      const legacyId = `CUS-${crypto.randomUUID()}`;
+      const created = await pool.query(`
+        INSERT INTO customers (id, username, phone, "verifiedAt")
+        VALUES ($1,$2,$3,NOW())
+        ON CONFLICT (phone) DO UPDATE SET "verifiedAt"=NOW()
+        RETURNING id,username,phone
+      `, [legacyId, challenge.username, phone]);
+      customer = created.rows[0];
+    } else if (challenge.purpose === "signup") {
+      // The SMS has been approved. This is the first time the password is
+      // saved: neither plaintext nor hash is stored before verification.
+      const passwordHash = await hashPassword(req.body.password);
+      const customerId = `CUS-${crypto.randomUUID()}`;
+      const created = await pool.query(`
+        INSERT INTO customers (id, username, phone, "passwordHash", "verifiedAt")
+        VALUES ($1,$2,$3,$4,NOW())
+        ON CONFLICT (phone) DO UPDATE SET
+          username=EXCLUDED.username,
+          "passwordHash"=EXCLUDED."passwordHash",
+          "verifiedAt"=NOW()
+        WHERE customers."passwordHash" IS NULL
+        RETURNING id,username,phone
+      `, [customerId, challenge.username, phone, passwordHash]);
+      if (!created.rows.length) {
+        return res.status(409).json({
+          success: false,
+          message: "An account already exists. Please sign in."
+        });
+      }
+      customer = created.rows[0];
+    } else {
+      // Existing SMS sign-in clients remain functional during migration.
+      const existing = await pool.query(
+        `UPDATE customers SET "verifiedAt"=NOW()
+         WHERE phone=$1 RETURNING id,username,phone`, [phone]
+      );
+      if (!existing.rows.length) {
+        return res.status(404).json({
+          success: false,
+          message: "Account not found. Please register first."
+        });
+      }
+      customer = existing.rows[0];
+    }
     await pool.query(`DELETE FROM customer_verification_codes WHERE phone=$1`, [phone]);
-    res.json({ success: true, customer: customer.rows[0], token: makeCustomerToken(customer.rows[0].id) });
+    res.json({ success: true, customer, token: makeCustomerToken(customer.id) });
   } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        success: false,
+        message: "That username is taken. Please choose another."
+      });
+    }
     console.error("Customer verification failed:", error.message);
     res.status(500).json({ success: false, message: "Unable to verify this phone number right now." });
+  }
+});
+
+/* ==========================================
+   CUSTOMER USERNAME + PASSWORD SIGN-IN
+   No SMS required for returning customers.
+========================================== */
+app.post("/api/customer/login", async (req, res) => {
+  const username = String(req.body.username || "").trim();
+  const password = req.body.password;
+  const usernameKey = username.toLowerCase();
+
+  if (!/^[A-Za-z0-9_]{3,24}$/.test(username) ||
+      typeof password !== "string" || password.length < 1 || password.length > 128) {
+    return res.status(400).json({
+      success: false,
+      message: "Enter your username and password."
+    });
+  }
+  if (!customerAuthSecret()) {
+    return res.status(503).json({
+      success: false,
+      message: "Customer sign-in is not configured."
+    });
+  }
+
+  try {
+    const blocked = await pool.query(`
+      SELECT attempts FROM customer_login_attempts
+      WHERE username=$1
+        AND "lastAttemptAt" > NOW()-INTERVAL '15 minutes'
+        AND attempts>=5
+    `, [usernameKey]);
+    if (blocked.rows.length) {
+      return res.status(429).json({
+        success: false,
+        message: "Too many attempts. Please try again in 15 minutes."
+      });
+    }
+
+    const result = await pool.query(`
+      SELECT id, username, phone, "passwordHash"
+      FROM customers
+      WHERE LOWER(username)=LOWER($1) AND "passwordHash" IS NOT NULL
+      LIMIT 1
+    `, [username]);
+    const customer = result.rows[0];
+    const correct = customer ? await verifyPassword(password, customer.passwordHash) : false;
+    if (!correct) {
+      await pool.query(`
+        INSERT INTO customer_login_attempts (username, attempts, "lastAttemptAt")
+        VALUES ($1,1,NOW())
+        ON CONFLICT (username) DO UPDATE SET
+          attempts=CASE
+            WHEN customer_login_attempts."lastAttemptAt" < NOW()-INTERVAL '15 minutes'
+            THEN 1
+            ELSE customer_login_attempts.attempts+1
+          END,
+          "lastAttemptAt"=NOW()
+      `, [usernameKey]);
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect username or password."
+      });
+    }
+
+    await pool.query(`DELETE FROM customer_login_attempts WHERE username=$1`, [usernameKey]);
+    const profile = { id: customer.id, username: customer.username, phone: customer.phone };
+    res.json({
+      success: true,
+      message: "Signed in successfully.",
+      customer: profile,
+      token: makeCustomerToken(customer.id)
+    });
+  } catch (error) {
+    console.error("Customer password login failed:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Unable to sign in at the moment."
+    });
   }
 });
 
