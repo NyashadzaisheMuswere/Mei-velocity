@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const path = require("path");
 const cors = require("cors");
 const crypto = require("crypto");
 const webpush = require("web-push");
@@ -357,7 +358,11 @@ async function initializeDatabase() {
   console.log("MEI Velocity database ready.");
 }
 
-app.get("/", (req, res) => res.json({ message: "MEI Velocity backend is running" }));
+const FRONTEND_DIR = path.join(__dirname, "..");
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, "index.html"));
+});
 app.get("/api/test", (req, res) => res.json({ success: true, message: "MEI Velocity API is working" }));
 // DISPATCH ENGINE
 async function expireOldOffers() {
@@ -2225,6 +2230,22 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
     console.error("Driver status error:", error);
     res.status(500).json({ success: false, message: "Unable to update driver status." });
   }
+});
+
+// Serve only approved public website files. Never expose backend/, .env, or repository files.
+const PUBLIC_FILES = new Set([
+  "index.html", "admin.html", "chat.html", "contact.html", "driver-history.html",
+  "driver.html", "drivers.html", "fares.html", "services.html",
+  "app.js", "chat.js", "map-config.js", "mobile-confirm.js",
+  "service-worker.js", "styles.css", "manifest.json", "manifest.webmanifest"
+]);
+
+app.use("/assets", express.static(path.join(FRONTEND_DIR, "assets"), { dotfiles: "deny", index: false }));
+app.use("/icons", express.static(path.join(FRONTEND_DIR, "icons"), { dotfiles: "deny", index: false }));
+
+app.get("/:filename", (req, res, next) => {
+  if (!PUBLIC_FILES.has(req.params.filename)) return next();
+  res.sendFile(path.join(FRONTEND_DIR, req.params.filename));
 });
 
 initializeDatabase()
