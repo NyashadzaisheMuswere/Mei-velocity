@@ -1776,6 +1776,11 @@ app.post("/api/promotions/validate", (req, res) => {
   res.json({ success: true, offer: { code, discount: 10, title: "Welcome ride credit", terms: "Up to $10 off one ride per phone number." } });
 });
 
+// Apply the same price precision to all stored ride fares.
+function roundFare(amount) {
+  return Math.round(amount * 2) / 2;
+}
+
 // CUSTOMER BOOKING
 app.post("/api/bookings", customerAuth, async (req, res) => {
   try {
@@ -1827,18 +1832,16 @@ app.post("/api/bookings", customerAuth, async (req, res) => {
   distance:
     Number(distance) || 0,
 
-  baseFare,
+  baseFare: roundFare(baseFare),
 
-  discount,
+  discount: roundFare(discount),
 
   promoCode:
     promoCode || null,
 
-  fare:
-    Math.min(
-      offeredFare,
-      referenceFare
-    ),
+  fare: roundFare(
+    Math.min(offeredFare, referenceFare)
+  ),
 
   payment:
     payment || "Cash",
