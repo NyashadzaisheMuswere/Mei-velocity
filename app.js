@@ -4285,131 +4285,154 @@ document
   );
 
 
-async function requestPhoneCode({ phone, username = "", message, reveal }) {
-  if (!phone) {
-    message.textContent = "Enter your phone number.";
-    return false;
-  }
+/* =========================================================
+   WEBSITE ACCOUNT AUTH — MATCHES THE MOBILE APP
+   Existing returning customers: username + password, no SMS.
+   New customers: username + phone + password, verified by SMS.
+   We construct controls in JS to preserve your existing index.html.
+========================================================= */
+(function setupMatchingWebAuth() {
+  const signIn = document.getElementById("accountSignInPanel");
+  const create = document.getElementById("accountCreatePanel");
+  if (!signIn || !create) return;
 
-  message.textContent = "Sending confirmation code…";
+  const style = document.createElement("style");
+  style.textContent = `
+    .mei-auth-field { display:block; width:100%; box-sizing:border-box;
+      min-height:45px; margin:8px 0 14px; padding:12px;
+      border:1px solid #cbd5e1; border-radius:10px; font-size:16px; }
+    .mei-auth-label { display:block; font-size:14px; font-weight:650; }
+    .mei-auth-submit { display:block; width:100%; padding:13px;
+      border:0; border-radius:11px; background:#f97316; color:white;
+      font-size:16px; font-weight:700; cursor:pointer; margin:12px 0; }
+    .mei-auth-submit:disabled { opacity:.6; cursor:wait; }
+    .mei-auth-hint { font-size:13px; color:#64748b; margin:5px 0 14px; }
+  `;
+  document.head.appendChild(style);
 
-  try {
-    const response = await fetch(
-      `${API_BASE}/api/customer/request-code`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(username ? { username, phone } : { phone })
-      }
-    );
+  // The website previously requested an SMS code on *every* sign-in.
+  signIn.replaceChildren();
+  signIn.innerHTML = `
+    <label class="mei-auth-label" for="meiWebLoginUsername">Username</label>
+    <input class="mei-auth-field" id="meiWebLoginUsername" autocomplete="username"
+      maxlength="24" placeholder="Enter your username" />
+    <label class="mei-auth-label" for="meiWebLoginPassword">Password</label>
+    <input class="mei-auth-field" id="meiWebLoginPassword" type="password"
+      autocomplete="current-password" placeholder="Enter your password" />
+    <button type="button" id="meiWebSignIn" class="mei-auth-submit">Sign In</button>
+    <p class="mei-auth-hint">Existing customers sign in with username and password. No SMS code is needed.</p>
+  `;
 
-    const data = await readApiResponse(response, "Could not send confirmation code.");
-    reveal();
-    message.textContent = data.message || "Confirmation code sent.";
-    return true;
-  } catch (error) {
-    message.textContent = apiErrorMessage(error);
-    return false;
-  }
-}
-
-
-async function verifyPhoneCode({ phone, code, message, successMessage }) {
-  if (!phone || !code) {
-    message.textContent = "Enter the confirmation code.";
+  // Keep the existing HTML registration controls and SMS code input.
+  const nameInput = document.getElementById("accountUsername");
+  const phoneInput = document.getElementById("accountPhone");
+  const createButton = document.getElementById("createAccountButton");
+  const verifyButton = document.getElementById("accountCreateVerify");
+  const codeInput = document.getElementById("accountCreateCode");
+  const codeWrap = document.getElementById("accountCreateCodeWrap");
+  if (!nameInput || !phoneInput || !createButton || !verifyButton || !codeInput || !codeWrap) {
+    console.warn("MEI Velocity registration controls are missing from index.html.");
     return;
   }
 
-  message.textContent = "Verifying…";
+  const passwordLabel = document.createElement("label");
+  passwordLabel.className = "mei-auth-label";
+  passwordLabel.htmlFor = "meiWebCreatePassword";
+  passwordLabel.textContent = "Create password (at least 8 characters)";
+  const newPassword = document.createElement("input");
+  newPassword.id = "meiWebCreatePassword";
+  newPassword.className = "mei-auth-field";
+  newPassword.type = "password";
+  newPassword.minLength = 8;
+  newPassword.maxLength = 128;
+  newPassword.autocomplete = "new-password";
+  newPassword.placeholder = "Create a password";
+  phoneInput.insertAdjacentElement("afterend", passwordLabel);
+  passwordLabel.insertAdjacentElement("afterend", newPassword);
+  createButton.textContent = "Send Verification Code";
 
-  try {
-    const response = await fetch(
-      `${API_BASE}/api/customer/verify-code`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, code })
-      }
-    );
-
-    const data = await readApiResponse(response, "Could not verify the code.");
-    finishAccountSignIn(data, successMessage);
-  } catch (error) {
-    message.textContent = apiErrorMessage(error);
-  }
-}
-
-
-document.getElementById("accountLoginContinue").addEventListener("click", async () => {
-  const phone = document.getElementById("loginPhone").value.trim();
   const message = document.getElementById("accountMessage");
+  const setMessage = value => { if (message) message.textContent = value; };
+  let pendingSignup = null;
 
-  await requestPhoneCode({
-    phone,
-    message,
-    reveal: () => {
-      document.getElementById("accountLoginCodeWrap").hidden = false;
-      document.getElementById("accountLoginCode").focus();
-    }
-  });
-});
-
-
-document.getElementById("accountLoginVerify").addEventListener("click", async () => {
-  await verifyPhoneCode({
-    phone: document.getElementById("loginPhone").value.trim(),
-    code: document.getElementById("accountLoginCode").value.trim(),
-    message: document.getElementById("accountMessage"),
-    successMessage: "Signed in successfully."
-  });
-});
-
-
-document.getElementById("createAccountButton").addEventListener("click", async () => {
-  const username = document.getElementById("accountUsername").value.trim();
-  const phone = document.getElementById("accountPhone").value.trim();
-  const message = document.getElementById("accountMessage");
-
-  if (!username || !phone) {
-    message.textContent = "Enter your name and phone number.";
-    return;
+  async function signInCustomer() {
+    const username = document.getElementById("meiWebLoginUsername").value.trim();
+    const password = document.getElementById("meiWebLoginPassword").value;
+    const button = document.getElementById("meiWebSignIn");
+    if (!username || !password) { setMessage("Enter your username and password."); return; }
+    button.disabled = true;
+    setMessage("Signing in…");
+    try {
+      const response = await fetch(`${API_BASE}/api/customer/login`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await readApiResponse(response, "Could not sign in.");
+      document.getElementById("meiWebLoginPassword").value = "";
+      finishAccountSignIn(data, "Signed in successfully.");
+    } catch (error) {
+      setMessage(apiErrorMessage(error));
+    } finally { button.disabled = false; }
   }
 
-  await requestPhoneCode({
-    phone,
-    username,
-    message,
-    reveal: () => {
-      document.getElementById("accountCreateCodeWrap").hidden = false;
-      document.getElementById("accountCreateCode").focus();
+  document.getElementById("meiWebSignIn").addEventListener("click", signInCustomer);
+  ["meiWebLoginUsername", "meiWebLoginPassword"].forEach(id => {
+    document.getElementById(id).addEventListener("keydown", event => {
+      if (event.key === "Enter") { event.preventDefault(); signInCustomer(); }
+    });
+  });
+
+  // Assign onclick so we replace any old inline click handler, not SMS sign-in.
+  createButton.addEventListener("click", async () => {
+    const username = nameInput.value.trim();
+    const phone = phoneInput.value.trim();
+    const password = newPassword.value;
+    if (!/^[A-Za-z0-9_]{3,24}$/.test(username)) {
+      setMessage("Use a username of 3–24 letters, numbers or underscores."); return;
     }
+    if (!phone || password.length < 8 || password.length > 128) {
+      setMessage("Enter your phone number and a password of 8–128 characters."); return;
+    }
+    createButton.disabled = true;
+    setMessage("Sending confirmation code…");
+    try {
+      const response = await fetch(`${API_BASE}/api/customer/request-code`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, phone, mode: "signup" })
+      });
+      const data = await readApiResponse(response, "Could not send confirmation code.");
+      pendingSignup = { username, phone, password };
+      codeWrap.hidden = false;
+      codeInput.focus();
+      setMessage(data.message || "Enter the confirmation code sent to your phone.");
+    } catch (error) { setMessage(apiErrorMessage(error)); }
+    finally { createButton.disabled = false; }
   });
-});
 
-
-document.getElementById("accountCreateVerify").addEventListener("click", async () => {
-  await verifyPhoneCode({
-    phone: document.getElementById("accountPhone").value.trim(),
-    code: document.getElementById("accountCreateCode").value.trim(),
-    message: document.getElementById("accountMessage"),
-    successMessage: "Account created successfully."
+  async function finishSignup() {
+    if (!pendingSignup) { setMessage("Request a verification code first."); return; }
+    const code = codeInput.value.trim();
+    if (!code) { setMessage("Enter your SMS confirmation code."); return; }
+    verifyButton.disabled = true;
+    setMessage("Verifying…");
+    try {
+      const response = await fetch(`${API_BASE}/api/customer/verify-code`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: pendingSignup.phone, code, password: pendingSignup.password })
+      });
+      const data = await readApiResponse(response, "Unable to verify the code.");
+      pendingSignup = null;
+      newPassword.value = "";
+      codeInput.value = "";
+      finishAccountSignIn(data, "Account created successfully.");
+    } catch (error) { setMessage(apiErrorMessage(error)); }
+    finally { verifyButton.disabled = false; }
+  }
+  verifyButton.addEventListener("click", finishSignup);
+  codeInput.addEventListener("keydown", event => {
+    if (event.key === "Enter") { event.preventDefault(); finishSignup(); }
   });
-});
-
-
-document.getElementById("loginPhone").addEventListener("keydown", event => {
-  if (event.key === "Enter") document.getElementById("accountLoginContinue").click();
-});
-
-
-document.getElementById("accountLoginCode").addEventListener("keydown", event => {
-  if (event.key === "Enter") document.getElementById("accountLoginVerify").click();
-});
-
-
-document.getElementById("accountCreateCode").addEventListener("keydown", event => {
-  if (event.key === "Enter") document.getElementById("accountCreateVerify").click();
-});
+})();
 
 
 /* =========================================================
