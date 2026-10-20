@@ -1607,6 +1607,79 @@ app.post("/api/customer/login", async (req, res) => {
   }
 });
 
+/* Customer account deletion: verified session plus password recheck for password accounts. */
+app.delete("/api/customer/account", customerAuth, async (req, res) => {
+  const client = await pool.connect();
+  let transactionStarted = false;
+  try {
+    await client.query("BEGIN");
+    transactionStarted = true;
+    const found = await client.query(
+      `SELECT id, username, phone, "passwordHash" FROM customers WHERE id=$1 FOR UPDATE`,
+      [req.customerId]
+    );
+    const customer = found.rows[0];
+    if (!customer) {
+      await client.query("ROLLBACK"); transactionStarted = false;
+      return res.status(401).json({ success: false, message: "Account not found. Please sign in again." });
+    }
+
+    // Reauthentication for accounts created with username and password.
+    if (customer.passwordHash) {
+      if (typeof req.body?.password !== "string" ||
+          !(await verifyPassword(req.body.password, customer.passwordHash))) {
+        await client.query("ROLLBACK"); transactionStarted = false;
+        return res.status(401).json({ success: false, message: "Incorrect password. Account was not deleted." });
+      }
+    }
+
+    // Do not remove a customer whose ride is still being arranged or delivered.
+    const active = await client.query(
+      `SELECT id FROM bookings WHERE "customerId"=$1 AND status IN ('Pending','Confirmed') LIMIT 1`,
+      [customer.id]
+    );
+    if (active.rows.length) {
+      await client.query("ROLLBACK"); transactionStarted = false;
+      return res.status(409).json({ success: false, message: "You have an active ride. Complete or cancel it before deleting your account." });
+    }
+
+    // Remove associated private ride chats; completed ride bookkeeping remains,
+    // but is disconnected from the account and anonymized.
+    await client.query(
+      `DELETE FROM booking_messages WHERE "bookingId" IN
+        (SELECT id FROM bookings WHERE "customerId"=$1)`, [customer.id]
+    );
+    // Erase cancelled rides and their offers; completed rides are retained anonymously.
+    await client.query(`DELETE FROM bookings WHERE "customerId"=$1 AND status='Cancelled'`, [customer.id]);
+    await client.query(`
+      UPDATE bookings SET
+        "customerId"=NULL,
+        name='Deleted customer', phone=CONCAT('deleted-', id),
+        pickup='Deleted', dropoff='Deleted',
+        "pickupLat"=NULL, "pickupLng"=NULL,
+        "dropoffLat"=NULL, "dropoffLng"=NULL,
+        "driverLat"=NULL, "driverLng"=NULL,
+        "riderLocationUpdatedAt"=NULL,
+        "driverLocationUpdatedAt"=NULL
+      WHERE "customerId"=$1 AND status='Completed'
+    `, [customer.id]);
+
+    // Remove transient authentication artifacts and the customer's account.
+    await client.query(`DELETE FROM customer_verification_codes WHERE phone=$1`, [customer.phone]);
+    await client.query(`DELETE FROM customer_login_attempts WHERE username=$1`, [customer.username.toLowerCase()]);
+    // Subscriptions cascade from customers ON DELETE CASCADE.
+    await client.query(`DELETE FROM customers WHERE id=$1`, [customer.id]);
+    await client.query("COMMIT"); transactionStarted = false;
+    return res.json({ success: true, message: "Your MEI Velocity account has been deleted." });
+  } catch (error) {
+    if (transactionStarted) await client.query("ROLLBACK").catch(() => {});
+    console.error("Customer account deletion failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to delete your account right now. Please try again." });
+  } finally {
+    client.release();
+  }
+});
+
 app.get("/api/customer/bookings", customerAuth, async (req, res) => {
   try {
     const result = await pool.query(`

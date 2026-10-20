@@ -4445,6 +4445,108 @@ document
 
 
 /* =========================================================
+   CUSTOMER ACCOUNT DELETION
+   Add an accessible button to the existing profile without changing index.html.
+========================================================= */
+(function setupCustomerAccountDeletion() {
+  const profile = document.getElementById("accountProfileView");
+  if (!profile || document.getElementById("deleteAccountButton")) return;
+
+  const styles = document.createElement("style");
+  styles.textContent = `
+    .mei-delete-account-btn { display:block; width:100%; margin-top:18px;
+      border:1px solid #dc2626; background:#fff7f7; color:#b91c1c;
+      padding:13px 16px; border-radius:12px; font-weight:700; cursor:pointer; }
+    .mei-delete-dialog { border:0; border-radius:18px; padding:24px;
+      width:min(92vw,410px); max-height:85vh; box-shadow:0 15px 65px #0005; color:#222; }
+    .mei-delete-dialog::backdrop { background:#0009; }
+    .mei-delete-dialog h2 { margin:0 0 12px; font-size:1.35rem; }
+    .mei-delete-dialog p { line-height:1.5; }
+    .mei-delete-dialog input { display:block; box-sizing:border-box; width:100%;
+      padding:13px; border:1px solid #aaa; border-radius:10px; margin:12px 0; font-size:16px; }
+    .mei-delete-actions { display:flex; gap:10px; margin-top:16px; }
+    .mei-delete-actions button { flex:1; border-radius:10px; padding:12px 8px;
+      font-weight:700; cursor:pointer; }
+    .mei-delete-cancel { border:1px solid #ddd; background:white; }
+    .mei-delete-confirm { border:0; background:#dc2626; color:white; }
+    .mei-delete-actions button:disabled { opacity:.6; cursor:wait; }
+    .mei-delete-error { color:#b91c1c; min-height:1.4em; font-size:.92rem; }
+  `;
+  document.head.appendChild(styles);
+
+  const openButton = document.createElement("button");
+  openButton.type = "button";
+  openButton.id = "deleteAccountButton";
+  openButton.className = "mei-delete-account-btn";
+  openButton.textContent = "Delete Account";
+  profile.appendChild(openButton);
+
+  const dialog = document.createElement("dialog");
+  dialog.className = "mei-delete-dialog";
+  dialog.setAttribute("aria-labelledby", "meiDeleteTitle");
+  dialog.innerHTML = `
+    <h2 id="meiDeleteTitle">Delete your account?</h2>
+    <p>This permanently deletes your MEI Velocity customer account, personal profile and account access. Some anonymized completed ride records may be retained for business records. This cannot be undone.</p>
+    <label for="meiDeletePassword">Your password (required for password accounts)</label>
+    <input id="meiDeletePassword" type="password" autocomplete="current-password" placeholder="Enter your password">
+    <p id="meiDeleteError" class="mei-delete-error" role="alert"></p>
+    <div class="mei-delete-actions">
+      <button type="button" class="mei-delete-cancel" id="meiDeleteCancel">Cancel</button>
+      <button type="button" class="mei-delete-confirm" id="meiDeleteConfirm">Delete forever</button>
+    </div>`;
+  document.body.appendChild(dialog);
+
+  const password = dialog.querySelector("#meiDeletePassword");
+  const errorMessage = dialog.querySelector("#meiDeleteError");
+  const confirmButton = dialog.querySelector("#meiDeleteConfirm");
+  const cancelButton = dialog.querySelector("#meiDeleteCancel");
+
+  openButton.addEventListener("click", () => {
+    if (!customerSession?.token) return;
+    password.value = "";
+    errorMessage.textContent = "";
+    // Close the existing account modal before opening a new modal.
+    if (accountDialog.open) accountDialog.close();
+    dialog.showModal();
+  });
+  cancelButton.addEventListener("click", () => dialog.close());
+
+  confirmButton.addEventListener("click", async () => {
+    const token = customerSession?.token;
+    if (!token || confirmButton.disabled) return;
+    confirmButton.disabled = true;
+    cancelButton.disabled = true;
+    errorMessage.textContent = "Deleting account…";
+    try {
+      const response = await fetch(`${API_BASE}/api/customer/account`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ password: password.value })
+      });
+      const data = await readApiResponse(response, "Unable to delete your account.");
+      if (!data.success) throw new Error("Account deletion was not confirmed.");
+
+      stopCustomerRidePolling();
+      stopHomeLocationWatch();
+      currentCustomerBooking = null;
+      customerSession = null;
+      ["meiVelocityCustomerSession", "meiVelocityCustomerBooking",
+        "meiVelocityRideHistory", "meiVelocityBookingDraft",
+        "meiVelocityRecentLocations", "meiVelocityRideNotifications"
+      ].forEach(key => localStorage.removeItem(key));
+      dialog.close();
+      alert("Your MEI Velocity account has been deleted.");
+      window.location.assign("index.html");
+    } catch (error) {
+      errorMessage.textContent = apiErrorMessage(error);
+    } finally {
+      confirmButton.disabled = false;
+      cancelButton.disabled = false;
+    }
+  });
+})();
+
+/* =========================================================
    PUSH NOTIFICATIONS
 ========================================================= */
 
