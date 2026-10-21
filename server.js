@@ -62,8 +62,10 @@ function makeDriverToken(driverId) {
   return `${payload}.${signature}`;
 }
 
-function makeCustomerToken(customerId) {
-  const payload = Buffer.from(JSON.stringify({ customerId, exp: Date.now() + 1000 * 60 * 60 * 24 * 30 })).toString("base64url");
+function makeCustomerToken(customerId, tokenVersion = 0) {
+  const payload = Buffer.from(JSON.stringify({
+    customerId, tokenVersion, exp: Date.now() + 1000 * 60 * 60 * 24 * 30
+  })).toString("base64url");
   const signature = crypto.createHmac("sha256", customerAuthSecret()).update(payload).digest("base64url");
   return `${payload}.${signature}`;
 }
@@ -85,22 +87,30 @@ function verifyCustomerToken(token) {
   }
 }
 
-function customerAuth(req, res, next) {
+async function customerAuth(req, res, next) {
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : "";
   const data = verifyCustomerToken(token);
-  if (!data) return res.status(401).json({ success: false, message: "Please verify your phone number to continue." });
-  req.customerId = data.customerId;
-  next();
+  if (!data) return res.status(401).json({ success: false, message: "Your session has expired. Please sign in again." });
+  try {
+    // Check token version so a password reset revokes previously issued sessions.
+    // Legacy tokens (without tokenVersion) are accepted only before first password update.
+    const result = await pool.query(`SELECT "tokenVersion" FROM customers WHERE id=$1`, [data.customerId]);
+    if (!result.rows.length || Number(result.rows[0].tokenVersion) !== Number(data.tokenVersion ?? 0)) {
+      return res.status(401).json({ success: false, message: "Your session has expired. Please sign in again." });
+    }
+    req.customerId = data.customerId;
+    next();
+  } catch (error) {
+    console.error("Customer session check failed:", error);
+    res.status(500).json({ success: false, message: "Unable to check your session right now." });
+  }
 }
 
-function optionalCustomerAuth(req, res, next) {
+async function optionalCustomerAuth(req, res, next) {
   const header = req.headers.authorization || "";
   if (!header) return next();
-  const data = verifyCustomerToken(header.startsWith("Bearer ") ? header.slice(7) : "");
-  if (!data) return res.status(401).json({ success: false, message: "Customer session expired. Please sign in again." });
-  req.customerId = data.customerId;
-  next();
+  return customerAuth(req, res, next);
 }
 
 function phoneCodeHash(phone, code) {
@@ -201,6 +211,19 @@ async function initializeDatabase() {
   await pool.query(`
     ALTER TABLE customers ADD COLUMN IF NOT EXISTS "passwordHash" TEXT
   `);
+  // MEI_PASSWORD_RECOVERY_V1: token revocation and expiring phone reset challenges.
+  await pool.query(`ALTER TABLE customers ADD COLUMN IF NOT EXISTS "tokenVersion" INTEGER NOT NULL DEFAULT 0`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_password_resets (
+      phone TEXT PRIMARY KEY REFERENCES customers(phone) ON DELETE CASCADE,
+      "codeHash" TEXT NOT NULL,
+      "expiresAt" TIMESTAMPTZ NOT NULL,
+      "sentAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "windowStart" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "requestCount" INTEGER NOT NULL DEFAULT 1,
+      attempts INTEGER NOT NULL DEFAULT 0
+    )
+  `);
   // Older passwordless users can have duplicate usernames; enforce uniqueness
   // when they set a password, without breaking existing rows.
   await pool.query(`
@@ -235,6 +258,20 @@ async function initializeDatabase() {
       DEFAULT NOW()
   )
 `);
+  // MEI_EXPO_DRIVER_PUSH_V1: native mobile Expo push tokens (separate from web-push).
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS customer_expo_push_tokens (
+      token TEXT PRIMARY KEY,
+      "customerId" TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+      platform TEXT NOT NULL DEFAULT 'unknown',
+      "tokenVersion" INTEGER NOT NULL DEFAULT 0,
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS customer_expo_push_tokens_customer_idx
+    ON customer_expo_push_tokens ("customerId")
+  `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS customer_verification_codes (
       phone TEXT PRIMARY KEY,
@@ -1039,15 +1076,144 @@ app.get(
   }
 );
 
+/* =========================================================
+   MEI_EXPO_DRIVER_PUSH_V1: native iOS/Android customer chat alerts
+   The existing web-push API is deliberately preserved.
+========================================================= */
+
+const MEI_EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+const MEI_EXPO_TOKEN_RE = /^(?:ExponentPushToken|ExpoPushToken)\[[\w-]{10,}\]$/;
+
+app.post("/api/customer/expo-push-token", customerAuth, async (req, res) => {
+  const token = typeof req.body?.token === "string" ? req.body.token.trim() : "";
+  const platform = req.body?.platform === "ios" || req.body?.platform === "android"
+    ? req.body.platform : "unknown";
+  if (!MEI_EXPO_TOKEN_RE.test(token)) {
+    return res.status(400).json({ success: false, message: "Invalid mobile push token." });
+  }
+  try {
+    await pool.query(`
+      INSERT INTO customer_expo_push_tokens (token,"customerId",platform,"tokenVersion")
+      VALUES ($1,$2,$3,(SELECT "tokenVersion" FROM customers WHERE id=$2))
+      ON CONFLICT (token) DO UPDATE SET
+        "customerId"=EXCLUDED."customerId",
+        platform=EXCLUDED.platform,
+        "tokenVersion"=EXCLUDED."tokenVersion",
+        "updatedAt"=NOW()
+    `, [token, req.customerId, platform]);
+    // Limit stale/old devices without impacting current active phones.
+    await pool.query(`
+      DELETE FROM customer_expo_push_tokens WHERE "customerId"=$1 AND token NOT IN (
+        SELECT token FROM customer_expo_push_tokens WHERE "customerId"=$1
+        ORDER BY "updatedAt" DESC LIMIT 8
+      )
+    `, [req.customerId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Expo token registration failed:", error);
+    res.status(500).json({ success: false, message: "Could not enable notifications." });
+  }
+});
+
+app.delete("/api/customer/expo-push-token", customerAuth, async (req, res) => {
+  const token = typeof req.body?.token === "string" ? req.body.token.trim() : "";
+  if (!MEI_EXPO_TOKEN_RE.test(token)) {
+    return res.status(400).json({ success: false, message: "Invalid push token." });
+  }
+  try {
+    await pool.query(`DELETE FROM customer_expo_push_tokens
+      WHERE token=$1 AND "customerId"=$2`, [token, req.customerId]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Expo token removal failed:", error);
+    res.status(500).json({ success: false, message: "Could not disable notifications." });
+  }
+});
+
+// This only runs after an AUTHENTICATED, ASSIGNED driver has stored a message.
+// All errors are isolated from successful message delivery.
+async function sendMeiExpoDriverChatPush(customerId, rideId, driverName, message) {
+  if (!customerId) return;
+  try {
+    const found = await pool.query(`SELECT t.token FROM customer_expo_push_tokens t
+      JOIN customers c ON c.id=t."customerId"
+      WHERE t."customerId"=$1 AND t."tokenVersion"=c."tokenVersion"
+      ORDER BY t."updatedAt" DESC LIMIT 8`, [customerId]);
+    if (!found.rows.length) return;
+    const name = String(driverName || "your driver").slice(0, 60);
+    const preview = String(message?.body || "Open MEI Velocity to read it").slice(0, 140);
+    const tokens = found.rows.map(row => row.token);
+    const notifications = tokens.map(to => ({
+      to,
+      title: `Message from ${name}`,
+      body: preview,
+      sound: "default",
+      priority: "high",
+      channelId: "driver-messages",
+      data: {
+        type: "driver-message",
+        bookingId: String(rideId),
+        messageId: String(message?.id || ""),
+      },
+    }));
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    let response;
+    try {
+      response = await fetch(MEI_EXPO_PUSH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          ...(process.env.EXPO_ACCESS_TOKEN
+            ? { Authorization: `Bearer ${process.env.EXPO_ACCESS_TOKEN}` } : {}),
+        },
+        body: JSON.stringify(notifications),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    if (!response.ok) {
+      console.warn("Expo push request failed:", response.status);
+      return;
+    }
+    const result = await response.json().catch(() => null);
+    const tickets = Array.isArray(result?.data) ? result.data :
+      result?.data ? [result.data] : [];
+    // Remove unregistered phones when Expo reports an invalid device token.
+    for (let i = 0; i < tickets.length; i++) {
+      if (tickets[i]?.status === "error") {
+        console.warn("Expo push ticket:", tickets[i]?.details?.error || tickets[i]?.message);
+        if (tickets[i]?.details?.error === "DeviceNotRegistered") {
+          await pool.query("DELETE FROM customer_expo_push_tokens WHERE token=$1 AND \"customerId\"=$2",
+            [tokens[i], customerId]);
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Could not send driver message push:", error?.message || error);
+  }
+}
+
 app.post("/api/driver/bookings/:id/messages", driverAuth, async (req, res) => {
   const body = String(req.body.body || "").trim();
   if (!body || body.length > 1000) return res.status(400).json({ success: false, message: "Write a message up to 1,000 characters." });
   try {
-    const ride = await pool.query(`SELECT id FROM bookings WHERE id=$1 AND "assignedDriverId"=$2 AND ${CHAT_AVAILABLE_RIDE_SQL}`, [req.params.id, req.driverId]);
+    const ride = await pool.query(`SELECT id, "customerId" FROM bookings WHERE id=$1 AND "assignedDriverId"=$2 AND ${CHAT_AVAILABLE_RIDE_SQL}`, [req.params.id, req.driverId]);
     if (!ride.rows.length) return res.status(404).json({ success: false, message: "This ride chat is no longer available." });
     const driver = await pool.query(`SELECT name FROM drivers WHERE id=$1`, [req.driverId]);
     const message = await saveRideMessage({ bookingId: req.params.id, senderType: "driver", senderId: req.driverId, senderName: driver.rows[0]?.name || "Driver", body });
     res.status(201).json({ success: true, message });
+    // Notify the correct customer's registered native phone(s).
+    // Push failure never causes the driver to resend an already saved message.
+    void sendMeiExpoDriverChatPush(
+      ride.rows[0].customerId,
+      req.params.id,
+      driver.rows[0]?.name || "your driver",
+      message
+    );
   } catch (error) {
     console.error("Driver ride chat send error:", error);
     res.status(500).json({ success: false, message: "Unable to send your message." });
@@ -1474,7 +1640,7 @@ app.post("/api/customer/verify-code", async (req, res) => {
         INSERT INTO customers (id, username, phone, "verifiedAt")
         VALUES ($1,$2,$3,NOW())
         ON CONFLICT (phone) DO UPDATE SET "verifiedAt"=NOW()
-        RETURNING id,username,phone
+        RETURNING id,username,phone,"tokenVersion"
       `, [legacyId, challenge.username, phone]);
       customer = created.rows[0];
     } else if (challenge.purpose === "signup") {
@@ -1490,7 +1656,7 @@ app.post("/api/customer/verify-code", async (req, res) => {
           "passwordHash"=EXCLUDED."passwordHash",
           "verifiedAt"=NOW()
         WHERE customers."passwordHash" IS NULL
-        RETURNING id,username,phone
+        RETURNING id,username,phone,"tokenVersion"
       `, [customerId, challenge.username, phone, passwordHash]);
       if (!created.rows.length) {
         return res.status(409).json({
@@ -1503,7 +1669,7 @@ app.post("/api/customer/verify-code", async (req, res) => {
       // Existing SMS sign-in clients remain functional during migration.
       const existing = await pool.query(
         `UPDATE customers SET "verifiedAt"=NOW()
-         WHERE phone=$1 RETURNING id,username,phone`, [phone]
+         WHERE phone=$1 RETURNING id,username,phone,"tokenVersion","tokenVersion"`, [phone]
       );
       if (!existing.rows.length) {
         return res.status(404).json({
@@ -1514,7 +1680,7 @@ app.post("/api/customer/verify-code", async (req, res) => {
       customer = existing.rows[0];
     }
     await pool.query(`DELETE FROM customer_verification_codes WHERE phone=$1`, [phone]);
-    res.json({ success: true, customer, token: makeCustomerToken(customer.id) });
+    res.json({ success: true, customer, token: makeCustomerToken(customer.id, customer.tokenVersion ?? 0) });
   } catch (error) {
     if (error.code === "23505") {
       return res.status(409).json({
@@ -1565,7 +1731,7 @@ app.post("/api/customer/login", async (req, res) => {
     }
 
     const result = await pool.query(`
-      SELECT id, username, phone, "passwordHash"
+      SELECT id, username, phone, "passwordHash", "tokenVersion"
       FROM customers
       WHERE LOWER(username)=LOWER($1) AND "passwordHash" IS NOT NULL
       LIMIT 1
@@ -1596,7 +1762,7 @@ app.post("/api/customer/login", async (req, res) => {
       success: true,
       message: "Signed in successfully.",
       customer: profile,
-      token: makeCustomerToken(customer.id)
+      token: makeCustomerToken(customer.id, customer.tokenVersion ?? 0)
     });
   } catch (error) {
     console.error("Customer password login failed:", error.message);
@@ -1605,6 +1771,217 @@ app.post("/api/customer/login", async (req, res) => {
       message: "Unable to sign in at the moment."
     });
   }
+});
+
+
+/* =========================================================
+   MEI_PASSWORD_RECOVERY_V1
+   Change password: current password + authenticated session.
+   Forgot password: a short-lived SMS code sent to the phone on the account.
+   Changing or resetting a password invalidates older access tokens.
+========================================================= */
+
+const RESET_GENERIC_REPLY = "If that phone number has a password account, a reset code will be sent. Check your SMS messages.";
+function validCustomerPassword(value) {
+  return typeof value === "string" && value.length >= 8 && value.length <= 128;
+}
+function resetCodeHash(phone, code) {
+  return crypto.createHmac("sha256", customerAuthSecret())
+    .update(`password-reset:${phone}:${code}`).digest("hex");
+}
+
+app.post("/api/customer/change-password", customerAuth, async (req, res) => {
+  const { currentPassword, newPassword } = req.body || {};
+  if (typeof currentPassword !== "string" || !validCustomerPassword(newPassword)) {
+    return res.status(400).json({ success: false, message: "Enter your current password and a new password of 8–128 characters." });
+  }
+  if (newPassword === currentPassword) {
+    return res.status(400).json({ success: false, message: "Choose a different password." });
+  }
+  const client = await pool.connect();
+  let begun = false;
+  try {
+    await client.query("BEGIN"); begun = true;
+    const found = await client.query(
+      `SELECT id, username, "passwordHash" FROM customers WHERE id=$1 FOR UPDATE`, [req.customerId]
+    );
+    const customer = found.rows[0];
+    if (!customer || !customer.passwordHash) {
+      await client.query("ROLLBACK"); begun = false;
+      return res.status(403).json({ success: false, message: "This account needs a password. Contact support for help." });
+    }
+    if (!(await verifyPassword(currentPassword, customer.passwordHash))) {
+      await client.query("ROLLBACK"); begun = false;
+      return res.status(401).json({ success: false, message: "Your current password is incorrect." });
+    }
+    const passwordHash = await hashPassword(newPassword);
+    const updated = await client.query(`
+      UPDATE customers
+      SET "passwordHash"=$1, "tokenVersion"="tokenVersion"+1
+      WHERE id=$2 RETURNING "tokenVersion"
+    `, [passwordHash, req.customerId]);
+    await client.query(`DELETE FROM customer_login_attempts WHERE username=$1`, [customer.username.toLowerCase()]);
+    await client.query(`DELETE FROM customer_password_resets WHERE phone=(SELECT phone FROM customers WHERE id=$1)`, [req.customerId]);
+    await client.query("COMMIT"); begun = false;
+    return res.json({ success: true, message: "Password changed successfully.",
+      token: makeCustomerToken(req.customerId, updated.rows[0].tokenVersion) });
+  } catch (error) {
+    if (begun) await client.query("ROLLBACK").catch(() => {});
+    console.error("Change customer password failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to change your password right now." });
+  } finally { client.release(); }
+});
+
+app.post("/api/customer/forgot-password/request", async (req, res) => {
+  const phone = normalizePhoneNumber(req.body?.phone);
+  if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+    return res.status(400).json({ success: false, message: "Enter a valid phone number with country code." });
+  }
+  const localOtp = isLocalCustomerOtpEnabled(req);
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID;
+  const from = process.env.TWILIO_FROM_NUMBER;
+  if (!customerAuthSecret() || (!localOtp && (!sid || !token || (!verifySid && !from)))) {
+    return res.status(503).json({ success: false, message: "SMS password recovery is temporarily unavailable." });
+  }
+  try {
+    const customers = await pool.query(
+      `SELECT id FROM customers WHERE phone=$1 AND "passwordHash" IS NOT NULL LIMIT 1`, [phone]
+    );
+    // Do not disclose whether a phone number has an account.
+    if (!customers.rows.length) return res.json({ success: true, message: RESET_GENERIC_REPLY });
+
+    const existing = await pool.query(`SELECT "sentAt", "windowStart", "requestCount"
+      FROM customer_password_resets WHERE phone=$1`, [phone]);
+    const row = existing.rows[0];
+    if (row && (Date.now() - new Date(row.sentAt).getTime() < 60000 ||
+        (Date.now() - new Date(row.windowStart).getTime() < 3600000 && Number(row.requestCount) >= 5))) {
+      return res.json({ success: true, message: RESET_GENERIC_REPLY });
+    }
+
+    let otp = null;
+    let codeHash;
+    if (localOtp) {
+      otp = String(crypto.randomInt(100000, 1000000));
+      console.info(`[LOCAL PASSWORD RESET] SMS code for ${phone}: ${otp}`);
+      codeHash = resetCodeHash(phone, otp);
+    } else if (verifySid) {
+      const response = await fetch(
+        `https://verify.twilio.com/v2/Services/${encodeURIComponent(verifySid)}/Verifications`,
+        { method: "POST", headers: {
+          Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded"
+        }, body: new URLSearchParams({ To: phone, Channel: "sms" }) }
+      );
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.warn("SMS reset request rejected:", error.code || response.status);
+        return res.status(502).json({ success: false, message: "Unable to send an SMS right now. Please try later." });
+      }
+      codeHash = resetCodeHash(phone, `verify:${crypto.randomUUID()}`);
+    } else {
+      otp = String(crypto.randomInt(100000, 1000000));
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(sid)}/Messages.json`,
+        { method: "POST", headers: {
+          Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded"
+        }, body: new URLSearchParams({
+          To: phone, From: from,
+          Body: `MEI Velocity password reset code: ${otp}. Expires in 10 minutes. Do not share this code.`
+        }) }
+      );
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        console.warn("SMS reset request rejected:", error.code || response.status);
+        return res.status(502).json({ success: false, message: "Unable to send an SMS right now. Please try later." });
+      }
+      codeHash = resetCodeHash(phone, otp);
+    }
+    await pool.query(`
+      INSERT INTO customer_password_resets
+        (phone,"codeHash","expiresAt","sentAt","windowStart","requestCount",attempts)
+      VALUES ($1,$2,NOW()+INTERVAL '10 minutes',NOW(),NOW(),1,0)
+      ON CONFLICT (phone) DO UPDATE SET
+        "codeHash"=EXCLUDED."codeHash", "expiresAt"=EXCLUDED."expiresAt",
+        "sentAt"=NOW(), attempts=0,
+        "requestCount"=CASE
+          WHEN customer_password_resets."windowStart" < NOW()-INTERVAL '1 hour' THEN 1
+          ELSE customer_password_resets."requestCount"+1 END,
+        "windowStart"=CASE
+          WHEN customer_password_resets."windowStart" < NOW()-INTERVAL '1 hour' THEN NOW()
+          ELSE customer_password_resets."windowStart" END
+    `, [phone, codeHash]);
+    return res.json({ success: true, message: RESET_GENERIC_REPLY });
+  } catch (error) {
+    console.error("Request customer password reset failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to request a reset right now." });
+  }
+});
+
+app.post("/api/customer/forgot-password/confirm", async (req, res) => {
+  const phone = normalizePhoneNumber(req.body?.phone);
+  const code = String(req.body?.code || "").trim();
+  const newPassword = req.body?.newPassword;
+  if (!/^\+[1-9]\d{6,14}$/.test(phone) || !/^\d{6}$/.test(code) || !validCustomerPassword(newPassword)) {
+    return res.status(400).json({ success: false, message: "Enter the 6-digit SMS code and a new password of 8–128 characters." });
+  }
+  const client = await pool.connect();
+  let begun = false;
+  try {
+    await client.query("BEGIN"); begun = true;
+    const found = await client.query(
+      `SELECT "codeHash","expiresAt",attempts FROM customer_password_resets WHERE phone=$1 FOR UPDATE`, [phone]
+    );
+    const challenge = found.rows[0];
+    if (!challenge || new Date(challenge.expiresAt).getTime() <= Date.now() || challenge.attempts >= 5) {
+      await client.query("ROLLBACK"); begun = false;
+      return res.status(400).json({ success: false, message: "Code expired or unavailable. Request a new code." });
+    }
+    await client.query(`UPDATE customer_password_resets SET attempts=attempts+1 WHERE phone=$1`, [phone]);
+    let approved = false;
+    if (isLocalCustomerOtpEnabled(req) || !process.env.TWILIO_VERIFY_SERVICE_SID) {
+      const expected = Buffer.from(challenge.codeHash, "hex");
+      const actual = Buffer.from(resetCodeHash(phone, code), "hex");
+      approved = expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+    } else {
+      const sid = process.env.TWILIO_ACCOUNT_SID;
+      const token = process.env.TWILIO_AUTH_TOKEN;
+      const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID;
+      const response = await fetch(
+        `https://verify.twilio.com/v2/Services/${encodeURIComponent(verifySid)}/VerificationCheck`,
+        { method: "POST", headers: {
+          Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded"
+        }, body: new URLSearchParams({ To: phone, Code: code }) }
+      );
+      const result = await response.json().catch(() => ({}));
+      approved = response.ok && result.status === "approved";
+    }
+    if (!approved) {
+      // Commit failed attempt so the five-try limit cannot be bypassed.
+      await client.query("COMMIT"); begun = false;
+      return res.status(400).json({ success: false, message: "Incorrect verification code." });
+    }
+    const newHash = await hashPassword(newPassword);
+    const updated = await client.query(`
+      UPDATE customers SET "passwordHash"=$1, "tokenVersion"="tokenVersion"+1
+      WHERE phone=$2 AND "passwordHash" IS NOT NULL RETURNING username
+    `, [newHash, phone]);
+    if (!updated.rows.length) {
+      await client.query("ROLLBACK"); begun = false;
+      return res.status(400).json({ success: false, message: "This account cannot be reset. Please contact support." });
+    }
+    await client.query(`DELETE FROM customer_password_resets WHERE phone=$1`, [phone]);
+    await client.query(`DELETE FROM customer_login_attempts WHERE username=$1`, [updated.rows[0].username.toLowerCase()]);
+    await client.query("COMMIT"); begun = false;
+    return res.json({ success: true, message: "Password reset. Sign in with your new password." });
+  } catch (error) {
+    if (begun) await client.query("ROLLBACK").catch(() => {});
+    console.error("Confirm customer password reset failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to reset the password right now." });
+  } finally { client.release(); }
 });
 
 /* Customer account deletion: verified session plus password recheck for password accounts. */
