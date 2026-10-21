@@ -1612,6 +1612,153 @@ app.post("/api/customer/login", async (req, res) => {
   }
 });
 
+/* =========================================================
+   CUSTOMER ACCOUNT DELETION — WEBSITE + EXPO APP
+   DELETE /api/customer/account
+   Requires a signed-in customer; password recheck for password accounts.
+   Protects active rides and atomically erases associated personal data.
+========================================================= */
+app.delete("/api/customer/account", customerAuth, async (req, res) => {
+  const client = await pool.connect();
+  let inTransaction = false;
+
+  try {
+    await client.query("BEGIN");
+    inTransaction = true;
+
+    const result = await client.query(`
+      SELECT id, username, phone, "passwordHash"
+      FROM customers
+      WHERE id = $1
+      FOR UPDATE
+    `, [req.customerId]);
+
+    const customer = result.rows[0];
+    if (!customer) {
+      await client.query("ROLLBACK");
+      inTransaction = false;
+      return res.status(401).json({
+        success: false,
+        message: "Account not found. Please sign in again."
+      });
+    }
+
+    // The native and web clients both send { password } in the DELETE body.
+    // Legacy passwordless accounts may still be deleted using their valid session.
+    if (customer.passwordHash) {
+      const supplied = req.body?.password;
+      const verified = typeof supplied === "string" &&
+        supplied.length <= 128 &&
+        (await verifyPassword(supplied, customer.passwordHash));
+      if (!verified) {
+        await client.query("ROLLBACK");
+        inTransaction = false;
+        return res.status(401).json({
+          success: false,
+          message: "Incorrect password. Account was not deleted."
+        });
+      }
+    }
+
+    // Also include old bookings not yet linked to customerId, but only when
+    // they have the SAME registered phone and have no other account owner.
+    const owner = `("customerId" = $1 OR ("customerId" IS NULL AND phone = $2))`;
+    const params = [customer.id, customer.phone];
+
+    const active = await client.query(`
+      SELECT id
+      FROM bookings
+      WHERE ${owner}
+        AND (status IS NULL OR status NOT IN ('Completed', 'Cancelled'))
+      LIMIT 1
+    `, params);
+    if (active.rows.length) {
+      await client.query("ROLLBACK");
+      inTransaction = false;
+      return res.status(409).json({
+        success: false,
+        message: "You have an active ride. Complete or cancel it before deleting your account."
+      });
+    }
+
+    // Ride messages contain private information and must not outlive the user.
+    await client.query(`
+      DELETE FROM booking_messages
+      WHERE "bookingId" IN (SELECT id FROM bookings WHERE ${owner})
+    `, params);
+
+    // Remove cancelled bookings entirely (driver offers cascade from bookings).
+    await client.query(`
+      DELETE FROM bookings
+      WHERE ${owner} AND status = 'Cancelled'
+    `, params);
+
+    // Retain completed transactions for operational accounting, but remove
+    // customer identity, pickup/drop-off addresses and precise location data.
+    await client.query(`
+      UPDATE bookings
+      SET "customerId" = NULL,
+          name = 'Deleted customer',
+          phone = 'deleted-' || id,
+          pickup = 'Deleted',
+          dropoff = 'Deleted',
+          "pickupLat" = NULL,
+          "pickupLng" = NULL,
+          "dropoffLat" = NULL,
+          "dropoffLng" = NULL,
+          "driverLat" = NULL,
+          "driverLng" = NULL,
+          "riderLocationUpdatedAt" = NULL,
+          "driverLocationUpdatedAt" = NULL,
+          "pickupSource" = 'deleted'
+      WHERE ${owner} AND status = 'Completed'
+    `, params);
+
+    // Delete SMS challenges, login attempt metadata and push registrations.
+    // Push tables usually cascade, but remove web tokens explicitly as well.
+    await client.query(
+      `DELETE FROM customer_verification_codes WHERE phone = $1`,
+      [customer.phone]
+    );
+    await client.query(
+      `DELETE FROM customer_login_attempts WHERE username = $1`,
+      [customer.username.toLowerCase()]
+    );
+    await client.query(
+      `DELETE FROM customer_push_subscriptions WHERE "customerId" = $1`,
+      [customer.id]
+    );
+
+    // The optional customer_expo_push_tokens table uses ON DELETE CASCADE.
+    // Never delete driver accounts or other users' records.
+    const deleted = await client.query(
+      `DELETE FROM customers WHERE id = $1 RETURNING id`,
+      [customer.id]
+    );
+    if (deleted.rowCount !== 1) {
+      throw new Error("Customer disappeared before account deletion completed.");
+    }
+
+    await client.query("COMMIT");
+    inTransaction = false;
+    return res.json({
+      success: true,
+      message: "Your MEI Velocity account has been permanently deleted."
+    });
+  } catch (error) {
+    if (inTransaction) {
+      await client.query("ROLLBACK").catch(() => {});
+    }
+    console.error("Customer account deletion failed:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to delete your account right now. Please try again."
+    });
+  } finally {
+    client.release();
+  }
+});
+
 app.get("/api/customer/bookings", customerAuth, async (req, res) => {
   try {
     const result = await pool.query(`
