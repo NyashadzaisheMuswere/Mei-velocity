@@ -2620,7 +2620,7 @@ app.patch("/api/driver/status", driverAuth, async (req, res) => {
 
 // Serve only approved public website files. Never expose backend/, .env, or repository files.
 const PUBLIC_FILES = new Set([
-  "index.html", "admin.html", "chat.html", "contact.html", "driver-history.html",
+  "index.html", "admin.html", "chat.html", "contact.html","privacy.html", "driver-history.html",
   "driver.html", "drivers.html", "fares.html", "services.html",
   "app.js", "chat.js", "map-config.js", "mobile-confirm.js",
   "service-worker.js", "styles.css", "manifest.json", "manifest.webmanifest"
